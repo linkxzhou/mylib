@@ -1,3 +1,16 @@
+### glog-mini介绍
+（1）glog-mini是为了方便使用glog库的mini版本，改造于glog-version0.3.4
+（2）使用方法执行make，将在目录下生产glog.a的静态库
+（3）引入头文件
+#include "commandlineflags.h"
+#include "config.h"
+#include "logging.h"
+编译时候，使用同时引入glog.a库即可
+（4）使用样例参考：
+unittest下面的logging_striptest_main.cpp
+编译：g++ -o unittest logging_striptest_main.cpp -I../ -I../base ../glog.a -g ../glog.a -lpthread -ldl -lrt
+执行：./unittest
+
 ### glog的使用方法
 
 日志文件名称格式：<program name>.<hostname>.<user name>.log.<severity level>.<date>.<time>.<pid>
@@ -55,4 +68,4 @@ eg:
     FLAGS_stop_logging_if_full_disk = true;     //当磁盘被写满时，停止日志输出
     google::SetLogFilenameExtension("91_");     //设置文件名扩展，如平台？或其它需要区分的信息
     google::InstallFailureSignalHandler();      //捕捉 core dumped
-    google::InstallFailureWriter(&SignalHandle);    //默认捕捉 SIGSEGV 信号信息输出会输出到 stderr，可以通过下面的方法自定义输出>方式：# glog-mini
+    google::InstallFailureWriter(&SignalHandle);    //默认捕捉 SIGSEGV 信号信息输出会输出到 stderr，可以通过下面的方法自定义输出>方式：
