@@ -84,8 +84,8 @@ int main(int, char* argv[]) {
       LOG_FIRST_N(ERROR,5)<<"LOG_FIRST_N(INFO,5)  google::COUNTER="<<google::COUNTER<<"  i="<<i;
   }
 
-  CHECK(true)<< "TRUE is output.";
-  CHECK(false)<< "TRUE is output.";
+  CHECK(true) << "TRUE is output.";
+  CHECK(false) << "TRUE is output.";
 
   return 0;
 }
