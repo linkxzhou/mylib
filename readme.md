@@ -36,7 +36,7 @@ bazel test //unittest:demangle_unittest
 
 ## 日志格式   
 
-日志文件名称格式：<program name>.<hostname>.<user name>.log.<severity level>.<date>.<time>.<pid>   
+日志文件名称格式：`<program name>.<hostname>.<user name>.log.<severity level>.<date>.<time>.<pid>`  
 例如：`hello_world.example.com.hamaji.log.INFO.20161120-222411.10474` 
 
 # 日志级别  
@@ -57,11 +57,12 @@ FLAGS_minloglevel   输出日志的最小级别，即高于等于该级别的日
 - 第一个参数为日志级别  
 - 第二个参数表示输出目录及日志文件名前缀  
 
-// 输出到标准输出的时候大于 INFO 级别的都输出；等同于 FLAGS_stderrthreshold=google::INFO; 
+// 输出到标准输出的时候大于 INFO 级别的都输出；
+// 等同于 FLAGS_stderrthreshold=google::INFO; 
 3、google::SetStderrLogging(google::INFO); 
 
 // 可以设置的FLAGS
-FLAGS_logbufsecs=0;　　	// 实时输出日志  
+FLAGS_logbufsecs=0;     // 实时输出日志  
 FLAGS_max_log_size=100; // 最大日志大小（MB）  
 FLAGS_log_dir="./test"; // 设置日志生成目录  
 ```
@@ -78,10 +79,15 @@ LOG_IF(INFO, num_cookies > 10) << "Got lots of cookies";
 ```c++
 //当条件满足时输出日志  
 LOG_IF(INFO, num_cookies > 10) << "Got lots of cookies"; 
-//google::COUNTER 记录该语句被执行次数，从1开始，在第一次运行输出日志之后，每隔 10 次再输出一次日志信息 
-LOG_EVERY_N(INFO, 10) << "Got the " << google::COUNTER << "th cookie";　 
-//上述两者的结合，不过要注意，是先每隔10次去判断条件是否满足，如果滞则输出日志；而不是当满足某条件的情况下，每隔10次输出一次日志信息
+
+//google::COUNTER 记录该语句被执行次数，从1开始，在第一次运行输出日志之后，
+//每隔 10 次再输出一次日志信息 
+LOG_EVERY_N(INFO, 10) << "Got the " << google::COUNTER << "th cookie";　
+
+//上述两者的结合，不过要注意，是先每隔10次去判断条件是否满足，如果滞则输出日志；
+//而不是当满足某条件的情况下，每隔10次输出一次日志信息
 LOG_IF_EVERY_N(INFO, (size > 1024), 10) << "Got the " << google::COUNTER << "th big cookie";　　 
+
 //当此语句执行的前 20 次都输出日志，然后不再输出   
 LOG_FIRST_N(INFO, 20) << "Got the " << google::COUNTER << "th cookie"; 
 ```
@@ -89,12 +95,12 @@ LOG_FIRST_N(INFO, 20) << "Got the " << google::COUNTER << "th cookie";
 ## 日志类型  
 
 ```c++
-LOG    		//内置日志  
-VLOG    	//自定义日志  
-DLOG    	//DEBUG模式可输出的日志  
-DVLOG   	//DEBUG模式可输出的自定义日志  
-SYSLOG  	//系统日志，同时通过 syslog() 函数写入到 /var/log/message 文件  
-PLOG    	//perror风格日志，设置errno状态并输出到日志中  
+LOG         //内置日志  
+VLOG        //自定义日志  
+DLOG        //DEBUG模式可输出的日志  
+DVLOG       //DEBUG模式可输出的自定义日志  
+SYSLOG      //系统日志，同时通过 syslog() 函数写入到 /var/log/message 文件  
+PLOG        //perror风格日志，设置errno状态并输出到日志中  
 RAW_LOG     //线程安全的日志，需要#include <glog/raw_logging.h>  
 ```
 
