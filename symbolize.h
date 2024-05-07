@@ -60,7 +60,7 @@
 
 #ifdef HAVE_SYMBOLIZE
 
-#if defined(__ELF__)  // defined by gcc
+#if defined(__ELF__) // defined by gcc
 #if defined(__OpenBSD__)
 #include <sys/exec_elf.h>
 #else
@@ -68,28 +68,28 @@
 #endif
 
 #if !defined(ANDROID)
-#include <link.h>  // For ElfW() macro.
+#include <link.h> // For ElfW() macro.
 #endif
 
 // For systems where SIZEOF_VOID_P is not defined, determine it
 // based on __LP64__ (defined by gcc on 64-bit systems)
 #if !defined(SIZEOF_VOID_P)
-# if defined(__LP64__)
-#  define SIZEOF_VOID_P 8
-# else
-#  define SIZEOF_VOID_P 4
-# endif
+#if defined(__LP64__)
+#define SIZEOF_VOID_P 8
+#else
+#define SIZEOF_VOID_P 4
+#endif
 #endif
 
 // If there is no ElfW macro, let's define it by ourself.
 #ifndef ElfW
-# if SIZEOF_VOID_P == 4
-#  define ElfW(type) Elf32_##type
-# elif SIZEOF_VOID_P == 8
-#  define ElfW(type) Elf64_##type
-# else
-#  error "Unknown sizeof(void *)"
-# endif
+#if SIZEOF_VOID_P == 4
+#define ElfW(type) Elf32_##type
+#elif SIZEOF_VOID_P == 8
+#define ElfW(type) Elf64_##type
+#else
+#error "Unknown sizeof(void *)"
+#endif
 #endif
 
 _START_GOOGLE_NAMESPACE_
@@ -97,11 +97,11 @@ _START_GOOGLE_NAMESPACE_
 // Gets the section header for the given name, if it exists. Returns true on
 // success. Otherwise, returns false.
 bool GetSectionHeaderByName(int fd, const char *name, size_t name_len,
-                            ElfW(Shdr) *out);
+                            ElfW(Shdr) * out);
 
 _END_GOOGLE_NAMESPACE_
 
-#endif  /* __ELF__ */
+#endif /* __ELF__ */
 
 _START_GOOGLE_NAMESPACE_
 
@@ -152,4 +152,4 @@ bool Symbolize(void *pc, char *out, int out_size);
 
 _END_GOOGLE_NAMESPACE_
 
-#endif  // BASE_SYMBOLIZE_H_
+#endif // BASE_SYMBOLIZE_H_

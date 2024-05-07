@@ -45,43 +45,52 @@ GLOG_DEFINE_bool(check_mode, false, "Prints 'opt' or 'dbg'");
 using std::string;
 using namespace GOOGLE_NAMESPACE;
 
-int CheckNoReturn(bool b) {
+int CheckNoReturn(bool b)
+{
   string s;
-  if (b) {
+  if (b)
+  {
     LOG(FATAL) << "Fatal";
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
 
-struct A { };
-std::ostream &operator<<(std::ostream &str, const A&) {return str;}
+struct A
+{
+};
+std::ostream &operator<<(std::ostream &str, const A &) { return str; }
 
-int main(int, char* argv[]) {
-  //FLAGS_logtostderr = true;
+int main(int, char *argv[])
+{
+  // FLAGS_logtostderr = true;
   InitGoogleLogging(argv[0]);
-  FLAGS_log_dir = "."; // 设置当前目录
-  FLAGS_stderrthreshold=google::INFO; // 设置日志级别
-  //SetLogDestination(google::GLOG_INFO,"./20161120");
-  if (FLAGS_check_mode) {
+  FLAGS_log_dir = ".";                  // 设置当前目录
+  FLAGS_stderrthreshold = google::INFO; // 设置日志级别
+  // SetLogDestination(google::GLOG_INFO,"./20161120");
+  if (FLAGS_check_mode)
+  {
     printf("%s\n", DEBUG_MODE ? "dbg" : "opt");
     return 0;
   }
   LOG(INFO) << "TESTMESSAGE INFO";
-  LOG(WARNING) << 2 << "something" << "TESTMESSAGE WARNING"
+  LOG(WARNING) << 2 << "something"
+               << "TESTMESSAGE WARNING"
                << 1 << 'c' << A() << std::endl;
   LOG(ERROR) << "TESTMESSAGE ERROR";
   bool flag = true;
   (flag ? LOG(INFO) : LOG(ERROR)) << "TESTMESSAGE COND";
-  //LOG(FATAL) << "TESTMESSAGE FATAL";
-  //LOG(FATAL) << "ANOTHRE TESTMESSAGE FATAL";
-  // 测试条件输出
-  for (int i = 1; i <= 100;i++)
+  // LOG(FATAL) << "TESTMESSAGE FATAL";
+  // LOG(FATAL) << "ANOTHRE TESTMESSAGE FATAL";
+  //  测试条件输出
+  for (int i = 1; i <= 100; i++)
   {
-      LOG_IF(INFO,i==100)<<"LOG_IF(INFO,i==100)  google::COUNTER="<<google::COUNTER<<"  i="<<i;
-      LOG_EVERY_N(INFO,10)<<"LOG_EVERY_N(INFO,10)  google::COUNTER="<<google::COUNTER<<"  i="<<i;
-      LOG_IF_EVERY_N(WARNING,(i>50),10)<<"LOG_IF_EVERY_N(INFO,(i>50),10)  google::COUNTER="<<google::COUNTER<<"  i="<<i;
-      LOG_FIRST_N(ERROR,5)<<"LOG_FIRST_N(INFO,5)  google::COUNTER="<<google::COUNTER<<"  i="<<i;
+    LOG_IF(INFO, i == 100) << "LOG_IF(INFO,i==100)  google::COUNTER=" << google::COUNTER << "  i=" << i;
+    LOG_EVERY_N(INFO, 10) << "LOG_EVERY_N(INFO,10)  google::COUNTER=" << google::COUNTER << "  i=" << i;
+    LOG_IF_EVERY_N(WARNING, (i > 50), 10) << "LOG_IF_EVERY_N(INFO,(i>50),10)  google::COUNTER=" << google::COUNTER << "  i=" << i;
+    LOG_FIRST_N(ERROR, 5) << "LOG_FIRST_N(INFO,5)  google::COUNTER=" << google::COUNTER << "  i=" << i;
   }
 
   CHECK(true) << "TRUE is output.";

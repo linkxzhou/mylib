@@ -1,8 +1,11 @@
 # google log makefile
-# author by linkxzhou@tencent.com
 CC  = gcc
 CXX = g++
 GCCVER := $(shell $(CC) -dumpversion | awk -F. '{ print $$1"."$$2}')
+ifeq ($(shell uname -s), Darwin)
+    CXX = clang++
+	CFLAGS += -Wno-nullability-completeness -Wno-expansion-to-defined
+endif
 
 TARGET = glog.a
 INC += -I./base -I./
@@ -17,8 +20,8 @@ ifeq ($(ARCH),32)
 	CFLAGS += -m32 -march=pentium4
 endif
 
-CFLAGS  += -g -D_SPP_PROXY -D_MP_MODE -Wno-write-strings -Werror -MMD -D_GNU_SOURCE -D_REENTRANT -DSTACKSTRACE
-CXXFLAGS+=$(CFLAGS)
+CFLAGS  += -g -Wno-write-strings -Werror -MMD -D_GNU_SOURCE -D_REENTRANT -DSTACKSTRACE
+CXXFLAGS += $(CFLAGS)
 
 $(TARGET): $(OBJ)
 	@$(CXX) $(INC) $(LIB) $(CFLAGS) $(CPPFLAGS) -c $< -o $*.o
@@ -30,4 +33,4 @@ all: $(TARGET)
 
 .PHONY: clean
 clean:
-	@rm -f glog.a *.o # - means: ignore error
+	@rm -f glog.a *.o

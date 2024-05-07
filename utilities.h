@@ -35,19 +35,19 @@
 #define UTILITIES_H__
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-# define OS_WINDOWS
+#define OS_WINDOWS
 #elif defined(__CYGWIN__) || defined(__CYGWIN32__)
-# define OS_CYGWIN
+#define OS_CYGWIN
 #elif defined(linux) || defined(__linux) || defined(__linux__)
-# define OS_LINUX
+#define OS_LINUX
 #elif defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
-# define OS_MACOSX
+#define OS_MACOSX
 #elif defined(__FreeBSD__)
-# define OS_FREEBSD
+#define OS_FREEBSD
 #elif defined(__NetBSD__)
-# define OS_NETBSD
+#define OS_NETBSD
 #elif defined(__OpenBSD__)
-# define OS_OPENBSD
+#define OS_OPENBSD
 #else
 // TODO(hamaji): Add other platforms.
 #endif
@@ -70,14 +70,14 @@
 #define PRIXS __PRIS_PREFIX "X"
 #define PRIoS __PRIS_PREFIX "o"
 
-#include "base/mutex.h"  // This must go first so we get _XOPEN_SOURCE
+#include "base/mutex.h" // This must go first so we get _XOPEN_SOURCE
 #include "base/googleinit.h"
 #include "logging.h"
 
 #include <string>
 
 #if defined(OS_WINDOWS)
-# include "port.h"
+#include "port.h"
 #endif
 
 // There are three different ways we can try to get the stack trace:
@@ -101,125 +101,129 @@
 // Some code may do that.
 
 #if defined(HAVE_LIB_UNWIND)
-# define STACKTRACE_H "base/stacktrace_libunwind-inl.h"
+#define STACKTRACE_H "base/stacktrace_libunwind-inl.h"
 #elif !defined(NO_FRAME_POINTER)
-# if defined(__i386__) && __GNUC__ >= 2
-#  define STACKTRACE_H "base/stacktrace_x86-inl.h"
-# elif defined(__x86_64__) && __GNUC__ >= 2 && HAVE_UNWIND_H
-#  define STACKTRACE_H "base/stacktrace_x86_64-inl.h"
-# elif (defined(__ppc__) || defined(__PPC__)) && __GNUC__ >= 2
-#  define STACKTRACE_H "base/stacktrace_powerpc-inl.h"
-# endif
+#if defined(__i386__) && __GNUC__ >= 2
+#define STACKTRACE_H "base/stacktrace_x86-inl.h"
+#elif defined(__x86_64__) && __GNUC__ >= 2 && HAVE_UNWIND_H
+#define STACKTRACE_H "base/stacktrace_x86_64-inl.h"
+#elif (defined(__ppc__) || defined(__PPC__)) && __GNUC__ >= 2
+#define STACKTRACE_H "base/stacktrace_powerpc-inl.h"
+#endif
 #endif
 
 #if !defined(STACKTRACE_H) && defined(HAVE_EXECINFO_H)
-# define STACKTRACE_H "base/stacktrace_generic-inl.h"
+#define STACKTRACE_H "base/stacktrace_generic-inl.h"
 #endif
 
 #if defined(STACKTRACE_H)
-# define HAVE_STACKTRACE
+#define HAVE_STACKTRACE
 #endif
 
 // defined by gcc
 #if defined(__ELF__) && defined(OS_LINUX)
-# define HAVE_SYMBOLIZE
+#define HAVE_SYMBOLIZE
 #elif defined(OS_MACOSX) && defined(HAVE_DLADDR)
 // Use dladdr to symbolize.
-# define HAVE_SYMBOLIZE
+#define HAVE_SYMBOLIZE
 #endif
 
 #ifndef ARRAYSIZE
 // There is a better way, but this is good enough for our purpose.
-# define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
+#define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
 _START_GOOGLE_NAMESPACE_
 
-namespace glog_internal_namespace_ {
+namespace glog_internal_namespace_
+{
 
 #ifdef HAVE___ATTRIBUTE__
-# define ATTRIBUTE_NOINLINE __attribute__ ((noinline))
-# define HAVE_ATTRIBUTE_NOINLINE
+#define ATTRIBUTE_NOINLINE __attribute__((noinline))
+#define HAVE_ATTRIBUTE_NOINLINE
 #else
-# define ATTRIBUTE_NOINLINE
+#define ATTRIBUTE_NOINLINE
 #endif
 
-const char* ProgramInvocationShortName();
+  const char *ProgramInvocationShortName();
 
-bool IsGoogleLoggingInitialized();
+  bool IsGoogleLoggingInitialized();
 
-bool is_default_thread();
+  bool is_default_thread();
 
-int64 CycleClock_Now();
+  int64 CycleClock_Now();
 
-int64 UsecToCycles(int64 usec);
+  int64 UsecToCycles(int64 usec);
 
-typedef double WallTime;
-WallTime WallTime_Now();
+  typedef double WallTime;
+  WallTime WallTime_Now();
 
-int32 GetMainThreadPid();
-bool PidHasChanged();
+  int32 GetMainThreadPid();
+  bool PidHasChanged();
 
-pid_t GetTID();
+  pid_t GetTID();
 
-const std::string& MyUserName();
+  const std::string &MyUserName();
 
-// Get the part of filepath after the last path separator.
-// (Doesn't modify filepath, contrary to basename() in libgen.h.)
-const char* const_basename(const char* filepath);
+  // Get the part of filepath after the last path separator.
+  // (Doesn't modify filepath, contrary to basename() in libgen.h.)
+  const char *const_basename(const char *filepath);
 
-// Wrapper of __sync_val_compare_and_swap. If the GCC extension isn't
-// defined, we try the CPU specific logics (we only support x86 and
-// x86_64 for now) first, then use a naive implementation, which has a
-// race condition.
-template<typename T>
-inline T sync_val_compare_and_swap(T* ptr, T oldval, T newval) {
+  // Wrapper of __sync_val_compare_and_swap. If the GCC extension isn't
+  // defined, we try the CPU specific logics (we only support x86 and
+  // x86_64 for now) first, then use a naive implementation, which has a
+  // race condition.
+  template <typename T>
+  inline T sync_val_compare_and_swap(T *ptr, T oldval, T newval)
+  {
 #if defined(HAVE___SYNC_VAL_COMPARE_AND_SWAP)
-  return __sync_val_compare_and_swap(ptr, oldval, newval);
+    return __sync_val_compare_and_swap(ptr, oldval, newval);
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-  T ret;
-  __asm__ __volatile__("lock; cmpxchg %1, (%2);"
-                       :"=a"(ret)
-                        // GCC may produces %sil or %dil for
-                        // constraint "r", but some of apple's gas
-                        // dosn't know the 8 bit registers.
-                        // We use "q" to avoid these registers.
-                       :"q"(newval), "q"(ptr), "a"(oldval)
-                       :"memory", "cc");
-  return ret;
+    T ret;
+    __asm__ __volatile__("lock; cmpxchg %1, (%2);"
+                         : "=a"(ret)
+                         // GCC may produces %sil or %dil for
+                         // constraint "r", but some of apple's gas
+                         // dosn't know the 8 bit registers.
+                         // We use "q" to avoid these registers.
+                         : "q"(newval), "q"(ptr), "a"(oldval)
+                         : "memory", "cc");
+    return ret;
 #else
-  T ret = *ptr;
-  if (ret == oldval) {
-    *ptr = newval;
-  }
-  return ret;
+    T ret = *ptr;
+    if (ret == oldval)
+    {
+      *ptr = newval;
+    }
+    return ret;
 #endif
-}
+  }
 
-void DumpStackTraceToString(std::string* stacktrace);
+  void DumpStackTraceToString(std::string *stacktrace);
 
-struct CrashReason {
-  CrashReason() : filename(0), line_number(0), message(0), depth(0) {}
+  struct CrashReason
+  {
+    CrashReason() : filename(0), line_number(0), message(0), depth(0) {}
 
-  const char* filename;
-  int line_number;
-  const char* message;
+    const char *filename;
+    int line_number;
+    const char *message;
 
-  // We'll also store a bit of stack trace context at the time of crash as
-  // it may not be available later on.
-  void* stack[32];
-  int depth;
-};
+    // We'll also store a bit of stack trace context at the time of crash as
+    // it may not be available later on.
+    void *stack[32];
+    int depth;
+  };
 
-void SetCrashReason(const CrashReason* r);
+  void SetCrashReason(const CrashReason *r);
 
-void InitGoogleLoggingUtilities(const char* argv0);
-void ShutdownGoogleLoggingUtilities();
+  void InitGoogleLoggingUtilities(const char *argv0);
+  void ShutdownGoogleLoggingUtilities();
 
-}  // namespace glog_internal_namespace_
+} // namespace glog_internal_namespace_
 
 _END_GOOGLE_NAMESPACE_
 
 using namespace GOOGLE_NAMESPACE::glog_internal_namespace_;
 
-#endif  // UTILITIES_H__
+#endif // UTILITIES_H__

@@ -38,18 +38,19 @@
 
 #include <time.h>
 
-namespace google {
+namespace google
+{
 
 #include "log_severity.h"
 #include "vlog_is_on.h"
 
 // Annoying stuff for windows -- makes sure clients can import these functions
 #ifndef GOOGLE_GLOG_DLL_DECL
-# if defined(_WIN32) && !defined(__CYGWIN__)
-#   define GOOGLE_GLOG_DLL_DECL  __declspec(dllimport)
-# else
-#   define GOOGLE_GLOG_DLL_DECL
-# endif
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define GOOGLE_GLOG_DLL_DECL __declspec(dllimport)
+#else
+#define GOOGLE_GLOG_DLL_DECL
+#endif
 #endif
 
 // This is similar to LOG(severity) << format... and VLOG(level) << format..,
@@ -66,34 +67,38 @@ namespace google {
 // These will print an almost standard log lines like this to stderr only:
 //   E0821 211317 file.cc:123] RAW: Failed foo with 22: bad_file
 //   I0821 211317 file.cc:142] RAW: status is 20
-#define RAW_LOG(severity, ...) \
-  do { \
-    switch (google::GLOG_ ## severity) {  \
-      case 0: \
-        RAW_LOG_INFO(__VA_ARGS__); \
-        break; \
-      case 1: \
-        RAW_LOG_WARNING(__VA_ARGS__); \
-        break; \
-      case 2: \
-        RAW_LOG_ERROR(__VA_ARGS__); \
-        break; \
-      case 3: \
-        RAW_LOG_FATAL(__VA_ARGS__); \
-        break; \
-      default: \
-        break; \
-    } \
+#define RAW_LOG(severity, ...)       \
+  do                                 \
+  {                                  \
+    switch (google::GLOG_##severity) \
+    {                                \
+    case 0:                          \
+      RAW_LOG_INFO(__VA_ARGS__);     \
+      break;                         \
+    case 1:                          \
+      RAW_LOG_WARNING(__VA_ARGS__);  \
+      break;                         \
+    case 2:                          \
+      RAW_LOG_ERROR(__VA_ARGS__);    \
+      break;                         \
+    case 3:                          \
+      RAW_LOG_FATAL(__VA_ARGS__);    \
+      break;                         \
+    default:                         \
+      break;                         \
+    }                                \
   } while (0)
 
 // The following STRIP_LOG testing is performed in the header file so that it's
 // possible to completely compile out the logging code and the log messages.
 #if STRIP_LOG == 0
 #define RAW_VLOG(verboselevel, ...) \
-  do { \
-    if (VLOG_IS_ON(verboselevel)) { \
-      RAW_LOG_INFO(__VA_ARGS__); \
-    } \
+  do                                \
+  {                                 \
+    if (VLOG_IS_ON(verboselevel))   \
+    {                               \
+      RAW_LOG_INFO(__VA_ARGS__);    \
+    }                               \
   } while (0)
 #else
 #define RAW_VLOG(verboselevel, ...) RawLogStub__(0, __VA_ARGS__)
@@ -101,33 +106,34 @@ namespace google {
 
 #if STRIP_LOG == 0
 #define RAW_LOG_INFO(...) google::RawLog__(google::GLOG_INFO, \
-                                   __FILE__, __LINE__, __VA_ARGS__)
+                                           __FILE__, __LINE__, __VA_ARGS__)
 #else
 #define RAW_LOG_INFO(...) google::RawLogStub__(0, __VA_ARGS__)
 #endif // STRIP_LOG == 0
 
 #if STRIP_LOG <= 1
-#define RAW_LOG_WARNING(...) google::RawLog__(google::GLOG_WARNING,   \
-                                      __FILE__, __LINE__, __VA_ARGS__)
+#define RAW_LOG_WARNING(...) google::RawLog__(google::GLOG_WARNING, \
+                                              __FILE__, __LINE__, __VA_ARGS__)
 #else
 #define RAW_LOG_WARNING(...) google::RawLogStub__(0, __VA_ARGS__)
 #endif // STRIP_LOG <= 1
 
 #if STRIP_LOG <= 2
-#define RAW_LOG_ERROR(...) google::RawLog__(google::GLOG_ERROR,       \
-                                    __FILE__, __LINE__, __VA_ARGS__)
+#define RAW_LOG_ERROR(...) google::RawLog__(google::GLOG_ERROR, \
+                                            __FILE__, __LINE__, __VA_ARGS__)
 #else
 #define RAW_LOG_ERROR(...) google::RawLogStub__(0, __VA_ARGS__)
 #endif // STRIP_LOG <= 2
 
 #if STRIP_LOG <= 3
-#define RAW_LOG_FATAL(...) google::RawLog__(google::GLOG_FATAL,       \
-                                    __FILE__, __LINE__, __VA_ARGS__)
+#define RAW_LOG_FATAL(...) google::RawLog__(google::GLOG_FATAL, \
+                                            __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define RAW_LOG_FATAL(...) \
-  do { \
-    google::RawLogStub__(0, __VA_ARGS__);        \
-    exit(1); \
+#define RAW_LOG_FATAL(...)                \
+  do                                      \
+  {                                       \
+    google::RawLogStub__(0, __VA_ARGS__); \
+    exit(1);                              \
   } while (0)
 #endif // STRIP_LOG <= 3
 
@@ -136,11 +142,13 @@ namespace google {
 // We do not want to provide args list here to encourage this usage:
 //   if (!cond)  RAW_LOG(FATAL, "foo ...", hard_to_compute_args);
 // so that the args are not computed when not needed.
-#define RAW_CHECK(condition, message)                                   \
-  do {                                                                  \
-    if (!(condition)) {                                                 \
-      RAW_LOG(FATAL, "Check %s failed: %s", #condition, message);       \
-    }                                                                   \
+#define RAW_CHECK(condition, message)                             \
+  do                                                              \
+  {                                                               \
+    if (!(condition))                                             \
+    {                                                             \
+      RAW_LOG(FATAL, "Check %s failed: %s", #condition, message); \
+    }                                                             \
   } while (0)
 
 // Debug versions of RAW_LOG and RAW_CHECK
@@ -149,37 +157,38 @@ namespace google {
 #define RAW_DLOG(severity, ...) RAW_LOG(severity, __VA_ARGS__)
 #define RAW_DCHECK(condition, message) RAW_CHECK(condition, message)
 
-#else  // NDEBUG
+#else // NDEBUG
 
-#define RAW_DLOG(severity, ...)                                 \
-  while (false)                                                 \
-    RAW_LOG(severity, __VA_ARGS__)
+#define RAW_DLOG(severity, ...) \
+  while (false)                 \
+  RAW_LOG(severity, __VA_ARGS__)
 #define RAW_DCHECK(condition, message) \
-  while (false) \
-    RAW_CHECK(condition, message)
+  while (false)                        \
+  RAW_CHECK(condition, message)
 
-#endif  // NDEBUG
+#endif // NDEBUG
 
-// Stub log function used to work around for unused variable warnings when
-// building with STRIP_LOG > 0.
-static inline void RawLogStub__(int /* ignored */, ...) {
+  // Stub log function used to work around for unused variable warnings when
+  // building with STRIP_LOG > 0.
+  static inline void RawLogStub__(int /* ignored */, ...)
+  {
+  }
+
+  // Helper function to implement RAW_LOG and RAW_VLOG
+  // Logs format... at "severity" level, reporting it
+  // as called from file:line.
+  // This does not allocate memory or acquire locks.
+  GOOGLE_GLOG_DLL_DECL void RawLog__(LogSeverity severity,
+                                     const char *file,
+                                     int line,
+                                     const char *format, ...)
+      __attribute__((__format__(__printf__, 4, 5)));
+
+  // Hack to propagate time information into this module so that
+  // this module does not have to directly call localtime_r(),
+  // which could allocate memory.
+  GOOGLE_GLOG_DLL_DECL void RawLog__SetLastTime(const struct tm &t, int usecs);
+
 }
 
-// Helper function to implement RAW_LOG and RAW_VLOG
-// Logs format... at "severity" level, reporting it
-// as called from file:line.
-// This does not allocate memory or acquire locks.
-GOOGLE_GLOG_DLL_DECL void RawLog__(LogSeverity severity,
-                                   const char* file,
-                                   int line,
-                                   const char* format, ...)
-   __attribute__((__format__ (__printf__, 4, 5)));
-
-// Hack to propagate time information into this module so that
-// this module does not have to directly call localtime_r(),
-// which could allocate memory.
-GOOGLE_GLOG_DLL_DECL void RawLog__SetLastTime(const struct tm& t, int usecs);
-
-}
-
-#endif  // BASE_RAW_LOGGING_H_
+#endif // BASE_RAW_LOGGING_H_

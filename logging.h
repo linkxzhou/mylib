@@ -44,13 +44,13 @@
 #include <sstream>
 #include <string>
 #if 1
-# include <unistd.h>
+#include <unistd.h>
 #endif
 #include <vector>
 
 #if defined(_MSC_VER)
 #define GLOG_MSVC_PUSH_DISABLE_WARNING(n) __pragma(warning(push)) \
-                                     __pragma(warning(disable:n))
+    __pragma(warning(disable : n))
 #define GLOG_MSVC_POP_WARNING() __pragma(warning(pop))
 #else
 #define GLOG_MSVC_PUSH_DISABLE_WARNING(n)
@@ -59,11 +59,11 @@
 
 // Annoying stuff for windows -- makes sure clients can import these functions
 #ifndef GOOGLE_GLOG_DLL_DECL
-# if defined(_WIN32) && !defined(__CYGWIN__)
-#   define GOOGLE_GLOG_DLL_DECL  __declspec(dllimport)
-# else
-#   define GOOGLE_GLOG_DLL_DECL
-# endif
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define GOOGLE_GLOG_DLL_DECL __declspec(dllimport)
+#else
+#define GOOGLE_GLOG_DLL_DECL
+#endif
 #endif
 
 // We care a lot about number of bits things take up.  Unfortunately,
@@ -73,36 +73,37 @@
 // that's because they were constructed that way at ./configure time.
 // Look at logging.h.in to see how they're calculated (based on your config).
 #if 1
-#include <stdint.h>             // the normal place uint16_t is defined
+#include <stdint.h> // the normal place uint16_t is defined
 #endif
 #if 1
-#include <sys/types.h>          // the normal place u_int16_t is defined
+#include <sys/types.h> // the normal place u_int16_t is defined
 #endif
 #if 1
-#include <inttypes.h>           // a third place for uint16_t or u_int16_t
+#include <inttypes.h> // a third place for uint16_t or u_int16_t
 #endif
 
 #if 0
 #include <gflags/gflags.h>
 #endif
 
-namespace google {
+namespace google
+{
 
-#if 1      // the C99 format
-typedef int32_t int32;
-typedef uint32_t uint32;
-typedef int64_t int64;
-typedef uint64_t uint64;
-#elif 1   // the BSD format
-typedef int32_t int32;
-typedef u_int32_t uint32;
-typedef int64_t int64;
-typedef u_int64_t uint64;
-#elif 0    // the windows (vc7) format
-typedef __int32 int32;
-typedef unsigned __int32 uint32;
-typedef __int64 int64;
-typedef unsigned __int64 uint64;
+#if 1 // the C99 format
+  typedef int32_t int32;
+  typedef uint32_t uint32;
+  typedef int64_t int64;
+  typedef uint64_t uint64;
+#elif 1 // the BSD format
+  typedef int32_t int32;
+  typedef u_int32_t uint32;
+  typedef int64_t int64;
+  typedef u_int64_t uint64;
+#elif 0 // the windows (vc7) format
+  typedef __int32 int32;
+  typedef unsigned __int32 uint32;
+  typedef __int64 int64;
+  typedef unsigned __int64 uint64;
 #else
 #error Do not know how to define a 32-bit integer quantity on your system
 #endif
@@ -150,7 +151,6 @@ typedef unsigned __int64 uint64;
 #define GOOGLE_PREDICT_TRUE(x) x
 #endif
 #endif
-
 
 // Make a bunch of macros for logging.  The way to log things is to stream
 // things to LOG(<a particular severity level>).  E.g.,
@@ -307,10 +307,11 @@ typedef unsigned __int64 uint64;
 
 #ifndef DECLARE_VARIABLE
 #define MUST_UNDEF_GFLAGS_DECLARE_MACROS
-#define DECLARE_VARIABLE(type, shorttype, name, tn)                     \
-  namespace fL##shorttype {                                             \
-    extern GOOGLE_GLOG_DLL_DECL type FLAGS_##name;                      \
-  }                                                                     \
+#define DECLARE_VARIABLE(type, shorttype, name, tn) \
+  namespace fL##shorttype                           \
+  {                                                 \
+    extern GOOGLE_GLOG_DLL_DECL type FLAGS_##name;  \
+  }                                                 \
   using fL##shorttype::FLAGS_##name
 
 // bool specialization
@@ -323,10 +324,11 @@ typedef unsigned __int64 uint64;
 
 // Special case for string, because we have to specify the namespace
 // std::string, which doesn't play nicely with our FLAG__namespace hackery.
-#define DECLARE_string(name)                                            \
-  namespace fLS {                                                       \
-    extern GOOGLE_GLOG_DLL_DECL std::string& FLAGS_##name;              \
-  }                                                                     \
+#define DECLARE_string(name)                               \
+  namespace fLS                                            \
+  {                                                        \
+    extern GOOGLE_GLOG_DLL_DECL std::string &FLAGS_##name; \
+  }                                                        \
   using fLS::FLAGS_##name
 #endif
 
@@ -368,7 +370,7 @@ DECLARE_int32(logfile_mode);
 // to the log files.
 DECLARE_string(log_link);
 
-DECLARE_int32(v);  // in vlog_is_on.cc
+DECLARE_int32(v); // in vlog_is_on.cc
 
 // Sets the maximum log file size (in MB).
 DECLARE_int32(max_log_size);
@@ -393,9 +395,9 @@ DECLARE_bool(stop_logging_if_full_disk);
 
 #if GOOGLE_STRIP_LOG == 0
 #define COMPACT_GOOGLE_LOG_INFO google::LogMessage( \
-      __FILE__, __LINE__)
+    __FILE__, __LINE__)
 #define LOG_TO_STRING_INFO(message) google::LogMessage( \
-      __FILE__, __LINE__, google::GLOG_INFO, message)
+    __FILE__, __LINE__, google::GLOG_INFO, message)
 #else
 #define COMPACT_GOOGLE_LOG_INFO google::NullStream()
 #define LOG_TO_STRING_INFO(message) google::NullStream()
@@ -403,9 +405,9 @@ DECLARE_bool(stop_logging_if_full_disk);
 
 #if GOOGLE_STRIP_LOG <= 1
 #define COMPACT_GOOGLE_LOG_WARNING google::LogMessage( \
-      __FILE__, __LINE__, google::GLOG_WARNING)
+    __FILE__, __LINE__, google::GLOG_WARNING)
 #define LOG_TO_STRING_WARNING(message) google::LogMessage( \
-      __FILE__, __LINE__, google::GLOG_WARNING, message)
+    __FILE__, __LINE__, google::GLOG_WARNING, message)
 #else
 #define COMPACT_GOOGLE_LOG_WARNING google::NullStream()
 #define LOG_TO_STRING_WARNING(message) google::NullStream()
@@ -413,9 +415,9 @@ DECLARE_bool(stop_logging_if_full_disk);
 
 #if GOOGLE_STRIP_LOG <= 2
 #define COMPACT_GOOGLE_LOG_ERROR google::LogMessage( \
-      __FILE__, __LINE__, google::GLOG_ERROR)
+    __FILE__, __LINE__, google::GLOG_ERROR)
 #define LOG_TO_STRING_ERROR(message) google::LogMessage( \
-      __FILE__, __LINE__, google::GLOG_ERROR, message)
+    __FILE__, __LINE__, google::GLOG_ERROR, message)
 #else
 #define COMPACT_GOOGLE_LOG_ERROR google::NullStream()
 #define LOG_TO_STRING_ERROR(message) google::NullStream()
@@ -423,9 +425,9 @@ DECLARE_bool(stop_logging_if_full_disk);
 
 #if GOOGLE_STRIP_LOG <= 3
 #define COMPACT_GOOGLE_LOG_FATAL google::LogMessageFatal( \
-      __FILE__, __LINE__)
+    __FILE__, __LINE__)
 #define LOG_TO_STRING_FATAL(message) google::LogMessage( \
-      __FILE__, __LINE__, google::GLOG_FATAL, message)
+    __FILE__, __LINE__, google::GLOG_FATAL, message)
 #else
 #define COMPACT_GOOGLE_LOG_FATAL google::NullStreamFatal()
 #define LOG_TO_STRING_FATAL(message) google::NullStreamFatal()
@@ -437,55 +439,58 @@ DECLARE_bool(stop_logging_if_full_disk);
 #define COMPACT_GOOGLE_LOG_DFATAL COMPACT_GOOGLE_LOG_ERROR
 #elif GOOGLE_STRIP_LOG <= 3
 #define COMPACT_GOOGLE_LOG_DFATAL google::LogMessage( \
-      __FILE__, __LINE__, google::GLOG_FATAL)
+    __FILE__, __LINE__, google::GLOG_FATAL)
 #else
 #define COMPACT_GOOGLE_LOG_DFATAL google::NullStreamFatal()
 #endif
 
 #define GOOGLE_LOG_INFO(counter) google::LogMessage(__FILE__, __LINE__, google::GLOG_INFO, counter, &google::LogMessage::SendToLog)
-#define SYSLOG_INFO(counter) \
+#define SYSLOG_INFO(counter)                                         \
   google::LogMessage(__FILE__, __LINE__, google::GLOG_INFO, counter, \
-  &google::LogMessage::SendToSyslogAndLog)
-#define GOOGLE_LOG_WARNING(counter)  \
+                     &google::LogMessage::SendToSyslogAndLog)
+#define GOOGLE_LOG_WARNING(counter)                                     \
   google::LogMessage(__FILE__, __LINE__, google::GLOG_WARNING, counter, \
-  &google::LogMessage::SendToLog)
-#define SYSLOG_WARNING(counter)  \
+                     &google::LogMessage::SendToLog)
+#define SYSLOG_WARNING(counter)                                         \
   google::LogMessage(__FILE__, __LINE__, google::GLOG_WARNING, counter, \
-  &google::LogMessage::SendToSyslogAndLog)
-#define GOOGLE_LOG_ERROR(counter)  \
+                     &google::LogMessage::SendToSyslogAndLog)
+#define GOOGLE_LOG_ERROR(counter)                                     \
   google::LogMessage(__FILE__, __LINE__, google::GLOG_ERROR, counter, \
-  &google::LogMessage::SendToLog)
-#define SYSLOG_ERROR(counter)  \
+                     &google::LogMessage::SendToLog)
+#define SYSLOG_ERROR(counter)                                         \
   google::LogMessage(__FILE__, __LINE__, google::GLOG_ERROR, counter, \
-  &google::LogMessage::SendToSyslogAndLog)
-#define GOOGLE_LOG_FATAL(counter) \
+                     &google::LogMessage::SendToSyslogAndLog)
+#define GOOGLE_LOG_FATAL(counter)                                     \
   google::LogMessage(__FILE__, __LINE__, google::GLOG_FATAL, counter, \
-  &google::LogMessage::SendToLog)
-#define SYSLOG_FATAL(counter) \
+                     &google::LogMessage::SendToLog)
+#define SYSLOG_FATAL(counter)                                         \
   google::LogMessage(__FILE__, __LINE__, google::GLOG_FATAL, counter, \
-  &google::LogMessage::SendToSyslogAndLog)
-#define GOOGLE_LOG_DFATAL(counter) \
+                     &google::LogMessage::SendToSyslogAndLog)
+#define GOOGLE_LOG_DFATAL(counter)                                      \
   google::LogMessage(__FILE__, __LINE__, google::DFATAL_LEVEL, counter, \
-  &google::LogMessage::SendToLog)
-#define SYSLOG_DFATAL(counter) \
+                     &google::LogMessage::SendToLog)
+#define SYSLOG_DFATAL(counter)                                          \
   google::LogMessage(__FILE__, __LINE__, google::DFATAL_LEVEL, counter, \
-  &google::LogMessage::SendToSyslogAndLog)
+                     &google::LogMessage::SendToSyslogAndLog)
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__) || defined(__CYGWIN32__)
 // A very useful logging macro to log windows errors:
-#define LOG_SYSRESULT(result) \
-  if (FAILED(HRESULT_FROM_WIN32(result))) { \
-    LPSTR message = NULL; \
-    LPSTR msg = reinterpret_cast<LPSTR>(&message); \
+#define LOG_SYSRESULT(result)                                              \
+  if (FAILED(HRESULT_FROM_WIN32(result)))                                  \
+  {                                                                        \
+    LPSTR message = NULL;                                                  \
+    LPSTR msg = reinterpret_cast<LPSTR>(&message);                         \
     DWORD message_length = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | \
-                         FORMAT_MESSAGE_FROM_SYSTEM, \
-                         0, result, 0, msg, 100, NULL); \
-    if (message_length > 0) { \
-      google::LogMessage(__FILE__, __LINE__, google::GLOG_ERROR, 0, \
-          &google::LogMessage::SendToLog).stream() \
-          << reinterpret_cast<const char*>(message); \
-      LocalFree(message); \
-    } \
+                                              FORMAT_MESSAGE_FROM_SYSTEM,  \
+                                          0, result, 0, msg, 100, NULL);   \
+    if (message_length > 0)                                                \
+    {                                                                      \
+      google::LogMessage(__FILE__, __LINE__, google::GLOG_ERROR, 0,        \
+                         &google::LogMessage::SendToLog)                   \
+              .stream()                                                    \
+          << reinterpret_cast<const char *>(message);                      \
+      LocalFree(message);                                                  \
+    }                                                                      \
   }
 #endif
 
@@ -497,26 +502,27 @@ DECLARE_bool(stop_logging_if_full_disk);
 // impossible to stream something like a string directly to an unnamed
 // ostream. We employ a neat hack by calling the stream() member
 // function of LogMessage which seems to avoid the problem.
-#define LOG(severity) COMPACT_GOOGLE_LOG_ ## severity.stream()
-#define SYSLOG(severity) SYSLOG_ ## severity(0).stream()
+#define LOG(severity) COMPACT_GOOGLE_LOG_##severity.stream()
+#define SYSLOG(severity) SYSLOG_##severity(0).stream()
 
-namespace google {
+namespace google
+{
 
 // They need the definitions of integer types.
-#include "glog/log_severity.h"
-#include "glog/vlog_is_on.h"
+#include "log_severity.h"
+#include "vlog_is_on.h"
 
-// Initialize google's logging library. You will see the program name
-// specified by argv0 in log outputs.
-GOOGLE_GLOG_DLL_DECL void InitGoogleLogging(const char* argv0);
+  // Initialize google's logging library. You will see the program name
+  // specified by argv0 in log outputs.
+  GOOGLE_GLOG_DLL_DECL void InitGoogleLogging(const char *argv0);
 
-// Shutdown google's logging library.
-GOOGLE_GLOG_DLL_DECL void ShutdownGoogleLogging();
+  // Shutdown google's logging library.
+  GOOGLE_GLOG_DLL_DECL void ShutdownGoogleLogging();
 
-// Install a function which will be called after LOG(FATAL).
-GOOGLE_GLOG_DLL_DECL void InstallFailureFunction(void (*fail_func)());
+  // Install a function which will be called after LOG(FATAL).
+  GOOGLE_GLOG_DLL_DECL void InstallFailureFunction(void (*fail_func)());
 
-class LogSink;  // defined below
+  class LogSink; // defined below
 
 // If a non-NULL sink pointer is given, we push this message to that sink.
 // For LOG_TO_SINK we then do normal LOG(severity) logging as well.
@@ -526,16 +532,18 @@ class LogSink;  // defined below
 //   LogSink* sink;
 //   LogSeverity severity;
 // The cast is to disambiguate NULL arguments.
-#define LOG_TO_SINK(sink, severity) \
-  google::LogMessage(                                    \
-      __FILE__, __LINE__,                                               \
-      google::GLOG_ ## severity,                         \
-      static_cast<google::LogSink*>(sink), true).stream()
-#define LOG_TO_SINK_BUT_NOT_TO_LOGFILE(sink, severity)                  \
-  google::LogMessage(                                    \
-      __FILE__, __LINE__,                                               \
-      google::GLOG_ ## severity,                         \
-      static_cast<google::LogSink*>(sink), false).stream()
+#define LOG_TO_SINK(sink, severity)               \
+  google::LogMessage(                             \
+      __FILE__, __LINE__,                         \
+      google::GLOG_##severity,                    \
+      static_cast<google::LogSink *>(sink), true) \
+      .stream()
+#define LOG_TO_SINK_BUT_NOT_TO_LOGFILE(sink, severity) \
+  google::LogMessage(                                  \
+      __FILE__, __LINE__,                              \
+      google::GLOG_##severity,                         \
+      static_cast<google::LogSink *>(sink), false)     \
+      .stream()
 
 // If a non-NULL string pointer is given, we write this message to that string.
 // We then do normal LOG(severity) logging as well.
@@ -548,7 +556,7 @@ class LogSink;  // defined below
 // NOTE: LOG(severity) expands to LogMessage().stream() for the specified
 // severity.
 #define LOG_TO_STRING(severity, message) \
-  LOG_TO_STRING_##severity(static_cast<string*>(message)).stream()
+  LOG_TO_STRING_##severity(static_cast<string *>(message)).stream()
 
 // If a non-NULL pointer is given, we push the message onto the end
 // of a vector of strings; otherwise, we report it with LOG(severity).
@@ -559,14 +567,14 @@ class LogSink;  // defined below
 //   vector<string> *outvec;
 // The cast is to disambiguate NULL arguments.
 #define LOG_STRING(severity, outvec) \
-  LOG_TO_STRING_##severity(static_cast<std::vector<std::string>*>(outvec)).stream()
+  LOG_TO_STRING_##severity(static_cast<std::vector<std::string> *>(outvec)).stream()
 
 #define LOG_IF(severity, condition) \
-  !(condition) ? (void) 0 : google::LogMessageVoidify() & LOG(severity)
+  !(condition) ? (void)0 : google::LogMessageVoidify() & LOG(severity)
 #define SYSLOG_IF(severity, condition) \
-  !(condition) ? (void) 0 : google::LogMessageVoidify() & SYSLOG(severity)
+  !(condition) ? (void)0 : google::LogMessageVoidify() & SYSLOG(severity)
 
-#define LOG_ASSERT(condition)  \
+#define LOG_ASSERT(condition) \
   LOG_IF(FATAL, !(condition)) << "Assert failed: " #condition
 #define SYSLOG_ASSERT(condition) \
   SYSLOG_IF(FATAL, !(condition)) << "Assert failed: " #condition
@@ -575,183 +583,200 @@ class LogSink;  // defined below
 // controlled by NDEBUG, so the check will be executed regardless of
 // compilation mode.  Therefore, it is safe to do things like:
 //    CHECK(fp->Write(x) == 4)
-#define CHECK(condition)  \
-      LOG_IF(FATAL, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition))) \
-             << "Check failed: " #condition " "
+#define CHECK(condition)                                       \
+  LOG_IF(FATAL, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition))) \
+      << "Check failed: " #condition " "
 
-// A container for a string pointer which can be evaluated to a bool -
-// true iff the pointer is NULL.
-struct CheckOpString {
-  CheckOpString(std::string* str) : str_(str) { }
-  // No destructor: if str_ is non-NULL, we're about to LOG(FATAL),
-  // so there's no point in cleaning up str_.
-  operator bool() const {
-    return GOOGLE_PREDICT_BRANCH_NOT_TAKEN(str_ != NULL);
+  // A container for a string pointer which can be evaluated to a bool -
+  // true iff the pointer is NULL.
+  struct CheckOpString
+  {
+    CheckOpString(std::string *str) : str_(str) {}
+    // No destructor: if str_ is non-NULL, we're about to LOG(FATAL),
+    // so there's no point in cleaning up str_.
+    operator bool() const
+    {
+      return GOOGLE_PREDICT_BRANCH_NOT_TAKEN(str_ != NULL);
+    }
+    std::string *str_;
+  };
+
+  // Function is overloaded for integral types to allow static const
+  // integrals declared in classes and not defined to be used as arguments to
+  // CHECK* macros. It's not encouraged though.
+  template <class T>
+  inline const T &GetReferenceableValue(const T &t) { return t; }
+  inline char GetReferenceableValue(char t) { return t; }
+  inline unsigned char GetReferenceableValue(unsigned char t) { return t; }
+  inline signed char GetReferenceableValue(signed char t) { return t; }
+  inline short GetReferenceableValue(short t) { return t; }
+  inline unsigned short GetReferenceableValue(unsigned short t) { return t; }
+  inline int GetReferenceableValue(int t) { return t; }
+  inline unsigned int GetReferenceableValue(unsigned int t) { return t; }
+  inline long GetReferenceableValue(long t) { return t; }
+  inline unsigned long GetReferenceableValue(unsigned long t) { return t; }
+  inline long long GetReferenceableValue(long long t) { return t; }
+  inline unsigned long long GetReferenceableValue(unsigned long long t)
+  {
+    return t;
   }
-  std::string* str_;
-};
 
-// Function is overloaded for integral types to allow static const
-// integrals declared in classes and not defined to be used as arguments to
-// CHECK* macros. It's not encouraged though.
-template <class T>
-inline const T&       GetReferenceableValue(const T&           t) { return t; }
-inline char           GetReferenceableValue(char               t) { return t; }
-inline unsigned char  GetReferenceableValue(unsigned char      t) { return t; }
-inline signed char    GetReferenceableValue(signed char        t) { return t; }
-inline short          GetReferenceableValue(short              t) { return t; }
-inline unsigned short GetReferenceableValue(unsigned short     t) { return t; }
-inline int            GetReferenceableValue(int                t) { return t; }
-inline unsigned int   GetReferenceableValue(unsigned int       t) { return t; }
-inline long           GetReferenceableValue(long               t) { return t; }
-inline unsigned long  GetReferenceableValue(unsigned long      t) { return t; }
-inline long long      GetReferenceableValue(long long          t) { return t; }
-inline unsigned long long GetReferenceableValue(unsigned long long t) {
-  return t;
-}
-
-// This is a dummy class to define the following operator.
-struct DummyClassToDefineOperator {};
+  // This is a dummy class to define the following operator.
+  struct DummyClassToDefineOperator
+  {
+  };
 
 }
 
 // Define global operator<< to declare using ::operator<<.
 // This declaration will allow use to use CHECK macros for user
 // defined classes which have operator<< (e.g., stl_logging.h).
-inline std::ostream& operator<<(
-    std::ostream& out, const google::DummyClassToDefineOperator&) {
+inline std::ostream &operator<<(
+    std::ostream &out, const google::DummyClassToDefineOperator &)
+{
   return out;
 }
 
-namespace google {
+namespace google
+{
 
-// This formats a value for a failing CHECK_XX statement.  Ordinarily,
-// it uses the definition for operator<<, with a few special cases below.
-template <typename T>
-inline void MakeCheckOpValueString(std::ostream* os, const T& v) {
-  (*os) << v;
-}
+  // This formats a value for a failing CHECK_XX statement.  Ordinarily,
+  // it uses the definition for operator<<, with a few special cases below.
+  template <typename T>
+  inline void MakeCheckOpValueString(std::ostream *os, const T &v)
+  {
+    (*os) << v;
+  }
 
-// Overrides for char types provide readable values for unprintable
-// characters.
-template <> GOOGLE_GLOG_DLL_DECL
-void MakeCheckOpValueString(std::ostream* os, const char& v);
-template <> GOOGLE_GLOG_DLL_DECL
-void MakeCheckOpValueString(std::ostream* os, const signed char& v);
-template <> GOOGLE_GLOG_DLL_DECL
-void MakeCheckOpValueString(std::ostream* os, const unsigned char& v);
+  // Overrides for char types provide readable values for unprintable
+  // characters.
+  template <>
+  GOOGLE_GLOG_DLL_DECL void MakeCheckOpValueString(std::ostream *os, const char &v);
+  template <>
+  GOOGLE_GLOG_DLL_DECL void MakeCheckOpValueString(std::ostream *os, const signed char &v);
+  template <>
+  GOOGLE_GLOG_DLL_DECL void MakeCheckOpValueString(std::ostream *os, const unsigned char &v);
 
-// Build the error message string. Specify no inlining for code size.
-template <typename T1, typename T2>
-std::string* MakeCheckOpString(const T1& v1, const T2& v2, const char* exprtext)
-    __attribute__ ((noinline));
+  // Build the error message string. Specify no inlining for code size.
+  template <typename T1, typename T2>
+  std::string *MakeCheckOpString(const T1 &v1, const T2 &v2, const char *exprtext)
+      __attribute__((noinline));
 
-namespace base {
-namespace internal {
+  namespace base
+  {
+    namespace internal
+    {
 
-// If "s" is less than base_logging::INFO, returns base_logging::INFO.
-// If "s" is greater than base_logging::FATAL, returns
-// base_logging::ERROR.  Otherwise, returns "s".
-LogSeverity NormalizeSeverity(LogSeverity s);
+      // If "s" is less than base_logging::INFO, returns base_logging::INFO.
+      // If "s" is greater than base_logging::FATAL, returns
+      // base_logging::ERROR.  Otherwise, returns "s".
+      LogSeverity NormalizeSeverity(LogSeverity s);
 
-}  // namespace internal
+    } // namespace internal
 
-// A helper class for formatting "expr (V1 vs. V2)" in a CHECK_XX
-// statement.  See MakeCheckOpString for sample usage.  Other
-// approaches were considered: use of a template method (e.g.,
-// base::BuildCheckOpString(exprtext, base::Print<T1>, &v1,
-// base::Print<T2>, &v2), however this approach has complications
-// related to volatile arguments and function-pointer arguments).
-class GOOGLE_GLOG_DLL_DECL CheckOpMessageBuilder {
- public:
-  // Inserts "exprtext" and " (" to the stream.
-  explicit CheckOpMessageBuilder(const char *exprtext);
-  // Deletes "stream_".
-  ~CheckOpMessageBuilder();
-  // For inserting the first variable.
-  std::ostream* ForVar1() { return stream_; }
-  // For inserting the second variable (adds an intermediate " vs. ").
-  std::ostream* ForVar2();
-  // Get the result (inserts the closing ")").
-  std::string* NewString();
+    // A helper class for formatting "expr (V1 vs. V2)" in a CHECK_XX
+    // statement.  See MakeCheckOpString for sample usage.  Other
+    // approaches were considered: use of a template method (e.g.,
+    // base::BuildCheckOpString(exprtext, base::Print<T1>, &v1,
+    // base::Print<T2>, &v2), however this approach has complications
+    // related to volatile arguments and function-pointer arguments).
+    class GOOGLE_GLOG_DLL_DECL CheckOpMessageBuilder
+    {
+    public:
+      // Inserts "exprtext" and " (" to the stream.
+      explicit CheckOpMessageBuilder(const char *exprtext);
+      // Deletes "stream_".
+      ~CheckOpMessageBuilder();
+      // For inserting the first variable.
+      std::ostream *ForVar1() { return stream_; }
+      // For inserting the second variable (adds an intermediate " vs. ").
+      std::ostream *ForVar2();
+      // Get the result (inserts the closing ")").
+      std::string *NewString();
 
- private:
-  std::ostringstream *stream_;
-};
+    private:
+      std::ostringstream *stream_;
+    };
 
-}  // namespace base
+  } // namespace base
 
-template <typename T1, typename T2>
-std::string* MakeCheckOpString(const T1& v1, const T2& v2, const char* exprtext) {
-  base::CheckOpMessageBuilder comb(exprtext);
-  MakeCheckOpValueString(comb.ForVar1(), v1);
-  MakeCheckOpValueString(comb.ForVar2(), v2);
-  return comb.NewString();
-}
+  template <typename T1, typename T2>
+  std::string *MakeCheckOpString(const T1 &v1, const T2 &v2, const char *exprtext)
+  {
+    base::CheckOpMessageBuilder comb(exprtext);
+    MakeCheckOpValueString(comb.ForVar1(), v1);
+    MakeCheckOpValueString(comb.ForVar2(), v2);
+    return comb.NewString();
+  }
 
 // Helper functions for CHECK_OP macro.
 // The (int, int) specialization works around the issue that the compiler
 // will not instantiate the template version of the function on values of
 // unnamed enum type - see comment below.
-#define DEFINE_CHECK_OP_IMPL(name, op) \
-  template <typename T1, typename T2> \
-  inline std::string* name##Impl(const T1& v1, const T2& v2,    \
-                            const char* exprtext) { \
-    if (GOOGLE_PREDICT_TRUE(v1 op v2)) return NULL; \
-    else return MakeCheckOpString(v1, v2, exprtext); \
-  } \
-  inline std::string* name##Impl(int v1, int v2, const char* exprtext) { \
-    return name##Impl<int, int>(v1, v2, exprtext); \
+#define DEFINE_CHECK_OP_IMPL(name, op)                                 \
+  template <typename T1, typename T2>                                  \
+  inline std::string *name##Impl(const T1 &v1, const T2 &v2,           \
+                                 const char *exprtext)                 \
+  {                                                                    \
+    if (GOOGLE_PREDICT_TRUE(v1 op v2))                                 \
+      return NULL;                                                     \
+    else                                                               \
+      return MakeCheckOpString(v1, v2, exprtext);                      \
+  }                                                                    \
+  inline std::string *name##Impl(int v1, int v2, const char *exprtext) \
+  {                                                                    \
+    return name##Impl<int, int>(v1, v2, exprtext);                     \
   }
 
-// We use the full name Check_EQ, Check_NE, etc. in case the file including
-// base/logging.h provides its own #defines for the simpler names EQ, NE, etc.
-// This happens if, for example, those are used as token names in a
-// yacc grammar.
-DEFINE_CHECK_OP_IMPL(Check_EQ, ==)  // Compilation error with CHECK_EQ(NULL, x)?
-DEFINE_CHECK_OP_IMPL(Check_NE, !=)  // Use CHECK(x == NULL) instead.
-DEFINE_CHECK_OP_IMPL(Check_LE, <=)
-DEFINE_CHECK_OP_IMPL(Check_LT, < )
-DEFINE_CHECK_OP_IMPL(Check_GE, >=)
-DEFINE_CHECK_OP_IMPL(Check_GT, > )
+  // We use the full name Check_EQ, Check_NE, etc. in case the file including
+  // base/logging.h provides its own #defines for the simpler names EQ, NE, etc.
+  // This happens if, for example, those are used as token names in a
+  // yacc grammar.
+  DEFINE_CHECK_OP_IMPL(Check_EQ, ==) // Compilation error with CHECK_EQ(NULL, x)?
+  DEFINE_CHECK_OP_IMPL(Check_NE, !=) // Use CHECK(x == NULL) instead.
+  DEFINE_CHECK_OP_IMPL(Check_LE, <=)
+  DEFINE_CHECK_OP_IMPL(Check_LT, <)
+  DEFINE_CHECK_OP_IMPL(Check_GE, >=)
+  DEFINE_CHECK_OP_IMPL(Check_GT, >)
 #undef DEFINE_CHECK_OP_IMPL
 
-// Helper macro for binary operators.
-// Don't use this macro directly in your code, use CHECK_EQ et al below.
+  // Helper macro for binary operators.
+  // Don't use this macro directly in your code, use CHECK_EQ et al below.
 
 #if defined(STATIC_ANALYSIS)
 // Only for static analysis tool to know that it is equivalent to assert
-#define CHECK_OP_LOG(name, op, val1, val2, log) CHECK((val1) op (val2))
+#define CHECK_OP_LOG(name, op, val1, val2, log) CHECK((val1)op(val2))
 #elif !defined(NDEBUG)
-// In debug mode, avoid constructing CheckOpStrings if possible,
-// to reduce the overhead of CHECK statments by 2x.
-// Real DCHECK-heavy tests have seen 1.5x speedups.
+  // In debug mode, avoid constructing CheckOpStrings if possible,
+  // to reduce the overhead of CHECK statments by 2x.
+  // Real DCHECK-heavy tests have seen 1.5x speedups.
 
-// The meaning of "string" might be different between now and
-// when this macro gets invoked (e.g., if someone is experimenting
-// with other string implementations that get defined after this
-// file is included).  Save the current meaning now and use it
-// in the macro.
-typedef std::string _Check_string;
-#define CHECK_OP_LOG(name, op, val1, val2, log)                         \
-  while (google::_Check_string* _result =                \
-         google::Check##name##Impl(                      \
-             google::GetReferenceableValue(val1),        \
-             google::GetReferenceableValue(val2),        \
-             #val1 " " #op " " #val2))                                  \
-    log(__FILE__, __LINE__,                                             \
-        google::CheckOpString(_result)).stream()
+  // The meaning of "string" might be different between now and
+  // when this macro gets invoked (e.g., if someone is experimenting
+  // with other string implementations that get defined after this
+  // file is included).  Save the current meaning now and use it
+  // in the macro.
+  typedef std::string _Check_string;
+#define CHECK_OP_LOG(name, op, val1, val2, log)       \
+  while (google::_Check_string *_result =             \
+             google::Check##name##Impl(               \
+                 google::GetReferenceableValue(val1), \
+                 google::GetReferenceableValue(val2), \
+                 #val1 " " #op " " #val2))            \
+  log(__FILE__, __LINE__,                             \
+      google::CheckOpString(_result))                 \
+      .stream()
 #else
 // In optimized mode, use CheckOpString to hint to compiler that
 // the while condition is unlikely.
-#define CHECK_OP_LOG(name, op, val1, val2, log)                         \
-  while (google::CheckOpString _result =                 \
-         google::Check##name##Impl(                      \
-             google::GetReferenceableValue(val1),        \
-             google::GetReferenceableValue(val2),        \
-             #val1 " " #op " " #val2))                                  \
-    log(__FILE__, __LINE__, _result).stream()
-#endif  // STATIC_ANALYSIS, !NDEBUG
+#define CHECK_OP_LOG(name, op, val1, val2, log)       \
+  while (google::CheckOpString _result =              \
+             google::Check##name##Impl(               \
+                 google::GetReferenceableValue(val1), \
+                 google::GetReferenceableValue(val2), \
+                 #val1 " " #op " " #val2))            \
+  log(__FILE__, __LINE__, _result).stream()
+#endif // STATIC_ANALYSIS, !NDEBUG
 
 #if GOOGLE_STRIP_LOG <= 3
 #define CHECK_OP(name, op, val1, val2) \
@@ -761,106 +786,107 @@ typedef std::string _Check_string;
   CHECK_OP_LOG(name, op, val1, val2, google::NullStreamFatal)
 #endif // STRIP_LOG <= 3
 
-// Equality/Inequality checks - compare two values, and log a FATAL message
-// including the two values when the result is not as expected.  The values
-// must have operator<<(ostream, ...) defined.
-//
-// You may append to the error message like so:
-//   CHECK_NE(1, 2) << ": The world must be ending!";
-//
-// We are very careful to ensure that each argument is evaluated exactly
-// once, and that anything which is legal to pass as a function argument is
-// legal here.  In particular, the arguments may be temporary expressions
-// which will end up being destroyed at the end of the apparent statement,
-// for example:
-//   CHECK_EQ(string("abc")[1], 'b');
-//
-// WARNING: These don't compile correctly if one of the arguments is a pointer
-// and the other is NULL. To work around this, simply static_cast NULL to the
-// type of the desired pointer.
+  // Equality/Inequality checks - compare two values, and log a FATAL message
+  // including the two values when the result is not as expected.  The values
+  // must have operator<<(ostream, ...) defined.
+  //
+  // You may append to the error message like so:
+  //   CHECK_NE(1, 2) << ": The world must be ending!";
+  //
+  // We are very careful to ensure that each argument is evaluated exactly
+  // once, and that anything which is legal to pass as a function argument is
+  // legal here.  In particular, the arguments may be temporary expressions
+  // which will end up being destroyed at the end of the apparent statement,
+  // for example:
+  //   CHECK_EQ(string("abc")[1], 'b');
+  //
+  // WARNING: These don't compile correctly if one of the arguments is a pointer
+  // and the other is NULL. To work around this, simply static_cast NULL to the
+  // type of the desired pointer.
 
 #define CHECK_EQ(val1, val2) CHECK_OP(_EQ, ==, val1, val2)
 #define CHECK_NE(val1, val2) CHECK_OP(_NE, !=, val1, val2)
 #define CHECK_LE(val1, val2) CHECK_OP(_LE, <=, val1, val2)
-#define CHECK_LT(val1, val2) CHECK_OP(_LT, < , val1, val2)
+#define CHECK_LT(val1, val2) CHECK_OP(_LT, <, val1, val2)
 #define CHECK_GE(val1, val2) CHECK_OP(_GE, >=, val1, val2)
-#define CHECK_GT(val1, val2) CHECK_OP(_GT, > , val1, val2)
+#define CHECK_GT(val1, val2) CHECK_OP(_GT, >, val1, val2)
 
-// Check that the input is non NULL.  This very useful in constructor
-// initializer lists.
+  // Check that the input is non NULL.  This very useful in constructor
+  // initializer lists.
 
 #define CHECK_NOTNULL(val) \
   google::CheckNotNull(__FILE__, __LINE__, "'" #val "' Must be non NULL", (val))
 
 // Helper functions for string comparisons.
 // To avoid bloat, the definitions are in logging.cc.
-#define DECLARE_CHECK_STROP_IMPL(func, expected) \
-  GOOGLE_GLOG_DLL_DECL std::string* Check##func##expected##Impl( \
-      const char* s1, const char* s2, const char* names);
-DECLARE_CHECK_STROP_IMPL(strcmp, true)
-DECLARE_CHECK_STROP_IMPL(strcmp, false)
-DECLARE_CHECK_STROP_IMPL(strcasecmp, true)
-DECLARE_CHECK_STROP_IMPL(strcasecmp, false)
+#define DECLARE_CHECK_STROP_IMPL(func, expected)                 \
+  GOOGLE_GLOG_DLL_DECL std::string *Check##func##expected##Impl( \
+      const char *s1, const char *s2, const char *names);
+  DECLARE_CHECK_STROP_IMPL(strcmp, true)
+  DECLARE_CHECK_STROP_IMPL(strcmp, false)
+  DECLARE_CHECK_STROP_IMPL(strcasecmp, true)
+  DECLARE_CHECK_STROP_IMPL(strcasecmp, false)
 #undef DECLARE_CHECK_STROP_IMPL
 
 // Helper macro for string comparisons.
 // Don't use this macro directly in your code, use CHECK_STREQ et al below.
-#define CHECK_STROP(func, op, expected, s1, s2) \
-  while (google::CheckOpString _result = \
-         google::Check##func##expected##Impl((s1), (s2), \
-                                     #s1 " " #op " " #s2)) \
-    LOG(FATAL) << *_result.str_
+#define CHECK_STROP(func, op, expected, s1, s2)                        \
+  while (google::CheckOpString _result =                               \
+             google::Check##func##expected##Impl((s1), (s2),           \
+                                                 #s1 " " #op " " #s2)) \
+  LOG(FATAL) << *_result.str_
 
-
-// String (char*) equality/inequality checks.
-// CASE versions are case-insensitive.
-//
-// Note that "s1" and "s2" may be temporary strings which are destroyed
-// by the compiler at the end of the current "full expression"
-// (e.g. CHECK_STREQ(Foo().c_str(), Bar().c_str())).
+  // String (char*) equality/inequality checks.
+  // CASE versions are case-insensitive.
+  //
+  // Note that "s1" and "s2" may be temporary strings which are destroyed
+  // by the compiler at the end of the current "full expression"
+  // (e.g. CHECK_STREQ(Foo().c_str(), Bar().c_str())).
 
 #define CHECK_STREQ(s1, s2) CHECK_STROP(strcmp, ==, true, s1, s2)
 #define CHECK_STRNE(s1, s2) CHECK_STROP(strcmp, !=, false, s1, s2)
 #define CHECK_STRCASEEQ(s1, s2) CHECK_STROP(strcasecmp, ==, true, s1, s2)
 #define CHECK_STRCASENE(s1, s2) CHECK_STROP(strcasecmp, !=, false, s1, s2)
 
-#define CHECK_INDEX(I,A) CHECK(I < (sizeof(A)/sizeof(A[0])))
-#define CHECK_BOUND(B,A) CHECK(B <= (sizeof(A)/sizeof(A[0])))
+#define CHECK_INDEX(I, A) CHECK(I < (sizeof(A) / sizeof(A[0])))
+#define CHECK_BOUND(B, A) CHECK(B <= (sizeof(A) / sizeof(A[0])))
 
-#define CHECK_DOUBLE_EQ(val1, val2)              \
-  do {                                           \
-    CHECK_LE((val1), (val2)+0.000000000000001L); \
-    CHECK_GE((val1), (val2)-0.000000000000001L); \
+#define CHECK_DOUBLE_EQ(val1, val2)                \
+  do                                               \
+  {                                                \
+    CHECK_LE((val1), (val2) + 0.000000000000001L); \
+    CHECK_GE((val1), (val2)-0.000000000000001L);   \
   } while (0)
 
-#define CHECK_NEAR(val1, val2, margin)           \
-  do {                                           \
-    CHECK_LE((val1), (val2)+(margin));           \
-    CHECK_GE((val1), (val2)-(margin));           \
+#define CHECK_NEAR(val1, val2, margin)   \
+  do                                     \
+  {                                      \
+    CHECK_LE((val1), (val2) + (margin)); \
+    CHECK_GE((val1), (val2) - (margin)); \
   } while (0)
 
-// perror()..googly style!
-//
-// PLOG() and PLOG_IF() and PCHECK() behave exactly like their LOG* and
-// CHECK equivalents with the addition that they postpend a description
-// of the current state of errno to their output lines.
+  // perror()..googly style!
+  //
+  // PLOG() and PLOG_IF() and PCHECK() behave exactly like their LOG* and
+  // CHECK equivalents with the addition that they postpend a description
+  // of the current state of errno to their output lines.
 
 #define PLOG(severity) GOOGLE_PLOG(severity, 0).stream()
 
-#define GOOGLE_PLOG(severity, counter)  \
-  google::ErrnoLogMessage( \
-      __FILE__, __LINE__, google::GLOG_ ## severity, counter, \
+#define GOOGLE_PLOG(severity, counter)                      \
+  google::ErrnoLogMessage(                                  \
+      __FILE__, __LINE__, google::GLOG_##severity, counter, \
       &google::LogMessage::SendToLog)
 
 #define PLOG_IF(severity, condition) \
-  !(condition) ? (void) 0 : google::LogMessageVoidify() & PLOG(severity)
+  !(condition) ? (void)0 : google::LogMessageVoidify() & PLOG(severity)
 
 // A CHECK() macro that postpends errno if the condition is false. E.g.
 //
 // if (poll(fds, nfds, timeout) == -1) { PCHECK(errno == EINTR); ... }
-#define PCHECK(condition)  \
-      PLOG_IF(FATAL, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition))) \
-              << "Check failed: " #condition " "
+#define PCHECK(condition)                                       \
+  PLOG_IF(FATAL, GOOGLE_PREDICT_BRANCH_NOT_TAKEN(!(condition))) \
+      << "Check failed: " #condition " "
 
 // A CHECK() macro that lets you assert the success of a function that
 // returns -1 and sets errno in case of an error. E.g.
@@ -870,71 +896,79 @@ DECLARE_CHECK_STROP_IMPL(strcasecmp, false)
 // or
 //
 // int fd = open(filename, flags); CHECK_ERR(fd) << ": open " << filename;
-#define CHECK_ERR(invocation)                                          \
-PLOG_IF(FATAL, GOOGLE_PREDICT_BRANCH_NOT_TAKEN((invocation) == -1))    \
-        << #invocation
+#define CHECK_ERR(invocation)                                         \
+  PLOG_IF(FATAL, GOOGLE_PREDICT_BRANCH_NOT_TAKEN((invocation) == -1)) \
+      << #invocation
 
 // Use macro expansion to create, for each use of LOG_EVERY_N(), static
 // variables with the __LINE__ expansion as part of the variable name.
 #define LOG_EVERY_N_VARNAME(base, line) LOG_EVERY_N_VARNAME_CONCAT(base, line)
-#define LOG_EVERY_N_VARNAME_CONCAT(base, line) base ## line
+#define LOG_EVERY_N_VARNAME_CONCAT(base, line) base##line
 
 #define LOG_OCCURRENCES LOG_EVERY_N_VARNAME(occurrences_, __LINE__)
 #define LOG_OCCURRENCES_MOD_N LOG_EVERY_N_VARNAME(occurrences_mod_n_, __LINE__)
 
-#define SOME_KIND_OF_LOG_EVERY_N(severity, n, what_to_do) \
-  static int LOG_OCCURRENCES = 0, LOG_OCCURRENCES_MOD_N = 0; \
-  ++LOG_OCCURRENCES; \
-  if (++LOG_OCCURRENCES_MOD_N > n) LOG_OCCURRENCES_MOD_N -= n; \
-  if (LOG_OCCURRENCES_MOD_N == 1) \
-    google::LogMessage( \
-        __FILE__, __LINE__, google::GLOG_ ## severity, LOG_OCCURRENCES, \
-        &what_to_do).stream()
+#define SOME_KIND_OF_LOG_EVERY_N(severity, n, what_to_do)           \
+  static int LOG_OCCURRENCES = 0, LOG_OCCURRENCES_MOD_N = 0;        \
+  ++LOG_OCCURRENCES;                                                \
+  if (++LOG_OCCURRENCES_MOD_N > n)                                  \
+    LOG_OCCURRENCES_MOD_N -= n;                                     \
+  if (LOG_OCCURRENCES_MOD_N == 1)                                   \
+  google::LogMessage(                                               \
+      __FILE__, __LINE__, google::GLOG_##severity, LOG_OCCURRENCES, \
+      &what_to_do)                                                  \
+      .stream()
 
-#define SOME_KIND_OF_LOG_IF_EVERY_N(severity, condition, n, what_to_do) \
-  static int LOG_OCCURRENCES = 0, LOG_OCCURRENCES_MOD_N = 0; \
-  ++LOG_OCCURRENCES; \
-  if (condition && \
-      ((LOG_OCCURRENCES_MOD_N=(LOG_OCCURRENCES_MOD_N + 1) % n) == (1 % n))) \
-    google::LogMessage( \
-        __FILE__, __LINE__, google::GLOG_ ## severity, LOG_OCCURRENCES, \
-                 &what_to_do).stream()
+#define SOME_KIND_OF_LOG_IF_EVERY_N(severity, condition, n, what_to_do)       \
+  static int LOG_OCCURRENCES = 0, LOG_OCCURRENCES_MOD_N = 0;                  \
+  ++LOG_OCCURRENCES;                                                          \
+  if (condition &&                                                            \
+      ((LOG_OCCURRENCES_MOD_N = (LOG_OCCURRENCES_MOD_N + 1) % n) == (1 % n))) \
+  google::LogMessage(                                                         \
+      __FILE__, __LINE__, google::GLOG_##severity, LOG_OCCURRENCES,           \
+      &what_to_do)                                                            \
+      .stream()
 
-#define SOME_KIND_OF_PLOG_EVERY_N(severity, n, what_to_do) \
-  static int LOG_OCCURRENCES = 0, LOG_OCCURRENCES_MOD_N = 0; \
-  ++LOG_OCCURRENCES; \
-  if (++LOG_OCCURRENCES_MOD_N > n) LOG_OCCURRENCES_MOD_N -= n; \
-  if (LOG_OCCURRENCES_MOD_N == 1) \
-    google::ErrnoLogMessage( \
-        __FILE__, __LINE__, google::GLOG_ ## severity, LOG_OCCURRENCES, \
-        &what_to_do).stream()
+#define SOME_KIND_OF_PLOG_EVERY_N(severity, n, what_to_do)          \
+  static int LOG_OCCURRENCES = 0, LOG_OCCURRENCES_MOD_N = 0;        \
+  ++LOG_OCCURRENCES;                                                \
+  if (++LOG_OCCURRENCES_MOD_N > n)                                  \
+    LOG_OCCURRENCES_MOD_N -= n;                                     \
+  if (LOG_OCCURRENCES_MOD_N == 1)                                   \
+  google::ErrnoLogMessage(                                          \
+      __FILE__, __LINE__, google::GLOG_##severity, LOG_OCCURRENCES, \
+      &what_to_do)                                                  \
+      .stream()
 
-#define SOME_KIND_OF_LOG_FIRST_N(severity, n, what_to_do) \
-  static int LOG_OCCURRENCES = 0; \
-  if (LOG_OCCURRENCES <= n) \
-    ++LOG_OCCURRENCES; \
-  if (LOG_OCCURRENCES <= n) \
-    google::LogMessage( \
-        __FILE__, __LINE__, google::GLOG_ ## severity, LOG_OCCURRENCES, \
-        &what_to_do).stream()
+#define SOME_KIND_OF_LOG_FIRST_N(severity, n, what_to_do)           \
+  static int LOG_OCCURRENCES = 0;                                   \
+  if (LOG_OCCURRENCES <= n)                                         \
+    ++LOG_OCCURRENCES;                                              \
+  if (LOG_OCCURRENCES <= n)                                         \
+  google::LogMessage(                                               \
+      __FILE__, __LINE__, google::GLOG_##severity, LOG_OCCURRENCES, \
+      &what_to_do)                                                  \
+      .stream()
 
-namespace glog_internal_namespace_ {
-template <bool>
-struct CompileAssert {
-};
-struct CrashReason;
+  namespace glog_internal_namespace_
+  {
+    template <bool>
+    struct CompileAssert
+    {
+    };
+    struct CrashReason;
 
-// Returns true if FailureSignalHandler is installed.
-bool IsFailureSignalHandlerInstalled();
-}  // namespace glog_internal_namespace_
+    // Returns true if FailureSignalHandler is installed.
+    bool IsFailureSignalHandlerInstalled();
+  } // namespace glog_internal_namespace_
 
 #define GOOGLE_GLOG_COMPILE_ASSERT(expr, msg) \
   typedef google::glog_internal_namespace_::CompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1]
 
-#define LOG_EVERY_N(severity, n)                                        \
-  GOOGLE_GLOG_COMPILE_ASSERT(google::GLOG_ ## severity < \
-                             google::NUM_SEVERITIES,     \
-                             INVALID_REQUESTED_LOG_SEVERITY);           \
+#define LOG_EVERY_N(severity, n)                              \
+  GOOGLE_GLOG_COMPILE_ASSERT(google::GLOG_##severity <        \
+                                 google::NUM_SEVERITIES,      \
+                             INVALID_REQUESTED_LOG_SEVERITY); \
   SOME_KIND_OF_LOG_EVERY_N(severity, (n), google::LogMessage::SendToLog)
 
 #define SYSLOG_EVERY_N(severity, n) \
@@ -949,8 +983,11 @@ bool IsFailureSignalHandlerInstalled();
 #define LOG_IF_EVERY_N(severity, condition, n) \
   SOME_KIND_OF_LOG_IF_EVERY_N(severity, (condition), (n), google::LogMessage::SendToLog)
 
-// We want the special COUNTER value available for LOG_EVERY_X()'ed messages
-enum PRIVATE_Counter {COUNTER};
+  // We want the special COUNTER value available for LOG_EVERY_X()'ed messages
+  enum PRIVATE_Counter
+  {
+    COUNTER
+  };
 
 #ifdef GLOG_NO_ABBREVIATED_SEVERITIES
 // wingdi.h defines ERROR to be 0. When we call LOG(ERROR), it gets
@@ -960,21 +997,21 @@ enum PRIVATE_Counter {COUNTER};
 #define COMPACT_GOOGLE_LOG_0 COMPACT_GOOGLE_LOG_ERROR
 #define SYSLOG_0 SYSLOG_ERROR
 #define LOG_TO_STRING_0 LOG_TO_STRING_ERROR
-// Needed for LOG_IS_ON(ERROR).
-const LogSeverity GLOG_0 = GLOG_ERROR;
+  // Needed for LOG_IS_ON(ERROR).
+  const LogSeverity GLOG_0 = GLOG_ERROR;
 #else
 // Users may include windows.h after logging.h without
 // GLOG_NO_ABBREVIATED_SEVERITIES nor WIN32_LEAN_AND_MEAN.
 // For this case, we cannot detect if ERROR is defined before users
 // actually use ERROR. Let's make an undefined symbol to warn users.
-# define GLOG_ERROR_MSG ERROR_macro_is_defined_Define_GLOG_NO_ABBREVIATED_SEVERITIES_before_including_logging_h_See_the_document_for_detail
-# define COMPACT_GOOGLE_LOG_0 GLOG_ERROR_MSG
-# define SYSLOG_0 GLOG_ERROR_MSG
-# define LOG_TO_STRING_0 GLOG_ERROR_MSG
-# define GLOG_0 GLOG_ERROR_MSG
+#define GLOG_ERROR_MSG ERROR_macro_is_defined_Define_GLOG_NO_ABBREVIATED_SEVERITIES_before_including_logging_h_See_the_document_for_detail
+#define COMPACT_GOOGLE_LOG_0 GLOG_ERROR_MSG
+#define SYSLOG_0 GLOG_ERROR_MSG
+#define LOG_TO_STRING_0 GLOG_ERROR_MSG
+#define GLOG_0 GLOG_ERROR_MSG
 #endif
 
-// Plus some debug-logging macros that get compiled to nothing for production
+  // Plus some debug-logging macros that get compiled to nothing for production
 
 #ifndef NDEBUG
 
@@ -1000,90 +1037,100 @@ const LogSeverity GLOG_0 = GLOG_ERROR;
 #define DCHECK_STRNE(str1, str2) CHECK_STRNE(str1, str2)
 #define DCHECK_STRCASENE(str1, str2) CHECK_STRCASENE(str1, str2)
 
-#else  // NDEBUG
+#else // NDEBUG
 
 #define DLOG(severity) \
-  true ? (void) 0 : google::LogMessageVoidify() & LOG(severity)
+  true ? (void)0 : google::LogMessageVoidify() & LOG(severity)
 
 #define DVLOG(verboselevel) \
-  (true || !VLOG_IS_ON(verboselevel)) ?\
-    (void) 0 : google::LogMessageVoidify() & LOG(INFO)
+  (true || !VLOG_IS_ON(verboselevel)) ? (void)0 : google::LogMessageVoidify() & LOG(INFO)
 
 #define DLOG_IF(severity, condition) \
-  (true || !(condition)) ? (void) 0 : google::LogMessageVoidify() & LOG(severity)
+  (true || !(condition)) ? (void)0 : google::LogMessageVoidify() & LOG(severity)
 
 #define DLOG_EVERY_N(severity, n) \
-  true ? (void) 0 : google::LogMessageVoidify() & LOG(severity)
+  true ? (void)0 : google::LogMessageVoidify() & LOG(severity)
 
 #define DLOG_IF_EVERY_N(severity, condition, n) \
-  (true || !(condition))? (void) 0 : google::LogMessageVoidify() & LOG(severity)
+  (true || !(condition)) ? (void)0 : google::LogMessageVoidify() & LOG(severity)
 
 #define DLOG_ASSERT(condition) \
-  true ? (void) 0 : LOG_ASSERT(condition)
+  true ? (void)0 : LOG_ASSERT(condition)
 
 // MSVC warning C4127: conditional expression is constant
-#define DCHECK(condition) \
+#define DCHECK(condition)              \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK(condition)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK(condition)
 
-#define DCHECK_EQ(val1, val2) \
+#define DCHECK_EQ(val1, val2)          \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_EQ(val1, val2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_EQ(val1, val2)
 
-#define DCHECK_NE(val1, val2) \
+#define DCHECK_NE(val1, val2)          \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_NE(val1, val2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_NE(val1, val2)
 
-#define DCHECK_LE(val1, val2) \
+#define DCHECK_LE(val1, val2)          \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_LE(val1, val2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_LE(val1, val2)
 
-#define DCHECK_LT(val1, val2) \
+#define DCHECK_LT(val1, val2)          \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_LT(val1, val2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_LT(val1, val2)
 
-#define DCHECK_GE(val1, val2) \
+#define DCHECK_GE(val1, val2)          \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_GE(val1, val2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_GE(val1, val2)
 
-#define DCHECK_GT(val1, val2) \
+#define DCHECK_GT(val1, val2)          \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_GT(val1, val2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_GT(val1, val2)
 
 // You may see warnings in release mode if you don't use the return
 // value of DCHECK_NOTNULL. Please just use DCHECK for such cases.
 #define DCHECK_NOTNULL(val) (val)
 
-#define DCHECK_STREQ(str1, str2) \
+#define DCHECK_STREQ(str1, str2)       \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_STREQ(str1, str2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_STREQ(str1, str2)
 
-#define DCHECK_STRCASEEQ(str1, str2) \
+#define DCHECK_STRCASEEQ(str1, str2)   \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_STRCASEEQ(str1, str2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_STRCASEEQ(str1, str2)
 
-#define DCHECK_STRNE(str1, str2) \
+#define DCHECK_STRNE(str1, str2)       \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_STRNE(str1, str2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_STRNE(str1, str2)
 
-#define DCHECK_STRCASENE(str1, str2) \
+#define DCHECK_STRCASENE(str1, str2)   \
   GLOG_MSVC_PUSH_DISABLE_WARNING(4127) \
-  while (false) \
-    GLOG_MSVC_POP_WARNING() CHECK_STRCASENE(str1, str2)
+  while (false)                        \
+    GLOG_MSVC_POP_WARNING()            \
+  CHECK_STRCASENE(str1, str2)
 
-#endif  // NDEBUG
+#endif // NDEBUG
 
-// Log only in verbose mode.
+  // Log only in verbose mode.
 
 #define VLOG(verboselevel) LOG_IF(INFO, VLOG_IS_ON(verboselevel))
 
@@ -1096,206 +1143,216 @@ const LogSeverity GLOG_0 = GLOG_ERROR;
 #define VLOG_IF_EVERY_N(verboselevel, condition, n) \
   LOG_IF_EVERY_N(INFO, (condition) && VLOG_IS_ON(verboselevel), n)
 
-namespace base_logging {
+  namespace base_logging
+  {
 
-// LogMessage::LogStream is a std::ostream backed by this streambuf.
-// This class ignores overflow and leaves two bytes at the end of the
-// buffer to allow for a '\n' and '\0'.
-class GOOGLE_GLOG_DLL_DECL LogStreamBuf : public std::streambuf {
- public:
-  // REQUIREMENTS: "len" must be >= 2 to account for the '\n' and '\n'.
-  LogStreamBuf(char *buf, int len) {
-    setp(buf, buf + len - 2);
-  }
-  // This effectively ignores overflow.
-  virtual int_type overflow(int_type ch) {
-    return ch;
-  }
+    // LogMessage::LogStream is a std::ostream backed by this streambuf.
+    // This class ignores overflow and leaves two bytes at the end of the
+    // buffer to allow for a '\n' and '\0'.
+    class GOOGLE_GLOG_DLL_DECL LogStreamBuf : public std::streambuf
+    {
+    public:
+      // REQUIREMENTS: "len" must be >= 2 to account for the '\n' and '\n'.
+      LogStreamBuf(char *buf, int len)
+      {
+        setp(buf, buf + len - 2);
+      }
+      // This effectively ignores overflow.
+      virtual int_type overflow(int_type ch)
+      {
+        return ch;
+      }
 
-  // Legacy public ostrstream method.
-  size_t pcount() const { return pptr() - pbase(); }
-  char* pbase() const { return std::streambuf::pbase(); }
-};
+      // Legacy public ostrstream method.
+      size_t pcount() const { return pptr() - pbase(); }
+      char *pbase() const { return std::streambuf::pbase(); }
+    };
 
-}  // namespace base_logging
+  } // namespace base_logging
 
-//
-// This class more or less represents a particular log message.  You
-// create an instance of LogMessage and then stream stuff to it.
-// When you finish streaming to it, ~LogMessage is called and the
-// full message gets streamed to the appropriate destination.
-//
-// You shouldn't actually use LogMessage's constructor to log things,
-// though.  You should use the LOG() macro (and variants thereof)
-// above.
-class GOOGLE_GLOG_DLL_DECL LogMessage {
-public:
-  enum {
-    // Passing kNoLogPrefix for the line number disables the
-    // log-message prefix. Useful for using the LogMessage
-    // infrastructure as a printing utility. See also the --log_prefix
-    // flag for controlling the log-message prefix on an
-    // application-wide basis.
-    kNoLogPrefix = -1
-  };
-
-  // LogStream inherit from non-DLL-exported class (std::ostrstream)
-  // and VC++ produces a warning for this situation.
-  // However, MSDN says "C4275 can be ignored in Microsoft Visual C++
-  // 2005 if you are deriving from a type in the Standard C++ Library"
-  // http://msdn.microsoft.com/en-us/library/3tdb471s(VS.80).aspx
-  // Let's just ignore the warning.
-#ifdef _MSC_VER
-# pragma warning(disable: 4275)
-#endif
-  class GOOGLE_GLOG_DLL_DECL LogStream : public std::ostream {
-#ifdef _MSC_VER
-# pragma warning(default: 4275)
-#endif
+  //
+  // This class more or less represents a particular log message.  You
+  // create an instance of LogMessage and then stream stuff to it.
+  // When you finish streaming to it, ~LogMessage is called and the
+  // full message gets streamed to the appropriate destination.
+  //
+  // You shouldn't actually use LogMessage's constructor to log things,
+  // though.  You should use the LOG() macro (and variants thereof)
+  // above.
+  class GOOGLE_GLOG_DLL_DECL LogMessage
+  {
   public:
-    LogStream(char *buf, int len, int ctr)
-        : std::ostream(NULL),
-          streambuf_(buf, len),
-          ctr_(ctr),
-          self_(this) {
-      rdbuf(&streambuf_);
-    }
+    enum
+    {
+      // Passing kNoLogPrefix for the line number disables the
+      // log-message prefix. Useful for using the LogMessage
+      // infrastructure as a printing utility. See also the --log_prefix
+      // flag for controlling the log-message prefix on an
+      // application-wide basis.
+      kNoLogPrefix = -1
+    };
 
-    int ctr() const { return ctr_; }
-    void set_ctr(int ctr) { ctr_ = ctr; }
-    LogStream* self() const { return self_; }
+    // LogStream inherit from non-DLL-exported class (std::ostrstream)
+    // and VC++ produces a warning for this situation.
+    // However, MSDN says "C4275 can be ignored in Microsoft Visual C++
+    // 2005 if you are deriving from a type in the Standard C++ Library"
+    // http://msdn.microsoft.com/en-us/library/3tdb471s(VS.80).aspx
+    // Let's just ignore the warning.
+#ifdef _MSC_VER
+#pragma warning(disable : 4275)
+#endif
+    class GOOGLE_GLOG_DLL_DECL LogStream : public std::ostream
+    {
+#ifdef _MSC_VER
+#pragma warning(default : 4275)
+#endif
+    public:
+      LogStream(char *buf, int len, int ctr)
+          : std::ostream(NULL),
+            streambuf_(buf, len),
+            ctr_(ctr),
+            self_(this)
+      {
+        rdbuf(&streambuf_);
+      }
 
-    // Legacy std::streambuf methods.
-    size_t pcount() const { return streambuf_.pcount(); }
-    char* pbase() const { return streambuf_.pbase(); }
-    char* str() const { return pbase(); }
+      int ctr() const { return ctr_; }
+      void set_ctr(int ctr) { ctr_ = ctr; }
+      LogStream *self() const { return self_; }
+
+      // Legacy std::streambuf methods.
+      size_t pcount() const { return streambuf_.pcount(); }
+      char *pbase() const { return streambuf_.pbase(); }
+      char *str() const { return pbase(); }
+
+    private:
+      LogStream(const LogStream &);
+      LogStream &operator=(const LogStream &);
+      base_logging::LogStreamBuf streambuf_;
+      int ctr_;         // Counter hack (for the LOG_EVERY_X() macro)
+      LogStream *self_; // Consistency check hack
+    };
+
+  public:
+    // icc 8 requires this typedef to avoid an internal compiler error.
+    typedef void (LogMessage::*SendMethod)();
+
+    LogMessage(const char *file, int line, LogSeverity severity, int ctr,
+               SendMethod send_method);
+
+    // Two special constructors that generate reduced amounts of code at
+    // LOG call sites for common cases.
+
+    // Used for LOG(INFO): Implied are:
+    // severity = INFO, ctr = 0, send_method = &LogMessage::SendToLog.
+    //
+    // Using this constructor instead of the more complex constructor above
+    // saves 19 bytes per call site.
+    LogMessage(const char *file, int line);
+
+    // Used for LOG(severity) where severity != INFO.  Implied
+    // are: ctr = 0, send_method = &LogMessage::SendToLog
+    //
+    // Using this constructor instead of the more complex constructor above
+    // saves 17 bytes per call site.
+    LogMessage(const char *file, int line, LogSeverity severity);
+
+    // Constructor to log this message to a specified sink (if not NULL).
+    // Implied are: ctr = 0, send_method = &LogMessage::SendToSinkAndLog if
+    // also_send_to_log is true, send_method = &LogMessage::SendToSink otherwise.
+    LogMessage(const char *file, int line, LogSeverity severity, LogSink *sink,
+               bool also_send_to_log);
+
+    // Constructor where we also give a vector<string> pointer
+    // for storing the messages (if the pointer is not NULL).
+    // Implied are: ctr = 0, send_method = &LogMessage::SaveOrSendToLog.
+    LogMessage(const char *file, int line, LogSeverity severity,
+               std::vector<std::string> *outvec);
+
+    // Constructor where we also give a string pointer for storing the
+    // message (if the pointer is not NULL).  Implied are: ctr = 0,
+    // send_method = &LogMessage::WriteToStringAndLog.
+    LogMessage(const char *file, int line, LogSeverity severity,
+               std::string *message);
+
+    // A special constructor used for check failures
+    LogMessage(const char *file, int line, const CheckOpString &result);
+
+    ~LogMessage();
+
+    // Flush a buffered message to the sink set in the constructor.  Always
+    // called by the destructor, it may also be called from elsewhere if
+    // needed.  Only the first call is actioned; any later ones are ignored.
+    void Flush();
+
+    // An arbitrary limit on the length of a single log message.  This
+    // is so that streaming can be done more efficiently.
+    static const size_t kMaxLogMessageLen;
+
+    // Theses should not be called directly outside of logging.*,
+    // only passed as SendMethod arguments to other LogMessage methods:
+    void SendToLog();          // Actually dispatch to the logs
+    void SendToSyslogAndLog(); // Actually dispatch to syslog and the logs
+
+    // Call abort() or similar to perform LOG(FATAL) crash.
+    static void __attribute__((noreturn)) Fail();
+
+    std::ostream &stream();
+
+    int preserved_errno() const;
+
+    // Must be called without the log_mutex held.  (L < log_mutex)
+    static int64 num_messages(int severity);
+
+    struct LogMessageData;
 
   private:
-    LogStream(const LogStream&);
-    LogStream& operator=(const LogStream&);
-    base_logging::LogStreamBuf streambuf_;
-    int ctr_;  // Counter hack (for the LOG_EVERY_X() macro)
-    LogStream *self_;  // Consistency check hack
+    // Fully internal SendMethod cases:
+    void SendToSinkAndLog(); // Send to sink if provided and dispatch to the logs
+    void SendToSink();       // Send to sink if provided, do nothing otherwise.
+
+    // Write to string if provided and dispatch to the logs.
+    void WriteToStringAndLog();
+
+    void SaveOrSendToLog(); // Save to stringvec if provided, else to logs
+
+    void Init(const char *file, int line, LogSeverity severity,
+              void (LogMessage::*send_method)());
+
+    // Used to fill in crash information during LOG(FATAL) failures.
+    void RecordCrashReason(glog_internal_namespace_::CrashReason *reason);
+
+    // Counts of messages sent at each priority:
+    static int64 num_messages_[NUM_SEVERITIES]; // under log_mutex
+
+    // We keep the data in a separate struct so that each instance of
+    // LogMessage uses less stack space.
+    LogMessageData *allocated_;
+    LogMessageData *data_;
+
+    friend class LogDestination;
+
+    LogMessage(const LogMessage &);
+    void operator=(const LogMessage &);
   };
 
-public:
-  // icc 8 requires this typedef to avoid an internal compiler error.
-  typedef void (LogMessage::*SendMethod)();
+  // This class happens to be thread-hostile because all instances share
+  // a single data buffer, but since it can only be created just before
+  // the process dies, we don't worry so much.
+  class GOOGLE_GLOG_DLL_DECL LogMessageFatal : public LogMessage
+  {
+  public:
+    LogMessageFatal(const char *file, int line);
+    LogMessageFatal(const char *file, int line, const CheckOpString &result);
+    __attribute__((noreturn)) ~LogMessageFatal();
+  };
 
-  LogMessage(const char* file, int line, LogSeverity severity, int ctr,
-             SendMethod send_method);
-
-  // Two special constructors that generate reduced amounts of code at
-  // LOG call sites for common cases.
-
-  // Used for LOG(INFO): Implied are:
-  // severity = INFO, ctr = 0, send_method = &LogMessage::SendToLog.
-  //
-  // Using this constructor instead of the more complex constructor above
-  // saves 19 bytes per call site.
-  LogMessage(const char* file, int line);
-
-  // Used for LOG(severity) where severity != INFO.  Implied
-  // are: ctr = 0, send_method = &LogMessage::SendToLog
-  //
-  // Using this constructor instead of the more complex constructor above
-  // saves 17 bytes per call site.
-  LogMessage(const char* file, int line, LogSeverity severity);
-
-  // Constructor to log this message to a specified sink (if not NULL).
-  // Implied are: ctr = 0, send_method = &LogMessage::SendToSinkAndLog if
-  // also_send_to_log is true, send_method = &LogMessage::SendToSink otherwise.
-  LogMessage(const char* file, int line, LogSeverity severity, LogSink* sink,
-             bool also_send_to_log);
-
-  // Constructor where we also give a vector<string> pointer
-  // for storing the messages (if the pointer is not NULL).
-  // Implied are: ctr = 0, send_method = &LogMessage::SaveOrSendToLog.
-  LogMessage(const char* file, int line, LogSeverity severity,
-             std::vector<std::string>* outvec);
-
-  // Constructor where we also give a string pointer for storing the
-  // message (if the pointer is not NULL).  Implied are: ctr = 0,
-  // send_method = &LogMessage::WriteToStringAndLog.
-  LogMessage(const char* file, int line, LogSeverity severity,
-             std::string* message);
-
-  // A special constructor used for check failures
-  LogMessage(const char* file, int line, const CheckOpString& result);
-
-  ~LogMessage();
-
-  // Flush a buffered message to the sink set in the constructor.  Always
-  // called by the destructor, it may also be called from elsewhere if
-  // needed.  Only the first call is actioned; any later ones are ignored.
-  void Flush();
-
-  // An arbitrary limit on the length of a single log message.  This
-  // is so that streaming can be done more efficiently.
-  static const size_t kMaxLogMessageLen;
-
-  // Theses should not be called directly outside of logging.*,
-  // only passed as SendMethod arguments to other LogMessage methods:
-  void SendToLog();  // Actually dispatch to the logs
-  void SendToSyslogAndLog();  // Actually dispatch to syslog and the logs
-
-  // Call abort() or similar to perform LOG(FATAL) crash.
-  static void __attribute__ ((noreturn)) Fail();
-
-  std::ostream& stream();
-
-  int preserved_errno() const;
-
-  // Must be called without the log_mutex held.  (L < log_mutex)
-  static int64 num_messages(int severity);
-
-  struct LogMessageData;
-
-private:
-  // Fully internal SendMethod cases:
-  void SendToSinkAndLog();  // Send to sink if provided and dispatch to the logs
-  void SendToSink();  // Send to sink if provided, do nothing otherwise.
-
-  // Write to string if provided and dispatch to the logs.
-  void WriteToStringAndLog();
-
-  void SaveOrSendToLog();  // Save to stringvec if provided, else to logs
-
-  void Init(const char* file, int line, LogSeverity severity,
-            void (LogMessage::*send_method)());
-
-  // Used to fill in crash information during LOG(FATAL) failures.
-  void RecordCrashReason(glog_internal_namespace_::CrashReason* reason);
-
-  // Counts of messages sent at each priority:
-  static int64 num_messages_[NUM_SEVERITIES];  // under log_mutex
-
-  // We keep the data in a separate struct so that each instance of
-  // LogMessage uses less stack space.
-  LogMessageData* allocated_;
-  LogMessageData* data_;
-
-  friend class LogDestination;
-
-  LogMessage(const LogMessage&);
-  void operator=(const LogMessage&);
-};
-
-// This class happens to be thread-hostile because all instances share
-// a single data buffer, but since it can only be created just before
-// the process dies, we don't worry so much.
-class GOOGLE_GLOG_DLL_DECL LogMessageFatal : public LogMessage {
- public:
-  LogMessageFatal(const char* file, int line);
-  LogMessageFatal(const char* file, int line, const CheckOpString& result);
-  __attribute__ ((noreturn)) ~LogMessageFatal();
-};
-
-// A non-macro interface to the log facility; (useful
-// when the logging level is not a compile-time constant).
-inline void LogAtLevel(int const severity, std::string const &msg) {
-  LogMessage(__FILE__, __LINE__, severity).stream() << msg;
-}
+  // A non-macro interface to the log facility; (useful
+  // when the logging level is not a compile-time constant).
+  inline void LogAtLevel(int const severity, std::string const &msg)
+  {
+    LogMessage(__FILE__, __LINE__, severity).stream() << msg;
+  }
 
 // A macro alternative of LogAtLevel. New code may want to use this
 // version since there are two advantages: 1. this version outputs the
@@ -1303,323 +1360,326 @@ inline void LogAtLevel(int const severity, std::string const &msg) {
 // LOG macros, 2. this macro can be used as C++ stream.
 #define LOG_AT_LEVEL(severity) google::LogMessage(__FILE__, __LINE__, severity).stream()
 
-// A small helper for CHECK_NOTNULL().
-template <typename T>
-T* CheckNotNull(const char *file, int line, const char *names, T* t) {
-  if (t == NULL) {
-    LogMessageFatal(file, line, new std::string(names));
+  // A small helper for CHECK_NOTNULL().
+  template <typename T>
+  T *CheckNotNull(const char *file, int line, const char *names, T *t)
+  {
+    if (t == NULL)
+    {
+      LogMessageFatal(file, line, new std::string(names));
+    }
+    return t;
   }
-  return t;
-}
 
-// Allow folks to put a counter in the LOG_EVERY_X()'ed messages. This
-// only works if ostream is a LogStream. If the ostream is not a
-// LogStream you'll get an assert saying as much at runtime.
-GOOGLE_GLOG_DLL_DECL std::ostream& operator<<(std::ostream &os,
-                                              const PRIVATE_Counter&);
+  // Allow folks to put a counter in the LOG_EVERY_X()'ed messages. This
+  // only works if ostream is a LogStream. If the ostream is not a
+  // LogStream you'll get an assert saying as much at runtime.
+  GOOGLE_GLOG_DLL_DECL std::ostream &operator<<(std::ostream &os,
+                                                const PRIVATE_Counter &);
 
+  // Derived class for PLOG*() above.
+  class GOOGLE_GLOG_DLL_DECL ErrnoLogMessage : public LogMessage
+  {
+  public:
+    ErrnoLogMessage(const char *file, int line, LogSeverity severity, int ctr,
+                    void (LogMessage::*send_method)());
 
-// Derived class for PLOG*() above.
-class GOOGLE_GLOG_DLL_DECL ErrnoLogMessage : public LogMessage {
- public:
+    // Postpends ": strerror(errno) [errno]".
+    ~ErrnoLogMessage();
 
-  ErrnoLogMessage(const char* file, int line, LogSeverity severity, int ctr,
-                  void (LogMessage::*send_method)());
+  private:
+    ErrnoLogMessage(const ErrnoLogMessage &);
+    void operator=(const ErrnoLogMessage &);
+  };
 
-  // Postpends ": strerror(errno) [errno]".
-  ~ErrnoLogMessage();
+  // This class is used to explicitly ignore values in the conditional
+  // logging macros.  This avoids compiler warnings like "value computed
+  // is not used" and "statement has no effect".
 
- private:
-  ErrnoLogMessage(const ErrnoLogMessage&);
-  void operator=(const ErrnoLogMessage&);
-};
+  class GOOGLE_GLOG_DLL_DECL LogMessageVoidify
+  {
+  public:
+    LogMessageVoidify() {}
+    // This has to be an operator with a precedence lower than << but
+    // higher than ?:
+    void operator&(std::ostream &) {}
+  };
 
+  // Flushes all log files that contains messages that are at least of
+  // the specified severity level.  Thread-safe.
+  GOOGLE_GLOG_DLL_DECL void FlushLogFiles(LogSeverity min_severity);
 
-// This class is used to explicitly ignore values in the conditional
-// logging macros.  This avoids compiler warnings like "value computed
-// is not used" and "statement has no effect".
+  // Flushes all log files that contains messages that are at least of
+  // the specified severity level. Thread-hostile because it ignores
+  // locking -- used for catastrophic failures.
+  GOOGLE_GLOG_DLL_DECL void FlushLogFilesUnsafe(LogSeverity min_severity);
 
-class GOOGLE_GLOG_DLL_DECL LogMessageVoidify {
- public:
-  LogMessageVoidify() { }
-  // This has to be an operator with a precedence lower than << but
-  // higher than ?:
-  void operator&(std::ostream&) { }
-};
-
-
-// Flushes all log files that contains messages that are at least of
-// the specified severity level.  Thread-safe.
-GOOGLE_GLOG_DLL_DECL void FlushLogFiles(LogSeverity min_severity);
-
-// Flushes all log files that contains messages that are at least of
-// the specified severity level. Thread-hostile because it ignores
-// locking -- used for catastrophic failures.
-GOOGLE_GLOG_DLL_DECL void FlushLogFilesUnsafe(LogSeverity min_severity);
-
-//
-// Set the destination to which a particular severity level of log
-// messages is sent.  If base_filename is "", it means "don't log this
-// severity".  Thread-safe.
-//
-GOOGLE_GLOG_DLL_DECL void SetLogDestination(LogSeverity severity,
-                                            const char* base_filename);
-
-//
-// Set the basename of the symlink to the latest log file at a given
-// severity.  If symlink_basename is empty, do not make a symlink.  If
-// you don't call this function, the symlink basename is the
-// invocation name of the program.  Thread-safe.
-//
-GOOGLE_GLOG_DLL_DECL void SetLogSymlink(LogSeverity severity,
-                                        const char* symlink_basename);
-
-//
-// Used to send logs to some other kind of destination
-// Users should subclass LogSink and override send to do whatever they want.
-// Implementations must be thread-safe because a shared instance will
-// be called from whichever thread ran the LOG(XXX) line.
-class GOOGLE_GLOG_DLL_DECL LogSink {
- public:
-  virtual ~LogSink();
-
-  // Sink's logging logic (message_len is such as to exclude '\n' at the end).
-  // This method can't use LOG() or CHECK() as logging system mutex(s) are held
-  // during this call.
-  virtual void send(LogSeverity severity, const char* full_filename,
-                    const char* base_filename, int line,
-                    const struct ::tm* tm_time,
-                    const char* message, size_t message_len) = 0;
-
-  // Redefine this to implement waiting for
-  // the sink's logging logic to complete.
-  // It will be called after each send() returns,
-  // but before that LogMessage exits or crashes.
-  // By default this function does nothing.
-  // Using this function one can implement complex logic for send()
-  // that itself involves logging; and do all this w/o causing deadlocks and
-  // inconsistent rearrangement of log messages.
-  // E.g. if a LogSink has thread-specific actions, the send() method
-  // can simply add the message to a queue and wake up another thread that
-  // handles real logging while itself making some LOG() calls;
-  // WaitTillSent() can be implemented to wait for that logic to complete.
-  // See our unittest for an example.
-  virtual void WaitTillSent();
-
-  // Returns the normal text output of the log message.
-  // Can be useful to implement send().
-  static std::string ToString(LogSeverity severity, const char* file, int line,
-                              const struct ::tm* tm_time,
-                              const char* message, size_t message_len);
-};
-
-// Add or remove a LogSink as a consumer of logging data.  Thread-safe.
-GOOGLE_GLOG_DLL_DECL void AddLogSink(LogSink *destination);
-GOOGLE_GLOG_DLL_DECL void RemoveLogSink(LogSink *destination);
-
-//
-// Specify an "extension" added to the filename specified via
-// SetLogDestination.  This applies to all severity levels.  It's
-// often used to append the port we're listening on to the logfile
-// name.  Thread-safe.
-//
-GOOGLE_GLOG_DLL_DECL void SetLogFilenameExtension(
-    const char* filename_extension);
-
-//
-// Make it so that all log messages of at least a particular severity
-// are logged to stderr (in addition to logging to the usual log
-// file(s)).  Thread-safe.
-//
-GOOGLE_GLOG_DLL_DECL void SetStderrLogging(LogSeverity min_severity);
-
-//
-// Make it so that all log messages go only to stderr.  Thread-safe.
-//
-GOOGLE_GLOG_DLL_DECL void LogToStderr();
-
-//
-// Make it so that all log messages of at least a particular severity are
-// logged via email to a list of addresses (in addition to logging to the
-// usual log file(s)).  The list of addresses is just a string containing
-// the email addresses to send to (separated by spaces, say).  Thread-safe.
-//
-GOOGLE_GLOG_DLL_DECL void SetEmailLogging(LogSeverity min_severity,
-                                          const char* addresses);
-
-// A simple function that sends email. dest is a commma-separated
-// list of addressess.  Thread-safe.
-GOOGLE_GLOG_DLL_DECL bool SendEmail(const char *dest,
-                                    const char *subject, const char *body);
-
-GOOGLE_GLOG_DLL_DECL const std::vector<std::string>& GetLoggingDirectories();
-
-// For tests only:  Clear the internal [cached] list of logging directories to
-// force a refresh the next time GetLoggingDirectories is called.
-// Thread-hostile.
-void TestOnly_ClearLoggingDirectoriesList();
-
-// Returns a set of existing temporary directories, which will be a
-// subset of the directories returned by GetLogginDirectories().
-// Thread-safe.
-GOOGLE_GLOG_DLL_DECL void GetExistingTempDirectories(
-    std::vector<std::string>* list);
-
-// Print any fatal message again -- useful to call from signal handler
-// so that the last thing in the output is the fatal message.
-// Thread-hostile, but a race is unlikely.
-GOOGLE_GLOG_DLL_DECL void ReprintFatalMessage();
-
-// Truncate a log file that may be the append-only output of multiple
-// processes and hence can't simply be renamed/reopened (typically a
-// stdout/stderr).  If the file "path" is > "limit" bytes, copy the
-// last "keep" bytes to offset 0 and truncate the rest. Since we could
-// be racing with other writers, this approach has the potential to
-// lose very small amounts of data. For security, only follow symlinks
-// if the path is /proc/self/fd/*
-GOOGLE_GLOG_DLL_DECL void TruncateLogFile(const char *path,
-                                          int64 limit, int64 keep);
-
-// Truncate stdout and stderr if they are over the value specified by
-// --max_log_size; keep the final 1MB.  This function has the same
-// race condition as TruncateLogFile.
-GOOGLE_GLOG_DLL_DECL void TruncateStdoutStderr();
-
-// Return the string representation of the provided LogSeverity level.
-// Thread-safe.
-GOOGLE_GLOG_DLL_DECL const char* GetLogSeverityName(LogSeverity severity);
-
-// ---------------------------------------------------------------------
-// Implementation details that are not useful to most clients
-// ---------------------------------------------------------------------
-
-// A Logger is the interface used by logging modules to emit entries
-// to a log.  A typical implementation will dump formatted data to a
-// sequence of files.  We also provide interfaces that will forward
-// the data to another thread so that the invoker never blocks.
-// Implementations should be thread-safe since the logging system
-// will write to them from multiple threads.
-
-namespace base {
-
-class GOOGLE_GLOG_DLL_DECL Logger {
- public:
-  virtual ~Logger();
-
-  // Writes "message[0,message_len-1]" corresponding to an event that
-  // occurred at "timestamp".  If "force_flush" is true, the log file
-  // is flushed immediately.
   //
-  // The input message has already been formatted as deemed
-  // appropriate by the higher level logging facility.  For example,
-  // textual log messages already contain timestamps, and the
-  // file:linenumber header.
-  virtual void Write(bool force_flush,
-                     time_t timestamp,
-                     const char* message,
-                     int message_len) = 0;
+  // Set the destination to which a particular severity level of log
+  // messages is sent.  If base_filename is "", it means "don't log this
+  // severity".  Thread-safe.
+  //
+  GOOGLE_GLOG_DLL_DECL void SetLogDestination(LogSeverity severity,
+                                              const char *base_filename);
 
-  // Flush any buffered messages
-  virtual void Flush() = 0;
+  //
+  // Set the basename of the symlink to the latest log file at a given
+  // severity.  If symlink_basename is empty, do not make a symlink.  If
+  // you don't call this function, the symlink basename is the
+  // invocation name of the program.  Thread-safe.
+  //
+  GOOGLE_GLOG_DLL_DECL void SetLogSymlink(LogSeverity severity,
+                                          const char *symlink_basename);
 
-  // Get the current LOG file size.
-  // The returned value is approximate since some
-  // logged data may not have been flushed to disk yet.
-  virtual uint32 LogSize() = 0;
-};
+  //
+  // Used to send logs to some other kind of destination
+  // Users should subclass LogSink and override send to do whatever they want.
+  // Implementations must be thread-safe because a shared instance will
+  // be called from whichever thread ran the LOG(XXX) line.
+  class GOOGLE_GLOG_DLL_DECL LogSink
+  {
+  public:
+    virtual ~LogSink();
 
-// Get the logger for the specified severity level.  The logger
-// remains the property of the logging module and should not be
-// deleted by the caller.  Thread-safe.
-extern GOOGLE_GLOG_DLL_DECL Logger* GetLogger(LogSeverity level);
+    // Sink's logging logic (message_len is such as to exclude '\n' at the end).
+    // This method can't use LOG() or CHECK() as logging system mutex(s) are held
+    // during this call.
+    virtual void send(LogSeverity severity, const char *full_filename,
+                      const char *base_filename, int line,
+                      const struct ::tm *tm_time,
+                      const char *message, size_t message_len) = 0;
 
-// Set the logger for the specified severity level.  The logger
-// becomes the property of the logging module and should not
-// be deleted by the caller.  Thread-safe.
-extern GOOGLE_GLOG_DLL_DECL void SetLogger(LogSeverity level, Logger* logger);
+    // Redefine this to implement waiting for
+    // the sink's logging logic to complete.
+    // It will be called after each send() returns,
+    // but before that LogMessage exits or crashes.
+    // By default this function does nothing.
+    // Using this function one can implement complex logic for send()
+    // that itself involves logging; and do all this w/o causing deadlocks and
+    // inconsistent rearrangement of log messages.
+    // E.g. if a LogSink has thread-specific actions, the send() method
+    // can simply add the message to a queue and wake up another thread that
+    // handles real logging while itself making some LOG() calls;
+    // WaitTillSent() can be implemented to wait for that logic to complete.
+    // See our unittest for an example.
+    virtual void WaitTillSent();
 
-}
+    // Returns the normal text output of the log message.
+    // Can be useful to implement send().
+    static std::string ToString(LogSeverity severity, const char *file, int line,
+                                const struct ::tm *tm_time,
+                                const char *message, size_t message_len);
+  };
 
-// glibc has traditionally implemented two incompatible versions of
-// strerror_r(). There is a poorly defined convention for picking the
-// version that we want, but it is not clear whether it even works with
-// all versions of glibc.
-// So, instead, we provide this wrapper that automatically detects the
-// version that is in use, and then implements POSIX semantics.
-// N.B. In addition to what POSIX says, we also guarantee that "buf" will
-// be set to an empty string, if this function failed. This means, in most
-// cases, you do not need to check the error code and you can directly
-// use the value of "buf". It will never have an undefined value.
-// DEPRECATED: Use StrError(int) instead.
-GOOGLE_GLOG_DLL_DECL int posix_strerror_r(int err, char *buf, size_t len);
+  // Add or remove a LogSink as a consumer of logging data.  Thread-safe.
+  GOOGLE_GLOG_DLL_DECL void AddLogSink(LogSink *destination);
+  GOOGLE_GLOG_DLL_DECL void RemoveLogSink(LogSink *destination);
 
-// A thread-safe replacement for strerror(). Returns a string describing the
-// given POSIX error code.
-GOOGLE_GLOG_DLL_DECL std::string StrError(int err);
+  //
+  // Specify an "extension" added to the filename specified via
+  // SetLogDestination.  This applies to all severity levels.  It's
+  // often used to append the port we're listening on to the logfile
+  // name.  Thread-safe.
+  //
+  GOOGLE_GLOG_DLL_DECL void SetLogFilenameExtension(
+      const char *filename_extension);
 
-// A class for which we define operator<<, which does nothing.
-class GOOGLE_GLOG_DLL_DECL NullStream : public LogMessage::LogStream {
- public:
-  // Initialize the LogStream so the messages can be written somewhere
-  // (they'll never be actually displayed). This will be needed if a
-  // NullStream& is implicitly converted to LogStream&, in which case
-  // the overloaded NullStream::operator<< will not be invoked.
-  NullStream() : LogMessage::LogStream(message_buffer_, 1, 0) { }
-  NullStream(const char* /*file*/, int /*line*/,
-             const CheckOpString& /*result*/) :
-      LogMessage::LogStream(message_buffer_, 1, 0) { }
-  NullStream &stream() { return *this; }
- private:
-  // A very short buffer for messages (which we discard anyway). This
-  // will be needed if NullStream& converted to LogStream& (e.g. as a
-  // result of a conditional expression).
-  char message_buffer_[2];
-};
+  //
+  // Make it so that all log messages of at least a particular severity
+  // are logged to stderr (in addition to logging to the usual log
+  // file(s)).  Thread-safe.
+  //
+  GOOGLE_GLOG_DLL_DECL void SetStderrLogging(LogSeverity min_severity);
 
-// Do nothing. This operator is inline, allowing the message to be
-// compiled away. The message will not be compiled away if we do
-// something like (flag ? LOG(INFO) : LOG(ERROR)) << message; when
-// SKIP_LOG=WARNING. In those cases, NullStream will be implicitly
-// converted to LogStream and the message will be computed and then
-// quietly discarded.
-template<class T>
-inline NullStream& operator<<(NullStream &str, const T &) { return str; }
+  //
+  // Make it so that all log messages go only to stderr.  Thread-safe.
+  //
+  GOOGLE_GLOG_DLL_DECL void LogToStderr();
 
-// Similar to NullStream, but aborts the program (without stack
-// trace), like LogMessageFatal.
-class GOOGLE_GLOG_DLL_DECL NullStreamFatal : public NullStream {
- public:
-  NullStreamFatal() { }
-  NullStreamFatal(const char* file, int line, const CheckOpString& result) :
-      NullStream(file, line, result) { }
-  __attribute__ ((noreturn)) ~NullStreamFatal() throw () { _exit(1); }
-};
+  //
+  // Make it so that all log messages of at least a particular severity are
+  // logged via email to a list of addresses (in addition to logging to the
+  // usual log file(s)).  The list of addresses is just a string containing
+  // the email addresses to send to (separated by spaces, say).  Thread-safe.
+  //
+  GOOGLE_GLOG_DLL_DECL void SetEmailLogging(LogSeverity min_severity,
+                                            const char *addresses);
 
-// Install a signal handler that will dump signal information and a stack
-// trace when the program crashes on certain signals.  We'll install the
-// signal handler for the following signals.
-//
-// SIGSEGV, SIGILL, SIGFPE, SIGABRT, SIGBUS, and SIGTERM.
-//
-// By default, the signal handler will write the failure dump to the
-// standard error.  You can customize the destination by installing your
-// own writer function by InstallFailureWriter() below.
-//
-// Note on threading:
-//
-// The function should be called before threads are created, if you want
-// to use the failure signal handler for all threads.  The stack trace
-// will be shown only for the thread that receives the signal.  In other
-// words, stack traces of other threads won't be shown.
-GOOGLE_GLOG_DLL_DECL void InstallFailureSignalHandler();
+  // A simple function that sends email. dest is a commma-separated
+  // list of addressess.  Thread-safe.
+  GOOGLE_GLOG_DLL_DECL bool SendEmail(const char *dest,
+                                      const char *subject, const char *body);
 
-// Installs a function that is used for writing the failure dump.  "data"
-// is the pointer to the beginning of a message to be written, and "size"
-// is the size of the message.  You should not expect the data is
-// terminated with '\0'.
-GOOGLE_GLOG_DLL_DECL void InstallFailureWriter(
-    void (*writer)(const char* data, int size));
+  GOOGLE_GLOG_DLL_DECL const std::vector<std::string> &GetLoggingDirectories();
 
+  // For tests only:  Clear the internal [cached] list of logging directories to
+  // force a refresh the next time GetLoggingDirectories is called.
+  // Thread-hostile.
+  void TestOnly_ClearLoggingDirectoriesList();
+
+  // Returns a set of existing temporary directories, which will be a
+  // subset of the directories returned by GetLogginDirectories().
+  // Thread-safe.
+  GOOGLE_GLOG_DLL_DECL void GetExistingTempDirectories(
+      std::vector<std::string> *list);
+
+  // Print any fatal message again -- useful to call from signal handler
+  // so that the last thing in the output is the fatal message.
+  // Thread-hostile, but a race is unlikely.
+  GOOGLE_GLOG_DLL_DECL void ReprintFatalMessage();
+
+  // Truncate a log file that may be the append-only output of multiple
+  // processes and hence can't simply be renamed/reopened (typically a
+  // stdout/stderr).  If the file "path" is > "limit" bytes, copy the
+  // last "keep" bytes to offset 0 and truncate the rest. Since we could
+  // be racing with other writers, this approach has the potential to
+  // lose very small amounts of data. For security, only follow symlinks
+  // if the path is /proc/self/fd/*
+  GOOGLE_GLOG_DLL_DECL void TruncateLogFile(const char *path,
+                                            int64 limit, int64 keep);
+
+  // Truncate stdout and stderr if they are over the value specified by
+  // --max_log_size; keep the final 1MB.  This function has the same
+  // race condition as TruncateLogFile.
+  GOOGLE_GLOG_DLL_DECL void TruncateStdoutStderr();
+
+  // Return the string representation of the provided LogSeverity level.
+  // Thread-safe.
+  GOOGLE_GLOG_DLL_DECL const char *GetLogSeverityName(LogSeverity severity);
+
+  // ---------------------------------------------------------------------
+  // Implementation details that are not useful to most clients
+  // ---------------------------------------------------------------------
+
+  // A Logger is the interface used by logging modules to emit entries
+  // to a log.  A typical implementation will dump formatted data to a
+  // sequence of files.  We also provide interfaces that will forward
+  // the data to another thread so that the invoker never blocks.
+  // Implementations should be thread-safe since the logging system
+  // will write to them from multiple threads.
+
+  namespace base
+  {
+
+    class GOOGLE_GLOG_DLL_DECL Logger
+    {
+    public:
+      virtual ~Logger();
+
+      // Writes "message[0,message_len-1]" corresponding to an event that
+      // occurred at "timestamp".  If "force_flush" is true, the log file
+      // is flushed immediately.
+      //
+      // The input message has already been formatted as deemed
+      // appropriate by the higher level logging facility.  For example,
+      // textual log messages already contain timestamps, and the
+      // file:linenumber header.
+      virtual void Write(bool force_flush,
+                         time_t timestamp,
+                         const char *message,
+                         int message_len) = 0;
+
+      // Flush any buffered messages
+      virtual void Flush() = 0;
+
+      // Get the current LOG file size.
+      // The returned value is approximate since some
+      // logged data may not have been flushed to disk yet.
+      virtual uint32 LogSize() = 0;
+    };
+
+    // Get the logger for the specified severity level.  The logger
+    // remains the property of the logging module and should not be
+    // deleted by the caller.  Thread-safe.
+    extern GOOGLE_GLOG_DLL_DECL Logger *GetLogger(LogSeverity level);
+
+    // Set the logger for the specified severity level.  The logger
+    // becomes the property of the logging module and should not
+    // be deleted by the caller.  Thread-safe.
+    extern GOOGLE_GLOG_DLL_DECL void SetLogger(LogSeverity level, Logger *logger);
+
+  }
+
+  // glibc has traditionally implemented two incompatible versions of
+  // strerror_r(). There is a poorly defined convention for picking the
+  // version that we want, but it is not clear whether it even works with
+  // all versions of glibc.
+  // So, instead, we provide this wrapper that automatically detects the
+  // version that is in use, and then implements POSIX semantics.
+  // N.B. In addition to what POSIX says, we also guarantee that "buf" will
+  // be set to an empty string, if this function failed. This means, in most
+  // cases, you do not need to check the error code and you can directly
+  // use the value of "buf". It will never have an undefined value.
+  // DEPRECATED: Use StrError(int) instead.
+  GOOGLE_GLOG_DLL_DECL int posix_strerror_r(int err, char *buf, size_t len);
+
+  // A thread-safe replacement for strerror(). Returns a string describing the
+  // given POSIX error code.
+  GOOGLE_GLOG_DLL_DECL std::string StrError(int err);
+
+  // A class for which we define operator<<, which does nothing.
+  class GOOGLE_GLOG_DLL_DECL NullStream : public LogMessage::LogStream
+  {
+  public:
+    // Initialize the LogStream so the messages can be written somewhere
+    // (they'll never be actually displayed). This will be needed if a
+    // NullStream& is implicitly converted to LogStream&, in which case
+    // the overloaded NullStream::operator<< will not be invoked.
+    NullStream() : LogMessage::LogStream(message_buffer_, 1, 0) {}
+    NullStream(const char * /*file*/, int /*line*/,
+               const CheckOpString & /*result*/) : LogMessage::LogStream(message_buffer_, 1, 0) {}
+    NullStream &stream() { return *this; }
+
+  private:
+    // A very short buffer for messages (which we discard anyway). This
+    // will be needed if NullStream& converted to LogStream& (e.g. as a
+    // result of a conditional expression).
+    char message_buffer_[2];
+  };
+
+  // Do nothing. This operator is inline, allowing the message to be
+  // compiled away. The message will not be compiled away if we do
+  // something like (flag ? LOG(INFO) : LOG(ERROR)) << message; when
+  // SKIP_LOG=WARNING. In those cases, NullStream will be implicitly
+  // converted to LogStream and the message will be computed and then
+  // quietly discarded.
+  template <class T>
+  inline NullStream &operator<<(NullStream &str, const T &) { return str; }
+
+  // Similar to NullStream, but aborts the program (without stack
+  // trace), like LogMessageFatal.
+  class GOOGLE_GLOG_DLL_DECL NullStreamFatal : public NullStream
+  {
+  public:
+    NullStreamFatal() {}
+    NullStreamFatal(const char *file, int line, const CheckOpString &result) : NullStream(file, line, result) {}
+    __attribute__((noreturn)) ~NullStreamFatal() throw() { _exit(1); }
+  };
+
+  // Install a signal handler that will dump signal information and a stack
+  // trace when the program crashes on certain signals.  We'll install the
+  // signal handler for the following signals.
+  //
+  // SIGSEGV, SIGILL, SIGFPE, SIGABRT, SIGBUS, and SIGTERM.
+  //
+  // By default, the signal handler will write the failure dump to the
+  // standard error.  You can customize the destination by installing your
+  // own writer function by InstallFailureWriter() below.
+  //
+  // Note on threading:
+  //
+  // The function should be called before threads are created, if you want
+  // to use the failure signal handler for all threads.  The stack trace
+  // will be shown only for the thread that receives the signal.  In other
+  // words, stack traces of other threads won't be shown.
+  GOOGLE_GLOG_DLL_DECL void InstallFailureSignalHandler();
+
+  // Installs a function that is used for writing the failure dump.  "data"
+  // is the pointer to the beginning of a message to be written, and "size"
+  // is the size of the message.  You should not expect the data is
+  // terminated with '\0'.
+  GOOGLE_GLOG_DLL_DECL void InstallFailureWriter(
+      void (*writer)(const char *data, int size));
 }
 
 #endif // _LOGGING_H_

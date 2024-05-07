@@ -54,34 +54,40 @@ using namespace std;
 using namespace GOOGLE_NAMESPACE;
 
 // A wrapper function for Demangle() to make the unit test simple.
-static const char *DemangleIt(const char * const mangled) {
+static const char *DemangleIt(const char *const mangled)
+{
   static char demangled[4096];
-  if (Demangle(mangled, demangled, sizeof(demangled))) {
+  if (Demangle(mangled, demangled, sizeof(demangled)))
+  {
     return demangled;
-  } else {
+  }
+  else
+  {
     return mangled;
   }
 }
 
 // Test corner cases of bounary conditions.
-TEST(Demangle, CornerCases) {
+TEST(Demangle, CornerCases)
+{
   char tmp[10];
   EXPECT_TRUE(Demangle("_Z6foobarv", tmp, sizeof(tmp)));
   // sizeof("foobar()") == 9
   EXPECT_STREQ("foobar()", tmp);
   EXPECT_TRUE(Demangle("_Z6foobarv", tmp, 9));
   EXPECT_STREQ("foobar()", tmp);
-  EXPECT_FALSE(Demangle("_Z6foobarv", tmp, 8));  // Not enough.
+  EXPECT_FALSE(Demangle("_Z6foobarv", tmp, 8)); // Not enough.
   EXPECT_FALSE(Demangle("_Z6foobarv", tmp, 1));
   EXPECT_FALSE(Demangle("_Z6foobarv", tmp, 0));
-  EXPECT_FALSE(Demangle("_Z6foobarv", NULL, 0));  // Should not cause SEGV.
+  EXPECT_FALSE(Demangle("_Z6foobarv", NULL, 0)); // Should not cause SEGV.
 }
 
 // Test handling of functions suffixed with .clone.N, which is used by GCC
 // 4.5.x, and .constprop.N and .isra.N, which are used by GCC 4.6.x.  These
 // suffixes are used to indicate functions which have been cloned during
 // optimization.  We ignore these suffixes.
-TEST(Demangle, Clones) {
+TEST(Demangle, Clones)
+{
   char tmp[20];
   EXPECT_TRUE(Demangle("_ZL3Foov", tmp, sizeof(tmp)));
   EXPECT_STREQ("Foo()", tmp);
@@ -103,15 +109,18 @@ TEST(Demangle, Clones) {
   EXPECT_FALSE(Demangle("_ZL3Foov.isra.2.constprop.", tmp, sizeof(tmp)));
 }
 
-TEST(Demangle, FromFile) {
+TEST(Demangle, FromFile)
+{
   string test_file = FLAGS_test_srcdir + "/src/demangle_unittest.txt";
-  ifstream f(test_file.c_str());  // The file should exist.
+  ifstream f(test_file.c_str()); // The file should exist.
   EXPECT_FALSE(f.fail());
 
   string line;
-  while (getline(f, line)) {
+  while (getline(f, line))
+  {
     // Lines start with '#' are considered as comments.
-    if (line.empty() || line[0] == '#') {
+    if (line.empty() || line[0] == '#')
+    {
       continue;
     }
     // Each line should contain a mangled name and a demangled name
@@ -124,7 +133,8 @@ TEST(Demangle, FromFile) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 #ifdef HAVE_LIB_GFLAGS
   ParseCommandLineFlags(&argc, &argv, true);
 #endif
@@ -132,17 +142,23 @@ int main(int argc, char **argv) {
 
   FLAGS_logtostderr = true;
   InitGoogleLogging(argv[0]);
-  if (FLAGS_demangle_filter) {
+  if (FLAGS_demangle_filter)
+  {
     // Read from cin and write to cout.
     string line;
-    while (getline(cin, line, '\n')) {
+    while (getline(cin, line, '\n'))
+    {
       cout << DemangleIt(line.c_str()) << endl;
     }
     return 0;
-  } else if (argc > 1) {
+  }
+  else if (argc > 1)
+  {
     cout << DemangleIt(argv[1]) << endl;
     return 0;
-  } else {
+  }
+  else
+  {
     return RUN_ALL_TESTS();
   }
 }

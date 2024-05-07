@@ -48,7 +48,8 @@ using namespace GFLAGS_NAMESPACE;
 
 using namespace GOOGLE_NAMESPACE;
 
-void* DieInThread(void*) {
+void *DieInThread(void *)
+{
   // We assume pthread_t is an integral number or a pointer, rather
   // than a complex struct.  In some environments, pthread_self()
   // returns an uint64 but in some other environments pthread_self()
@@ -62,13 +63,16 @@ void* DieInThread(void*) {
   return NULL;
 }
 
-void WriteToStdout(const char* data, int size) {
-  if (write(STDOUT_FILENO, data, size) < 0) {
+void WriteToStdout(const char *data, int size)
+{
+  if (write(STDOUT_FILENO, data, size) < 0)
+  {
     // Ignore errors.
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 #if defined(HAVE_STACKTRACE) && defined(HAVE_SYMBOLIZE)
   InitGoogleLogging(argv[0]);
 #ifdef HAVE_LIB_GFLAGS
@@ -76,24 +80,34 @@ int main(int argc, char **argv) {
 #endif
   InstallFailureSignalHandler();
   const std::string command = argc > 1 ? argv[1] : "none";
-  if (command == "segv") {
+  if (command == "segv")
+  {
     // We'll check if this is outputted.
     LOG(INFO) << "create the log file";
     LOG(INFO) << "a message before segv";
     // We assume 0xDEAD is not writable.
-    int *a = (int*)0xDEAD;
+    int *a = (int *)0xDEAD;
     *a = 0;
-  } else if (command == "loop") {
+  }
+  else if (command == "loop")
+  {
     fprintf(stderr, "looping\n");
-    while (true);
-  } else if (command == "die_in_thread") {
+    while (true)
+      ;
+  }
+  else if (command == "die_in_thread")
+  {
     pthread_t thread;
     pthread_create(&thread, NULL, &DieInThread, NULL);
     pthread_join(thread, NULL);
-  } else if (command == "dump_to_stdout") {
+  }
+  else if (command == "dump_to_stdout")
+  {
     InstallFailureWriter(WriteToStdout);
     abort();
-  } else {
+  }
+  else
+  {
     // Tell the shell script
     puts("OK");
   }

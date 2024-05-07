@@ -37,7 +37,7 @@
 #include "commandlineflags.h"
 
 #ifdef HAVE_EXECINFO_H
-# include <execinfo.h>
+#include <execinfo.h>
 #endif
 
 using namespace GOOGLE_NAMESPACE;
@@ -51,7 +51,8 @@ using namespace GOOGLE_NAMESPACE;
 // backtrace.
 const int BACKTRACE_STEPS = 6;
 
-struct AddressRange {
+struct AddressRange
+{
   const void *start, *end;
 };
 
@@ -62,44 +63,58 @@ AddressRange expected_range[BACKTRACE_STEPS];
 // Using GCC extension: address of a label can be taken with '&&label'.
 // Start should be a label somewhere before recursive call, end somewhere
 // after it.
-#define INIT_ADDRESS_RANGE(fn, start_label, end_label, prange)           \
-  do {                                                                   \
-    (prange)->start = &&start_label;                                     \
-    (prange)->end = &&end_label;                                         \
-    CHECK_LT((prange)->start, (prange)->end);                            \
+#define INIT_ADDRESS_RANGE(fn, start_label, end_label, prange) \
+  do                                                           \
+  {                                                            \
+    (prange)->start = &&start_label;                           \
+    (prange)->end = &&end_label;                               \
+    CHECK_LT((prange)->start, (prange)->end);                  \
   } while (0)
 // This macro expands into "unmovable" code (opaque to GCC), and that
 // prevents GCC from moving a_label up or down in the code.
 // Without it, there is no code following the 'end' label, and GCC
 // (4.3.1, 4.4.0) thinks it safe to assign &&end an address that is before
 // the recursive call.
-#define DECLARE_ADDRESS_LABEL(a_label)                                   \
-  a_label: do { __asm__ __volatile__(""); } while (0)
+#define DECLARE_ADDRESS_LABEL(a_label) \
+  a_label:                             \
+  do                                   \
+  {                                    \
+    __asm__ __volatile__("");          \
+  } while (0)
 // Gcc 4.4.0 may split function into multiple chunks, and the chunk
 // performing recursive call may end up later in the code then the return
 // instruction (this actually happens with FDO).
 // Adjust function range from __builtin_return_address.
-#define ADJUST_ADDRESS_RANGE_FROM_RA(prange)                             \
-  do {                                                                   \
-    void *ra = __builtin_return_address(0);                              \
-    CHECK_LT((prange)->start, ra);                                       \
-    if (ra > (prange)->end) {                                            \
-      printf("Adjusting range from %p..%p to %p..%p\n",                  \
-             (prange)->start, (prange)->end,                             \
-             (prange)->start, ra);                                       \
-      (prange)->end = ra;                                                \
-    }                                                                    \
+#define ADJUST_ADDRESS_RANGE_FROM_RA(prange)            \
+  do                                                    \
+  {                                                     \
+    void *ra = __builtin_return_address(0);             \
+    CHECK_LT((prange)->start, ra);                      \
+    if (ra > (prange)->end)                             \
+    {                                                   \
+      printf("Adjusting range from %p..%p to %p..%p\n", \
+             (prange)->start, (prange)->end,            \
+             (prange)->start, ra);                      \
+      (prange)->end = ra;                               \
+    }                                                   \
   } while (0)
 #else
 // Assume the Check* functions below are not longer than 256 bytes.
-#define INIT_ADDRESS_RANGE(fn, start_label, end_label, prange)           \
-  do {                                                                   \
-    (prange)->start = reinterpret_cast<const void *>(&fn);               \
-    (prange)->end = reinterpret_cast<const char *>(&fn) + 256;           \
+#define INIT_ADDRESS_RANGE(fn, start_label, end_label, prange) \
+  do                                                           \
+  {                                                            \
+    (prange)->start = reinterpret_cast<const void *>(&fn);     \
+    (prange)->end = reinterpret_cast<const char *>(&fn) + 256; \
   } while (0)
-#define DECLARE_ADDRESS_LABEL(a_label) do { } while (0)
-#define ADJUST_ADDRESS_RANGE_FROM_RA(prange) do { } while (0)
-#endif  // __GNUC__
+#define DECLARE_ADDRESS_LABEL(a_label) \
+  do                                   \
+  {                                    \
+  } while (0)
+#define ADJUST_ADDRESS_RANGE_FROM_RA(prange) \
+  do                                         \
+  {                                          \
+  } while (0)
+#endif // __GNUC__
 
 //-----------------------------------------------------------------------//
 
@@ -112,7 +127,8 @@ void CheckRetAddrIsInFunction(void *ret_addr, const AddressRange &range)
 //-----------------------------------------------------------------------//
 
 void ATTRIBUTE_NOINLINE CheckStackTrace(int);
-void ATTRIBUTE_NOINLINE CheckStackTraceLeaf(void) {
+void ATTRIBUTE_NOINLINE CheckStackTraceLeaf(void)
+{
   const int STACK_LEN = 10;
   void *stack[STACK_LEN];
   int size;
@@ -125,7 +141,8 @@ void ATTRIBUTE_NOINLINE CheckStackTraceLeaf(void) {
   CHECK_GE(size, 1);
   CHECK_LE(size, STACK_LEN);
 
-  if (1) {
+  if (1)
+  {
 #ifdef HAVE_EXECINFO_H
     char **strings = backtrace_symbols(stack, size);
     printf("Obtained %d stack frames.\n", size);
@@ -135,7 +152,8 @@ void ATTRIBUTE_NOINLINE CheckStackTraceLeaf(void) {
     free(strings);
 #endif
   }
-  for (int i = 0; i < BACKTRACE_STEPS; i++) {
+  for (int i = 0; i < BACKTRACE_STEPS; i++)
+  {
     printf("Backtrace %d: expected: %p..%p  actual: %p ... ",
            i, expected_range[i].start, expected_range[i].end, stack[i]);
     fflush(stdout);
@@ -148,7 +166,8 @@ void ATTRIBUTE_NOINLINE CheckStackTraceLeaf(void) {
 //-----------------------------------------------------------------------//
 
 /* Dummy functions to make the backtrace more interesting. */
-void ATTRIBUTE_NOINLINE CheckStackTrace4(int i) {
+void ATTRIBUTE_NOINLINE CheckStackTrace4(int i)
+{
   ADJUST_ADDRESS_RANGE_FROM_RA(&expected_range[2]);
   INIT_ADDRESS_RANGE(CheckStackTrace4, start, end, &expected_range[1]);
   DECLARE_ADDRESS_LABEL(start);
@@ -156,7 +175,8 @@ void ATTRIBUTE_NOINLINE CheckStackTrace4(int i) {
     CheckStackTraceLeaf();
   DECLARE_ADDRESS_LABEL(end);
 }
-void ATTRIBUTE_NOINLINE CheckStackTrace3(int i) {
+void ATTRIBUTE_NOINLINE CheckStackTrace3(int i)
+{
   ADJUST_ADDRESS_RANGE_FROM_RA(&expected_range[3]);
   INIT_ADDRESS_RANGE(CheckStackTrace3, start, end, &expected_range[2]);
   DECLARE_ADDRESS_LABEL(start);
@@ -164,7 +184,8 @@ void ATTRIBUTE_NOINLINE CheckStackTrace3(int i) {
     CheckStackTrace4(j);
   DECLARE_ADDRESS_LABEL(end);
 }
-void ATTRIBUTE_NOINLINE CheckStackTrace2(int i) {
+void ATTRIBUTE_NOINLINE CheckStackTrace2(int i)
+{
   ADJUST_ADDRESS_RANGE_FROM_RA(&expected_range[4]);
   INIT_ADDRESS_RANGE(CheckStackTrace2, start, end, &expected_range[3]);
   DECLARE_ADDRESS_LABEL(start);
@@ -172,7 +193,8 @@ void ATTRIBUTE_NOINLINE CheckStackTrace2(int i) {
     CheckStackTrace3(j);
   DECLARE_ADDRESS_LABEL(end);
 }
-void ATTRIBUTE_NOINLINE CheckStackTrace1(int i) {
+void ATTRIBUTE_NOINLINE CheckStackTrace1(int i)
+{
   ADJUST_ADDRESS_RANGE_FROM_RA(&expected_range[5]);
   INIT_ADDRESS_RANGE(CheckStackTrace1, start, end, &expected_range[4]);
   DECLARE_ADDRESS_LABEL(start);
@@ -180,7 +202,8 @@ void ATTRIBUTE_NOINLINE CheckStackTrace1(int i) {
     CheckStackTrace2(j);
   DECLARE_ADDRESS_LABEL(end);
 }
-void ATTRIBUTE_NOINLINE CheckStackTrace(int i) {
+void ATTRIBUTE_NOINLINE CheckStackTrace(int i)
+{
   INIT_ADDRESS_RANGE(CheckStackTrace, start, end, &expected_range[5]);
   DECLARE_ADDRESS_LABEL(start);
   for (int j = i; j >= 0; j--)
@@ -190,7 +213,8 @@ void ATTRIBUTE_NOINLINE CheckStackTrace(int i) {
 
 //-----------------------------------------------------------------------//
 
-int main(int, char ** argv) {
+int main(int, char **argv)
+{
   FLAGS_logtostderr = true;
   InitGoogleLogging(argv[0]);
 
@@ -201,8 +225,9 @@ int main(int, char ** argv) {
 }
 
 #else
-int main() {
+int main()
+{
   printf("PASS (no stacktrace support)\n");
   return 0;
 }
-#endif  // HAVE_STACKTRACE
+#endif // HAVE_STACKTRACE

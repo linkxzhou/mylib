@@ -41,21 +41,21 @@
 #ifdef __GNUC__
 // C++0x isn't enabled by default in GCC and libc++ does not have
 // non-standard ext/* and tr1/unordered_*.
-# if defined(_LIBCPP_VERSION)
-#  ifndef GLOG_STL_LOGGING_FOR_UNORDERED
-#  define GLOG_STL_LOGGING_FOR_UNORDERED
-#  endif
-# else
-#  ifndef GLOG_STL_LOGGING_FOR_EXT_HASH
-#  define GLOG_STL_LOGGING_FOR_EXT_HASH
-#  endif
-#  ifndef GLOG_STL_LOGGING_FOR_EXT_SLIST
-#  define GLOG_STL_LOGGING_FOR_EXT_SLIST
-#  endif
-#  ifndef GLOG_STL_LOGGING_FOR_TR1_UNORDERED
-#  define GLOG_STL_LOGGING_FOR_TR1_UNORDERED
-#  endif
-# endif
+#if defined(_LIBCPP_VERSION)
+#ifndef GLOG_STL_LOGGING_FOR_UNORDERED
+#define GLOG_STL_LOGGING_FOR_UNORDERED
+#endif
+#else
+#ifndef GLOG_STL_LOGGING_FOR_EXT_HASH
+#define GLOG_STL_LOGGING_FOR_EXT_HASH
+#endif
+#ifndef GLOG_STL_LOGGING_FOR_EXT_SLIST
+#define GLOG_STL_LOGGING_FOR_EXT_SLIST
+#endif
+#ifndef GLOG_STL_LOGGING_FOR_TR1_UNORDERED
+#define GLOG_STL_LOGGING_FOR_TR1_UNORDERED
+#endif
+#endif
 #endif
 
 #include "logging.h"
@@ -67,11 +67,13 @@ using namespace std;
 using namespace __gnu_cxx;
 #endif
 
-struct user_hash {
+struct user_hash
+{
   size_t operator()(int x) const { return x; }
 };
 
-void TestSTLLogging() {
+void TestSTLLogging()
+{
   {
     // Test a sequence.
     vector<int> v;
@@ -82,20 +84,20 @@ void TestSTLLogging() {
     ss << v;
     EXPECT_EQ(ss.str(), "10 20 30");
     vector<int> copied_v(v);
-    CHECK_EQ(v, copied_v);  // This must compile.
+    CHECK_EQ(v, copied_v); // This must compile.
   }
 
   {
     // Test a sorted pair associative container.
-    map< int, string > m;
+    map<int, string> m;
     m[20] = "twenty";
     m[10] = "ten";
     m[30] = "thirty";
     ostringstream ss;
     ss << m;
     EXPECT_EQ(ss.str(), "(10, ten) (20, twenty) (30, thirty)");
-    map< int, string > copied_m(m);
-    CHECK_EQ(m, copied_m);  // This must compile.
+    map<int, string> copied_m(m);
+    CHECK_EQ(m, copied_m); // This must compile.
   }
 
 #ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
@@ -109,7 +111,7 @@ void TestSTLLogging() {
     ss << hs;
     EXPECT_EQ(ss.str(), "10 20 30");
     hash_set<int> copied_hs(hs);
-    CHECK_EQ(hs, copied_hs);  // This must compile.
+    CHECK_EQ(hs, copied_hs); // This must compile.
   }
 #endif
 
@@ -124,7 +126,7 @@ void TestSTLLogging() {
     ss << hm;
     EXPECT_EQ(ss.str(), "(10, ten) (20, twenty) (30, thirty)");
     hash_map<int, string> copied_hm(hm);
-    CHECK_EQ(hm, copied_hm);  // this must compile
+    CHECK_EQ(hm, copied_hm); // this must compile
   }
 #endif
 
@@ -132,9 +134,11 @@ void TestSTLLogging() {
     // Test a long sequence.
     vector<int> v;
     string expected;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 100; i++)
+    {
       v.push_back(i);
-      if (i > 0) expected += ' ';
+      if (i > 0)
+        expected += ' ';
       char buf[256];
       sprintf(buf, "%d", i);
       expected += buf;
@@ -149,15 +153,15 @@ void TestSTLLogging() {
   {
     // Test a sorted pair associative container.
     // Use a non-default comparison functor.
-    map< int, string, greater<int> > m;
+    map<int, string, greater<int>> m;
     m[20] = "twenty";
     m[10] = "ten";
     m[30] = "thirty";
     ostringstream ss;
     ss << m;
     EXPECT_EQ(ss.str(), "(30, thirty) (20, twenty) (10, ten)");
-    map< int, string, greater<int> > copied_m(m);
-    CHECK_EQ(m, copied_m);  // This must compile.
+    map<int, string, greater<int>> copied_m(m);
+    CHECK_EQ(m, copied_m); // This must compile.
   }
 
 #ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
@@ -172,12 +176,13 @@ void TestSTLLogging() {
     ss << hs;
     EXPECT_EQ(ss.str(), "10 20 30");
     hash_set<int, user_hash> copied_hs(hs);
-    CHECK_EQ(hs, copied_hs);  // This must compile.
+    CHECK_EQ(hs, copied_hs); // This must compile.
   }
 #endif
 }
 
-int main(int, char**) {
+int main(int, char **)
+{
   TestSTLLogging();
   std::cout << "PASS\n";
   return 0;
@@ -187,11 +192,12 @@ int main(int, char**) {
 
 #include <iostream>
 
-int main(int, char**) {
+int main(int, char **)
+{
   std::cout << "We don't support stl_logging for this compiler.\n"
             << "(we need compiler support of 'using ::operator<<' "
             << "for this feature.)\n";
   return 0;
 }
 
-#endif  // HAVE_USING_OPERATOR
+#endif // HAVE_USING_OPERATOR

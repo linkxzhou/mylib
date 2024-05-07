@@ -33,11 +33,12 @@
 
 #include "utilities.h"
 
-extern "C" {
+extern "C"
+{
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 }
-#include "glog/raw_logging.h"
+#include "raw_logging.h"
 #include "stacktrace.h"
 
 _START_GOOGLE_NAMESPACE_
@@ -52,27 +53,33 @@ _START_GOOGLE_NAMESPACE_
 static bool g_now_entering = false;
 
 // If you change this function, also change GetStackFrames below.
-int GetStackTrace(void** result, int max_depth, int skip_count) {
+int GetStackTrace(void **result, int max_depth, int skip_count)
+{
   void *ip;
   int n = 0;
   unw_cursor_t cursor;
   unw_context_t uc;
 
-  if (sync_val_compare_and_swap(&g_now_entering, false, true)) {
+  if (sync_val_compare_and_swap(&g_now_entering, false, true))
+  {
     return 0;
   }
 
   unw_getcontext(&uc);
   RAW_CHECK(unw_init_local(&cursor, &uc) >= 0, "unw_init_local failed");
-  skip_count++;         // Do not include the "GetStackTrace" frame
+  skip_count++; // Do not include the "GetStackTrace" frame
 
-  while (n < max_depth) {
-    int ret = unw_get_reg(&cursor, UNW_REG_IP, (unw_word_t *) &ip);
+  while (n < max_depth)
+  {
+    int ret = unw_get_reg(&cursor, UNW_REG_IP, (unw_word_t *)&ip);
     if (ret < 0)
       break;
-    if (skip_count > 0) {
+    if (skip_count > 0)
+    {
       skip_count--;
-    } else {
+    }
+    else
+    {
       result[n++] = ip;
     }
     ret = unw_step(&cursor);

@@ -130,7 +130,7 @@
 #define HAVE___SYNC_VAL_COMPARE_AND_SWAP 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+ */
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
@@ -180,4 +180,6 @@
 #define _END_GOOGLE_NAMESPACE_ }
 
 /* Puts following code inside the Google namespace */
-#define _START_GOOGLE_NAMESPACE_ namespace google {
+#define _START_GOOGLE_NAMESPACE_ \
+   namespace google              \
+   {

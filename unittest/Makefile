@@ -17,7 +17,7 @@ ifeq ($(ARCH),32)
 	CFLAGS += -m32 -march=pentium4
 endif
 
-CFLAGS  += -g -D_SPP_PROXY -D_MP_MODE -Wno-write-strings -Werror -MMD -D_GNU_SOURCE -D_REENTRANT -DSTACKSTRACE
+CFLAGS  += -g -Wno-write-strings -Werror -MMD -D_GNU_SOURCE -D_REENTRANT -DSTACKSTRACE
 CXXFLAGS+=$(CFLAGS)
 
 $(TARGET): $(OBJ)

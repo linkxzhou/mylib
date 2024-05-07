@@ -82,4 +82,4 @@ bool GOOGLE_GLOG_DLL_DECL Demangle(const char *mangled, char *out, int out_size)
 
 _END_GOOGLE_NAMESPACE_
 
-#endif  // BASE_DEMANGLE_H_
+#endif // BASE_DEMANGLE_H_
