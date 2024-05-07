@@ -51,11 +51,14 @@ FLAGS_minloglevel   输出日志的最小级别，即高于等于该级别的日
 # 初始化  
 
 ```
-1、google::InitGoogleLogging(argv[0]);  // 初始化  
+// 初始化 
+1、google::InitGoogleLogging(argv[0]);   
 2、google::SetLogDestination(google::GLOG_INFO, "./test");  
 - 第一个参数为日志级别  
 - 第二个参数表示输出目录及日志文件名前缀  
-3、google::SetStderrLogging(google::INFO); // 输出到标准输出的时候大于 INFO 级别的都输出；等同于 FLAGS_stderrthreshold=google::INFO; 
+
+// 输出到标准输出的时候大于 INFO 级别的都输出；等同于 FLAGS_stderrthreshold=google::INFO; 
+3、google::SetStderrLogging(google::INFO); 
 
 // 可以设置的FLAGS
 FLAGS_logbufsecs=0;　　	// 实时输出日志  
@@ -73,10 +76,14 @@ LOG_IF(INFO, num_cookies > 10) << "Got lots of cookies";
 ## 条件输出   
 
 ```c++
-LOG_IF(INFO, num_cookies > 10) << "Got lots of cookies"; //当条件满足时输出日志  
-LOG_EVERY_N(INFO, 10) << "Got the " << google::COUNTER << "th cookie";　//google::COUNTER   记录该语句被执行次数，从1开始，在第一次运行输出日志之后，每隔 10 次再输出一次日志信息  
-LOG_IF_EVERY_N(INFO, (size > 1024), 10) << "Got the " << google::COUNTER << "th big cookie";　　//上述两者的结合，不过要注意，是先每隔10次去判断条件是否满足，如果滞则输出日志；而不是当满足某条件的情况下，每隔10次输出一次日志信息  
-LOG_FIRST_N(INFO, 20) << "Got the " << google::COUNTER << "th cookie"; //当此语句执行的前 20 次都输出日志，然后不再输出  
+//当条件满足时输出日志  
+LOG_IF(INFO, num_cookies > 10) << "Got lots of cookies"; 
+//google::COUNTER 记录该语句被执行次数，从1开始，在第一次运行输出日志之后，每隔 10 次再输出一次日志信息 
+LOG_EVERY_N(INFO, 10) << "Got the " << google::COUNTER << "th cookie";　 
+//上述两者的结合，不过要注意，是先每隔10次去判断条件是否满足，如果滞则输出日志；而不是当满足某条件的情况下，每隔10次输出一次日志信息
+LOG_IF_EVERY_N(INFO, (size > 1024), 10) << "Got the " << google::COUNTER << "th big cookie";　　 
+//当此语句执行的前 20 次都输出日志，然后不再输出   
+LOG_FIRST_N(INFO, 20) << "Got the " << google::COUNTER << "th cookie"; 
 ```
 
 ## 日志类型  
@@ -138,7 +145,7 @@ google::SetLogFilenameExtension("91_");
 
 //捕捉 core dumped                     
 google::InstallFailureSignalHandler();    
-  
+
 //默认捕捉 SIGSEGV 信号信息输出会输出到                 
 google::InstallFailureWriter(&SignalHandle);                
 ```
