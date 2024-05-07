@@ -8,7 +8,7 @@ ifeq ($(shell uname -s), Darwin)
 endif
 
 TARGET = glog.a
-INC += -I./base -I./
+INC += -I./base -I./ -I../
 LIB += -lpthread -ldl -lrt
 OBJ = $(patsubst %.cpp, %.o, $(wildcard *.cpp))
 
@@ -20,7 +20,7 @@ ifeq ($(ARCH),32)
 	CFLAGS += -m32 -march=pentium4
 endif
 
-CFLAGS  += -g -Wno-write-strings -Werror -MMD -D_GNU_SOURCE -D_REENTRANT -DSTACKSTRACE
+CFLAGS  += -g -Wno-write-strings -Werror -MMD -D_GNU_SOURCE -D_REENTRANT -DSTACKSTRACE $(INC)
 CXXFLAGS += $(CFLAGS)
 
 $(TARGET): $(OBJ)

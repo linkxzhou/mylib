@@ -32,14 +32,14 @@
 // This is a helper binary for testing signalhandler.cc.  The actual test
 // is done in signalhandler_unittest.sh.
 
-#include "utilities.h"
+#include "glog/utilities.h"
+#include "glog/logging.h"
 
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include "logging.h"
 
 #ifdef HAVE_LIB_GFLAGS
 #include <gflags/gflags.h>

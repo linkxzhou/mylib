@@ -223,7 +223,6 @@ int main(int, char **argv)
   printf("PASS\n");
   return 0;
 }
-
 #else
 int main()
 {

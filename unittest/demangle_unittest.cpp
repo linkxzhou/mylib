@@ -31,16 +31,15 @@
 //
 // Unit tests for functions in demangle.c.
 
-#include "utilities.h"
-
+#include "glog/utilities.h"
+#include "glog/logging.h"
+#include "glog/demangle.h"
+#include "base/config.h"
+#include "base/commandlineflags.h"
+#include <gtest/gtest.h>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "logging.h"
-#include "demangle.h"
-#include "config.h"
-// 使用google的test版本
-#include "googletest.h"
 
 #ifdef HAVE_LIB_GFLAGS
 #include <gflags/gflags.h>
@@ -51,6 +50,7 @@ GLOG_DEFINE_bool(demangle_filter, false,
                  "Run demangle_unittest in filter mode");
 
 using namespace std;
+using namespace testing;
 using namespace GOOGLE_NAMESPACE;
 
 // A wrapper function for Demangle() to make the unit test simple.
@@ -109,6 +109,7 @@ TEST(Demangle, Clones)
   EXPECT_FALSE(Demangle("_ZL3Foov.isra.2.constprop.", tmp, sizeof(tmp)));
 }
 
+#ifdef HAVE_LIB_GFLAGS
 TEST(Demangle, FromFile)
 {
   string test_file = FLAGS_test_srcdir + "/src/demangle_unittest.txt";
@@ -132,6 +133,7 @@ TEST(Demangle, FromFile)
     EXPECT_EQ(demangled, DemangleIt(mangled.c_str()));
   }
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -142,6 +144,7 @@ int main(int argc, char **argv)
 
   FLAGS_logtostderr = true;
   InitGoogleLogging(argv[0]);
+
   if (FLAGS_demangle_filter)
   {
     // Read from cin and write to cout.

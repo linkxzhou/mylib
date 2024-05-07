@@ -31,15 +31,14 @@
 //
 // Unit tests for functions in symbolize.cc.
 
-#include "utilities.h"
+#include "glog/utilities.h"
+#include "glog/logging.h"
+#include "glog/symbolize.h"
+#include "base/config.h"
 
+#include <gtest/gtest.h>
 #include <signal.h>
 #include <iostream>
-
-#include "logging.h"
-#include "symbolize.h"
-#include "config.h"
-#include "googletest.h"
 
 #ifdef HAVE_LIB_GFLAGS
 #include <gflags/gflags.h>
@@ -47,6 +46,7 @@ using namespace GFLAGS_NAMESPACE;
 #endif
 
 using namespace std;
+using namespace testing;
 using namespace GOOGLE_NAMESPACE;
 
 #if defined(HAVE_STACKTRACE) && defined(__ELF__)

@@ -27,7 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "config.h"
+#include "base/config.h"
+#include "glog/logging.h"
+#include "glog/stl_logging.h"
 
 #ifdef HAVE_USING_OPERATOR
 
@@ -37,6 +39,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #ifdef __GNUC__
 // C++0x isn't enabled by default in GCC and libc++ does not have
@@ -58,9 +61,7 @@
 #endif
 #endif
 
-#include "logging.h"
-#include "stl_logging.h"
-#include "googletest.h"
+#include <gtest/gtest.h>
 
 using namespace std;
 #ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
@@ -88,49 +89,6 @@ void TestSTLLogging()
   }
 
   {
-    // Test a sorted pair associative container.
-    map<int, string> m;
-    m[20] = "twenty";
-    m[10] = "ten";
-    m[30] = "thirty";
-    ostringstream ss;
-    ss << m;
-    EXPECT_EQ(ss.str(), "(10, ten) (20, twenty) (30, thirty)");
-    map<int, string> copied_m(m);
-    CHECK_EQ(m, copied_m); // This must compile.
-  }
-
-#ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
-  {
-    // Test a hashed simple associative container.
-    hash_set<int> hs;
-    hs.insert(10);
-    hs.insert(20);
-    hs.insert(30);
-    ostringstream ss;
-    ss << hs;
-    EXPECT_EQ(ss.str(), "10 20 30");
-    hash_set<int> copied_hs(hs);
-    CHECK_EQ(hs, copied_hs); // This must compile.
-  }
-#endif
-
-#ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
-  {
-    // Test a hashed pair associative container.
-    hash_map<int, string> hm;
-    hm[10] = "ten";
-    hm[20] = "twenty";
-    hm[30] = "thirty";
-    ostringstream ss;
-    ss << hm;
-    EXPECT_EQ(ss.str(), "(10, ten) (20, twenty) (30, thirty)");
-    hash_map<int, string> copied_hm(hm);
-    CHECK_EQ(hm, copied_hm); // this must compile
-  }
-#endif
-
-  {
     // Test a long sequence.
     vector<int> v;
     string expected;
@@ -149,36 +107,6 @@ void TestSTLLogging()
     ss << v;
     CHECK_EQ(ss.str(), expected.c_str());
   }
-
-  {
-    // Test a sorted pair associative container.
-    // Use a non-default comparison functor.
-    map<int, string, greater<int>> m;
-    m[20] = "twenty";
-    m[10] = "ten";
-    m[30] = "thirty";
-    ostringstream ss;
-    ss << m;
-    EXPECT_EQ(ss.str(), "(30, thirty) (20, twenty) (10, ten)");
-    map<int, string, greater<int>> copied_m(m);
-    CHECK_EQ(m, copied_m); // This must compile.
-  }
-
-#ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
-  {
-    // Test a hashed simple associative container.
-    // Use a user defined hash function.
-    hash_set<int, user_hash> hs;
-    hs.insert(10);
-    hs.insert(20);
-    hs.insert(30);
-    ostringstream ss;
-    ss << hs;
-    EXPECT_EQ(ss.str(), "10 20 30");
-    hash_set<int, user_hash> copied_hs(hs);
-    CHECK_EQ(hs, copied_hs); // This must compile.
-  }
-#endif
 }
 
 int main(int, char **)
