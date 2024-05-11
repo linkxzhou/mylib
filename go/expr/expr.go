@@ -306,8 +306,9 @@ type (
 	BuiltinFunc func(...interface{}) (interface{}, error)
 
 	Expr struct {
-		root ast.Expr
-		pool *Pool
+		root  ast.Expr
+		pool  *Pool
+		cache map[string]Value
 	}
 
 	Getter map[string]interface{}
@@ -351,6 +352,7 @@ func New(s string, pool *Pool) (*Expr, error) {
 	}
 	e := new(Expr)
 	e.pool = pool
+	e.cache = make(map[string]Value, 0)
 	if err := e.parse(s); err != nil {
 		return nil, err
 	}
@@ -361,7 +363,7 @@ func New(s string, pool *Pool) (*Expr, error) {
 // parse parses string s
 func (e *Expr) parse(s string) error {
 	if s == "" {
-		return nil
+		return fmt.Errorf("parse error: empty string")
 	}
 	node, err := parser.ParseExpr(s)
 	if err != nil {
@@ -388,7 +390,6 @@ func (v *visitor) Visit(node ast.Node) ast.Visitor {
 		} else {
 			v.err = fmt.Errorf("unsupported call expr")
 		}
-		return v
 	}
 	return v
 }
@@ -404,7 +405,7 @@ func (e *Expr) Eval(getter Getter) (Value, error) {
 	return v, nil
 }
 
-func Eval(s string, getter map[string]interface{}, pool *Pool) (Value, error) {
+func Eval(s string, getter Getter, pool *Pool) (Value, error) {
 	e, err := New(s, pool)
 	if err != nil {
 		return nil, err
@@ -415,6 +416,14 @@ func Eval(s string, getter map[string]interface{}, pool *Pool) (Value, error) {
 func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 	switch n := node.(type) {
 	case *ast.Ident:
+		// support true/false
+		switch strings.ToLower(n.Name) {
+		case "true":
+			return Bool(true), nil
+		case "false":
+			return Bool(false), nil
+		}
+
 		if getter == nil {
 			return e.pool.onVarMissing(n.Name)
 		}
@@ -428,23 +437,38 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 	case *ast.BasicLit:
 		switch n.Kind {
 		case token.INT:
+			if v, ok := e.cache[n.Value]; ok {
+				return v, nil
+			}
 			i, err := strconv.ParseInt(n.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			return Int(i), nil
+			v := Int(i)
+			e.cache[n.Value] = v
+			return v, nil
 		case token.FLOAT:
+			if v, ok := e.cache[n.Value]; ok {
+				return v, nil
+			}
 			f, err := strconv.ParseFloat(n.Value, 64)
 			if err != nil {
 				return nil, err
 			}
-			return Float(f), nil
+			v := Float(f)
+			e.cache[n.Value] = v
+			return v, nil
 		case token.CHAR, token.STRING:
+			if v, ok := e.cache[n.Value]; ok {
+				return v, nil
+			}
 			s, err := strconv.Unquote(n.Value)
 			if err != nil {
 				return nil, err
 			}
-			return Raw(s), nil
+			v := Raw(s)
+			e.cache[n.Value] = v
+			return v, nil
 		default:
 			return nil, fmt.Errorf("unsupported token: %s(%v)", n.Value, n.Kind)
 		}
@@ -535,7 +559,7 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 		}
 
 	default:
-		return nil, fmt.Errorf("unexpected node type %T", n)
+		return nil, fmt.Errorf("unexpected node type %v", n)
 	}
 }
 
