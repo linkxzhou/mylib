@@ -5,4 +5,4 @@
 
 
 ## Golang
-- expr：golang的表达式支持库
+- expr：golang的表达式支持库，查看 [readme](go/expr/readme.md)
