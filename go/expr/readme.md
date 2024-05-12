@@ -31,3 +31,16 @@ BenchmarkExpr1-16    	15724354	       760.1 ns/op	     304 B/op	      27 allocs/
 PASS
 ok  	github.com/linkxzhou/mylib/go/expr	63.644s
 ```
+
+### new version
+```
+lvzhou@lvdeMacBook-Pro expr % go test -bench . -benchtime 1s -cpu 4 -benchmem -cpuprofile cpu.pprof -memprofile mem.pprof
+goos: darwin
+goarch: arm64
+pkg: github.com/linkxzhou/mylib/go/expr
+BenchmarkExprNoCache-4   	 1653823	       704.2 ns/op	     248 B/op	      24 allocs/op
+BenchmarkExprCache-4     	 2193422	       543.7 ns/op	     192 B/op	      19 allocs/op
+BenchmarkSystem-4        	100000000	        11.24 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/linkxzhou/mylib/go/expr	5.394s
+````

@@ -4,3 +4,5 @@
 **/*.bazel
 **/*.bazel.lock
 **/bazel-*
+**/*.pprof
+**/*.test

@@ -23,7 +23,7 @@ type (
 
 	Int   int64
 	Float float64
-	Raw   []byte
+	Raw   string
 	Bool  bool
 )
 
@@ -246,7 +246,7 @@ func (v Float) Le(v2 Value) (Value, error) {
 
 func (v Raw) Int() int64     { return 0 }
 func (v Raw) Float() float64 { return 0 }
-func (v Raw) String() string { return fmt.Sprintf("%v", string(v)) }
+func (v Raw) String() string { return string(v) }
 func (v Raw) Bool() bool     { return string(v) != "" }
 func (v Raw) Kind() Kind     { return kRaw }
 
@@ -285,30 +285,11 @@ func (v Raw) Le(v2 Value) (Value, error) {
 	return Bool(string(v) <= v2.String()), support(v, kRaw)
 }
 
-func ValuesToInterfaces(args ...Value) []interface{} {
-	var rInterfaces []interface{}
-	for _, v := range args {
-		switch v.Kind() {
-		case kBool:
-			rInterfaces = append(rInterfaces, v.Bool())
-		case kInt:
-			rInterfaces = append(rInterfaces, v.Int())
-		case kFloat:
-			rInterfaces = append(rInterfaces, v.Float())
-		case kRaw:
-			rInterfaces = append(rInterfaces, v.String())
-		}
-	}
-	return rInterfaces
-}
-
 type (
-	BuiltinFunc func(...interface{}) (interface{}, error)
-
 	Expr struct {
-		root  ast.Expr
-		pool  *Pool
-		cache map[string]Value
+		root        ast.Expr
+		pool        *Pool
+		cacheValues map[int64]Value
 	}
 
 	Getter map[string]interface{}
@@ -342,7 +323,7 @@ var (
 	}
 )
 
-func New(s string, pool *Pool) (*Expr, error) {
+func New(s string, pool *Pool, options ...Option) (*Expr, error) {
 	s = strings.TrimSpace(s)
 	if pool == nil {
 		pool = defaultPool
@@ -352,12 +333,24 @@ func New(s string, pool *Pool) (*Expr, error) {
 	}
 	e := new(Expr)
 	e.pool = pool
-	e.cache = make(map[string]Value, 0)
+	for _, option := range options {
+		option(e)
+	}
 	if err := e.parse(s); err != nil {
 		return nil, err
 	}
 	pool.set(s, e)
 	return e, nil
+}
+
+type Option func(*Expr)
+
+func WithCacheValues(b bool) Option {
+	return func(e *Expr) {
+		if b {
+			e.cacheValues = make(map[int64]Value)
+		}
+	}
 }
 
 // parse parses string s
@@ -428,50 +421,47 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 			return e.pool.onVarMissing(n.Name)
 		}
 
-		if val, ok := getter.get(n.Name); !ok {
+		v, ok := getter.get(n.Name)
+		if !ok {
 			return e.pool.onVarMissing(n.Name)
-		} else {
-			return val, nil
 		}
+		return v, nil
 
 	case *ast.BasicLit:
-		switch n.Kind {
-		case token.INT:
-			if v, ok := e.cache[n.Value]; ok {
+		pos := int64(n.ValuePos)
+		var v Value
+		if e.cacheValues != nil {
+			if v, ok := e.cacheValues[pos]; ok {
 				return v, nil
 			}
+		}
+
+		switch n.Kind {
+		case token.INT:
 			i, err := strconv.ParseInt(n.Value, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			v := Int(i)
-			e.cache[n.Value] = v
-			return v, nil
+			v = Int(i)
 		case token.FLOAT:
-			if v, ok := e.cache[n.Value]; ok {
-				return v, nil
-			}
 			f, err := strconv.ParseFloat(n.Value, 64)
 			if err != nil {
 				return nil, err
 			}
-			v := Float(f)
-			e.cache[n.Value] = v
-			return v, nil
+			v = Float(f)
 		case token.CHAR, token.STRING:
-			if v, ok := e.cache[n.Value]; ok {
-				return v, nil
-			}
 			s, err := strconv.Unquote(n.Value)
 			if err != nil {
 				return nil, err
 			}
-			v := Raw(s)
-			e.cache[n.Value] = v
-			return v, nil
+			v = Raw(s)
 		default:
 			return nil, fmt.Errorf("unsupported token: %s(%v)", n.Value, n.Kind)
 		}
+		if e.cacheValues != nil {
+			e.cacheValues[pos] = v
+		}
+		return v, nil
 
 	case *ast.ParenExpr:
 		return eval(e, getter, n.X)
@@ -515,6 +505,7 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		switch n.Op {
 		case token.ADD:
 			return x.Add(y)
@@ -564,33 +555,44 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 }
 
 type (
-	VarMissingFunc func(string) (Value, error)
+	VarMissingFn func(string) (Value, error)
+	BuiltinFn    func(...interface{}) (interface{}, error)
 
-	Pool struct {
-		locker sync.RWMutex
-		pool   map[string]*Expr
-
-		builtinList  map[string]BuiltinFunc
-		onVarMissing VarMissingFunc
+	PoolOption func(*Pool)
+	Pool       struct {
+		locker       sync.RWMutex
+		pool         map[string]*Expr
+		builtinList  map[string]BuiltinFn
+		onVarMissing VarMissingFn
 	}
 )
 
-func NewPool(builtinList ...map[string]BuiltinFunc) (*Pool, error) {
+func NewPool(options ...PoolOption) (*Pool, error) {
 	p := &Pool{
 		pool:         make(map[string]*Expr),
-		builtinList:  map[string]BuiltinFunc{},
+		builtinList:  make(map[string]BuiltinFn),
 		onVarMissing: defaultOnVarMissing,
 	}
-	for _, builtin := range builtinList {
-		for name, fn := range builtin {
-			p.builtinList[name] = fn
-		}
+	for _, option := range options {
+		option(p)
 	}
 	return p, nil
 }
 
-func (p *Pool) SetOnVarMissing(fn VarMissingFunc) {
-	p.onVarMissing = fn
+func WithVarMissingFn(fn VarMissingFn) PoolOption {
+	return func(p *Pool) {
+		p.onVarMissing = fn
+	}
+}
+
+func WithBuiltinList(builtinList ...map[string]BuiltinFn) PoolOption {
+	return func(p *Pool) {
+		for _, builtin := range builtinList {
+			for name, fn := range builtin {
+				p.builtinList[name] = fn
+			}
+		}
+	}
 }
 
 func (p *Pool) get(s string) (*Expr, bool) {
@@ -615,4 +617,21 @@ func (p *Pool) builtinCall(name string, args ...Value) (Value, error) {
 		return nil, err
 	}
 	return nil, fmt.Errorf("undefined function `%v`", name)
+}
+
+func ValuesToInterfaces(args ...Value) []interface{} {
+	var rInterfaces []interface{}
+	for _, v := range args {
+		switch v.Kind() {
+		case kBool:
+			rInterfaces = append(rInterfaces, v.Bool())
+		case kInt:
+			rInterfaces = append(rInterfaces, v.Int())
+		case kFloat:
+			rInterfaces = append(rInterfaces, v.Float())
+		case kRaw:
+			rInterfaces = append(rInterfaces, v.String())
+		}
+	}
+	return rInterfaces
 }

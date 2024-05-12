@@ -5,20 +5,22 @@ import (
 	"testing"
 )
 
-func TestExpr1(t *testing.T) {
-	pool, _ := NewPool(map[string]BuiltinFunc{
-		"sum": func(args ...interface{}) (interface{}, error) {
-			var sum int64
-			for _, v := range args {
-				v1, ok := v.(int64)
-				if !ok {
-					return nil, fmt.Errorf("%v isn't int64", v)
-				}
+var builtin = map[string]BuiltinFn{
+	"sum": func(args ...interface{}) (interface{}, error) {
+		var sum int64
+		for _, v := range args {
+			if v1, ok := v.(int64); !ok {
+				return nil, fmt.Errorf("%v int64 invalid", v)
+			} else {
 				sum += v1
 			}
-			return sum, nil
-		},
-	})
+		}
+		return sum, nil
+	},
+}
+
+func TestExpr1(t *testing.T) {
+	pool, _ := NewPool(WithBuiltinList(builtin))
 
 	tests := []struct {
 		name    string
@@ -231,34 +233,73 @@ func TestExpr1(t *testing.T) {
 				t.Errorf("expr New error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			val, err := e.Eval(tt.args)
-			if !tt.wantErr && (err != nil) {
-				t.Errorf("expr Eval error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			t.Logf("%v = %v", tt.evalstr, val)
-			if !tt.wantErr && val.String() != tt.want {
-				t.Errorf("expr Result got = %v, want %v", val.String(), tt.want)
+			for i := 0; i < 2; i++ {
+				val, err := e.Eval(tt.args)
+				if !tt.wantErr && (err != nil) {
+					t.Errorf("expr Eval error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				t.Logf("%v = %v", tt.evalstr, val)
+				if !tt.wantErr && val.String() != tt.want {
+					t.Errorf("expr Result got = %v, want %v", val.String(), tt.want)
+				}
 			}
 		})
 	}
 }
 
-func BenchmarkExpr1(b *testing.B) {
-	pool, _ := NewPool(nil)
-	e, err := New(`((2 << 3) + (10 % 3)) * (5 - (x * 2)) + (3.0 / y) * (2.0 + 1.0) && ((z + "World") == "Hello World")`, pool)
+const BenchmarkExpr = `((2 << 3) + (10 % 3)) * (5 - (x * 2)) + (3.0 / y) * (2.0 + 1.0) && ((z + "World") == "Hello World")`
+
+func BenchmarkExprNoCache(b *testing.B) {
+	pool, _ := NewPool(WithBuiltinList(builtin))
+	e, err := New(BenchmarkExpr, pool)
 	if err != nil {
 		b.Errorf("expr New error = %v", err)
 		return
 	}
 	for i := 0; i < b.N; i++ {
-		val, err := e.Eval(map[string]interface{}{
+		_, err := e.Eval(map[string]interface{}{
 			"x": 3.0,
 			"y": 2.0,
 			"z": "Hello ",
 		})
-		if val.String() != `true` {
+		if err != nil {
 			b.Errorf("expr Eval error = %v", err)
+			return
+		}
+	}
+}
+
+func BenchmarkExprCache(b *testing.B) {
+	pool, _ := NewPool(WithBuiltinList(builtin))
+	e, err := New(BenchmarkExpr, pool, WithCacheValues(true))
+	if err != nil {
+		b.Errorf("expr New error = %v", err)
+		return
+	}
+	for i := 0; i < b.N; i++ {
+		_, err := e.Eval(map[string]interface{}{
+			"x": 3.0,
+			"y": 2.0,
+			"z": "Hello ",
+		})
+		if err != nil {
+			b.Errorf("expr Eval error = %v", err)
+			return
+		}
+	}
+}
+
+func BenchmarkSystem(b *testing.B) {
+	f := func(x, y float64, z string) bool {
+		if (z + "World") == "Hello World" {
+			return int(((2<<3)+(10%3))*(5-int(x*2))+int((3.0/y)*(2.0+1.0))) != 0
+		}
+		return false
+	}
+	for i := 0; i < b.N; i++ {
+		if !f(3.0, 2.0, "Hello ") {
+			b.Errorf("expr Eval error = %v", false)
 			return
 		}
 	}
