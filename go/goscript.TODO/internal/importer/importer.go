@@ -80,6 +80,7 @@ func NewImporter(importPackage ...*ssa.Package) *Importer {
 		ssaPackages:     make(map[string]*ssa.Package),
 		packageCache:    make(map[string]*types.Package),
 	}
+
 	for _, pkg := range importPackage {
 		i.ssaPackages[pkg.Pkg.Name()] = pkg
 	}

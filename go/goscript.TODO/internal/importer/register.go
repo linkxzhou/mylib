@@ -9,35 +9,31 @@ import (
 type BasicKind int
 
 const (
-	// Unknown 未知
 	Unknown BasicKind = iota
-	// Var 变量
 	Var
-	// Const 常量
 	Const
-	// TypeName 类型
 	TypeName
-	// Function 函数
 	Function
-	// BuiltinFunction 内置函数
 	BuiltinFunction
 )
 
-// ExternalPackage 外部引入包
-type ExternalPackage struct {
-	Path    string
-	Name    string
-	Objects []*ExternalObject
-}
+type (
+	// ExternalPackage 外部引入包
+	ExternalPackage struct {
+		Path    string
+		Name    string
+		Objects []*ExternalObject
+	}
 
-// ExternalObject 外部引入对象
-type ExternalObject struct {
-	Name  string
-	Kind  BasicKind
-	Value reflect.Value
-	Type  reflect.Type
-	Doc   string
-}
+	// ExternalObject 外部引入对象
+	ExternalObject struct {
+		Name  string
+		Kind  BasicKind
+		Value reflect.Value
+		Type  reflect.Type
+		Doc   string
+	}
+)
 
 var packages = make(map[string]*ExternalPackage)
 

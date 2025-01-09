@@ -11,8 +11,7 @@ func (p *Importer) parseNameType(t reflect.Type) (named *types.Named) {
 	name := t.Name()
 	if pkg != nil {
 		scope := pkg.Scope()
-		obj := scope.Lookup(name)
-		if obj == nil {
+		if obj := scope.Lookup(name); obj == nil {
 			typeName := types.NewTypeName(token.NoPos, pkg, name, nil)
 			named = types.NewNamed(typeName, nil, nil)
 			scope.Insert(typeName)

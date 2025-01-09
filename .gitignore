@@ -6,3 +6,4 @@
 **/bazel-*
 **/*.pprof
 **/*.test
+**/.DS_Store
