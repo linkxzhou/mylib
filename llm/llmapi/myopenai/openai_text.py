@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any
 from util.mylog import logger
-from llmapi.myopenai.openai_base import OpenAIBase
+from myopenai.openai_base import OpenAIBase
 from util.cache import global_cache
 from openai import OpenAI
 import time

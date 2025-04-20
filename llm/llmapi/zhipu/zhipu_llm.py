@@ -3,7 +3,7 @@ from typing import Any, List, Mapping, Optional, Dict
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from pydantic import Field
-from llmapi.zhipu.zhipu_text import ZhipuTextAPI
+from zhipu.zhipu_text import ZhipuTextAPI
 
 class ZhipuLLM(LLM):
     """智谱 AI 大模型的 LangChain LLM 实现"""

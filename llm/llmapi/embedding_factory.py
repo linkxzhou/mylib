@@ -1,6 +1,5 @@
 from typing import Optional
-from llmapi.hunyuan.hunyuan_embedding import HunyuanEmbedding
-from llmapi.myhuggingface.huggingface_embedding import HuggingFaceEmbedding
+from myhuggingface.huggingface_embedding import HuggingFaceEmbedding
 from util.mylog import logger
 from util.base import BaseEmbedding
 
@@ -11,7 +10,7 @@ class EmbeddingFactory:
     
     @staticmethod
     def create(
-        embedding_type: str = "hunyuan",
+        embedding_type: str = "huggingface",
         api_key: Optional[str] = None,
         **kwargs
     ) -> BaseEmbedding:
@@ -19,7 +18,7 @@ class EmbeddingFactory:
         创建 Embedding 实例
         
         Args:
-            embedding_type: Embedding类型，目前支持：hunyuan
+            embedding_type: Embedding类型
             api_key: API密钥
             **kwargs: 其他参数
             
@@ -29,16 +28,14 @@ class EmbeddingFactory:
         Raises:
             ValueError: 不支持的Embedding类型
         """
-        if embedding_type.lower() == "hunyuan":
-            return HunyuanEmbedding(**kwargs)
-        elif embedding_type.lower() == "huggingface":
+        if embedding_type.lower() == "huggingface":
             return HuggingFaceEmbedding(**kwargs)
         else:
             raise ValueError(f"不支持的Embedding类型: {embedding_type}")
 
 if __name__ == "__main__":
-    # 创建混元Embedding实例
-    embeddings = [(name, EmbeddingFactory.create(name)) for name in ["hunyuan", "huggingface"]] 
+    # 创建Embedding实例
+    embeddings = [(name, EmbeddingFactory.create(name)) for name in ["huggingface"]] 
     # 测试向量化
     for name, embedding in embeddings:
         try:

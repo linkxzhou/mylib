@@ -4,7 +4,7 @@ import requests
 from typing import Dict, Any, Optional, List
 from util.mylog import logger
 from util.util import image_to_base64
-from llmapi.qianfan.qianfan_base import QianFanBaseAPI
+from qianfan.qianfan_base import QianFanBaseAPI
 
 class QianFanTextAPI(QianFanBaseAPI):
     """百度千帆API客户端实现"""

@@ -1,8 +1,8 @@
 import ast
 from typing import Optional, Dict, Any, List, Tuple
 from langchain.llms.base import LLM
-from llmapi.llm_plugin import Plugin, ReplaceHtmlPlugin, ReplaceImagePlugin
-from llmapi.get_model_list import SUPPORTED_MODELS
+from llm_plugin import Plugin, ReplaceHtmlPlugin, ReplaceImagePlugin
+from get_model_list import SUPPORTED_MODELS
 from util.mylog import logger
 
 class LLMChatAdapter:
@@ -114,7 +114,7 @@ class LLMFactory:
         创建LLM实例
         
         Args:
-            model_type: 模型类型，支持 'hunyuan' 和 'qianfan'
+            model_type: 模型类型
             model_name: 模型名称
             temperature: 温度参数 (0.0-1.0)
             top_p: 采样参数 (0.0-1.0)
@@ -136,7 +136,7 @@ class LLMFactory:
             raise ValueError("max_tokens 必须大于 0")
             
         # 获取模型类
-        model_type = model_type or "hunyuan"  # 默认使用 hunyuan
+        model_type = model_type
         model_class = SUPPORTED_MODELS.get(model_type)
         if not model_class:
             raise ValueError(f"不支持的模型类型: {model_type}，支持的类型: {list(SUPPORTED_MODELS.keys())}")
@@ -155,7 +155,6 @@ if __name__ == "__main__":
     # 测试不同类型的模型
     test_prompts = [
         ("qianfan", "deepseek-v3"),
-        ("hunyuan", "hunyuan-turbo"),
         ("huggingface", "Qwen/Qwen2.5-0.5B-Instruct"),
         ("openai", "gpt-3.5-turbo"),
         ("qwen", "qwen/qwen-plus"),

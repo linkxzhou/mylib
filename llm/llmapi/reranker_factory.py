@@ -1,6 +1,6 @@
 from typing import Optional
 from util.mylog import logger
-from llmapi.myhuggingface.huggingface_reranker import HuggingFaceRerankerAPI
+from myhuggingface.huggingface_reranker import HuggingFaceRerankerAPI
 
 class RerankerFactory:
     """
@@ -33,7 +33,7 @@ class RerankerFactory:
             raise ValueError(f"不支持的Reranker类型: {reranker_type}")
 
 if __name__ == "__main__":
-    # 创建混元Embedding实例
+    # 创建Embedding实例
     rerankers = [(name, RerankerFactory.create(name)) for name in ["huggingface"]] 
     # 测试重排
     query = "深度学习如何处理自然语言"

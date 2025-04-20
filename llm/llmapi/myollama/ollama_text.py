@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any, Union
 from util.mylog import logger
-from llmapi.myollama.ollama_base import OllamaBase
+from myollama.ollama_base import OllamaBase
 import requests
 import json
 

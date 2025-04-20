@@ -2,7 +2,7 @@ from typing import Any, List, Mapping, Optional, Dict
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from pydantic import Field
-from llmapi.qwen.qwen_text import QwenTextAPI
+from qwen.qwen_text import QwenTextAPI
 from util.mylog import logger
 
 class QwenLLM(LLM):

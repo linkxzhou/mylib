@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any, Generator
 from util.mylog import logger
-from llmapi.siliconflow.siliconflow_base import SiliconFlowBase
+from siliconflow.siliconflow_base import SiliconFlowBase
 import requests
 import json
 import time
@@ -20,16 +20,12 @@ class SiliconFlowTextAPI(SiliconFlowBase):
         """获取可用模型列表"""
         return [
             {
-                'name': 'siliconflow/siliconflow-7b',
-                'description': 'SiliconFlow 7B 基础模型'
+                'name': 'siliconflow/deepseek-ai/DeepSeek-V3',
+                'description': 'deepseek-ai 模型'
             },
             {
-                'name': 'siliconflow/siliconflow-13b',
-                'description': 'SiliconFlow 13B 增强模型'
-            },
-            {
-                'name': 'siliconflow/siliconflow-code',
-                'description': 'SiliconFlow 代码专用模型'
+                'name': 'siliconflow/Qwen/QwQ-32B',
+                'description': 'qwen 大模型'
             }
         ]
 
@@ -47,7 +43,7 @@ class SiliconFlowTextAPI(SiliconFlowBase):
         def create(
             self,
             messages: List[Dict[str, str]],
-            model: str = "siliconflow-7b",
+            model: str = "siliconflow/deepseek-ai/DeepSeek-V3",
             temperature: Optional[float] = 0.7,
             top_p: Optional[float] = 0.9,
             max_tokens: Optional[int] = None,
@@ -58,7 +54,7 @@ class SiliconFlowTextAPI(SiliconFlowBase):
             try:
                 # 处理模型名称，移除可能的前缀
                 if '/' in model:
-                    model = model.split('/')[-1]
+                    model = "/".join(model.split('/')[-2:])
                 
                 # 构建请求参数
                 params = {
@@ -169,7 +165,7 @@ class SiliconFlowTextAPI(SiliconFlowBase):
                     "id": collected_chunks[0].get("id", f"chatcmpl-{int(time.time())}") if collected_chunks else f"chatcmpl-{int(time.time())}",
                     "object": "chat.completion",
                     "created": int(time.time()),
-                    "model": collected_chunks[0].get("model", "siliconflow-7b") if collected_chunks else "siliconflow-7b",
+                    "model": collected_chunks[0].get("model", "deepseek-ai/DeepSeek-V3") if collected_chunks else "deepseek-ai/DeepSeek-V3",
                     "choices": [{
                         "index": 0,
                         "message": {
@@ -196,7 +192,7 @@ class SiliconFlowTextAPI(SiliconFlowBase):
     def generate_text(
         self, 
         prompt: str,
-        model: str = "siliconflow-7b",
+        model: str = "deepseek-ai/DeepSeek-V3",
         temperature: float = 0.7,
         top_p: float = 0.9,
         max_tokens: Optional[int] = None,
@@ -230,7 +226,7 @@ class SiliconFlowTextAPI(SiliconFlowBase):
     def generate_text_with_conversation(
         self,
         messages: List[Dict[str, str]],
-        model: str = "siliconflow-7b",
+        model: str = "deepseek-ai/DeepSeek-V3",
         temperature: float = 0.7,
         top_p: float = 0.9,
         max_tokens: Optional[int] = None,
@@ -271,6 +267,6 @@ if __name__ == "__main__":
     # 测试聊天功能
     response = api.chat.create(
         messages=[{"role": "user", "content": "你好，请介绍一下你自己"}],
-        model="siliconflow-7b"
+        model="deepseek-ai/DeepSeek-V3"
     )
     logger.info(f"聊天响应: {response}")

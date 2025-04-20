@@ -1,19 +1,19 @@
 from typing import Optional, Dict, Any, List, Tuple
-from llmapi.hunyuan.hunyuan_llm import HunYuanLLM
-from llmapi.qianfan.qianfan_llm import QianFanLLM
-from llmapi.qwen.qwen_llm import QwenLLM
-from llmapi.zhipu.zhipu_llm import ZhipuLLM
-from llmapi.myopenai.openai_llm import OpenAILLM
-from llmapi.myollama.ollama_llm import OllamaLLM
+from qianfan.qianfan_llm import QianFanLLM
+from qwen.qwen_llm import QwenLLM
+from zhipu.zhipu_llm import ZhipuLLM
+from myopenai.openai_llm import OpenAILLM
+from myollama.ollama_llm import OllamaLLM
+from siliconflow.siliconflow_llm import SiliconFlowLLM
 from util.mylog import logger
 
 SUPPORTED_MODELS = {
-    "hunyuan": HunYuanLLM,
     "qianfan": QianFanLLM,
     "qwen": QwenLLM,
     "zhipu": ZhipuLLM,
     "openai": OpenAILLM,
     "ollama": OllamaLLM,
+    "siliconflow": SiliconFlowLLM,
 }
 
 def get_text_model_list() -> List[Dict[str, Any]]:

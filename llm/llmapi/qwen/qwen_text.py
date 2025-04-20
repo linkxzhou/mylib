@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any
 from util.mylog import logger
-from llmapi.qwen.qwen_base import QwenBase
+from qwen.qwen_base import QwenBase
 from openai import OpenAI
 import time
 

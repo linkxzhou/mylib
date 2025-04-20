@@ -2,7 +2,7 @@ from typing import Any, List, Mapping, Optional, Dict
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from pydantic import Field
-from llmapi.myhuggingface.huggingface_text import HuggingFaceTextAPI
+from myhuggingface.huggingface_text import HuggingFaceTextAPI
 from util.mylog import logger
 
 class HuggingFaceLLM(LLM):

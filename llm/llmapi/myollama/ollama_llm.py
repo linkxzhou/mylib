@@ -2,7 +2,7 @@ from typing import Any, List, Mapping, Optional, Dict
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from pydantic import Field
-from llmapi.myollama.ollama_text import OllamaTextAPI
+from myollama.ollama_text import OllamaTextAPI
 
 class OllamaLLM(LLM):
     """Ollama 大模型的 LangChain LLM 实现"""

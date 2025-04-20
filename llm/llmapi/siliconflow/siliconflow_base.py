@@ -32,7 +32,7 @@ class SiliconFlowBase:
         Returns:
             str: 默认模型名称
         """
-        return "siliconflow-7b"
+        return "deepseek-ai/DeepSeek-V3"
         
     @property
     def api_version(self) -> str:

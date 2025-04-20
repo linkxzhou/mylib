@@ -3,7 +3,7 @@ from typing import Any, List, Mapping, Optional, Dict
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from pydantic import Field
-from llmapi.qianfan.qianfan_text import QianFanTextAPI
+from qianfan.qianfan_text import QianFanTextAPI
 
 class QianFanLLM(LLM):
     """百度千帆大模型的 LangChain LLM 实现"""

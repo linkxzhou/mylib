@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Any, Union
 from util.mylog import logger
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from llmapi.myhuggingface.huggingface_base import HuggingFaceBase
+from myhuggingface.huggingface_base import HuggingFaceBase
 from util.base import BaseEmbedding
 from util.util import split_model_name
 import torch

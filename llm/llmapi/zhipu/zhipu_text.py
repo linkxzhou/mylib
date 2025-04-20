@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, Generator
 import base64
 from PIL import Image
 import io
-from llmapi.zhipu.zhipu_base import ZhipuBaseAPI
+from zhipu.zhipu_base import ZhipuBaseAPI
 
 # 
 class ZhipuTextAPI(ZhipuBaseAPI):

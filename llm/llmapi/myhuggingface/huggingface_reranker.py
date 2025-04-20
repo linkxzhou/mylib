@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any, Union, Tuple
 from util.mylog import logger
-from llmapi.myhuggingface.huggingface_base import HuggingFaceBase
+from myhuggingface.huggingface_base import HuggingFaceBase
 from util.util import split_model_name
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch

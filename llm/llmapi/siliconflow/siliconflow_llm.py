@@ -2,14 +2,14 @@ from typing import Any, List, Mapping, Optional, Dict
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from pydantic import Field
-from llmapi.siliconflow.siliconflow_text import SiliconFlowTextAPI
+from siliconflow.siliconflow_text import SiliconFlowTextAPI
 from util.mylog import logger
 
 class SiliconFlowLLM(LLM):
     """SiliconFlow大模型的 LangChain LLM 实现"""
     
     client: SiliconFlowTextAPI = Field(default_factory=SiliconFlowTextAPI)
-    model_name: str = Field(default="siliconflow-7b")
+    model_name: str = Field(default="deepseek-ai/DeepSeek-V3")
     temperature: Optional[float] = Field(default=0.7)
     top_p: Optional[float] = Field(default=0.9)
     max_tokens: Optional[int] = Field(default=None)
@@ -33,7 +33,7 @@ class SiliconFlowLLM(LLM):
         return {
             "temperature": 0.7,
             "top_p": 0.9,
-            "model": "siliconflow-7b"
+            "model": "deepseek-ai/DeepSeek-V3"
         }
         
     def _call(

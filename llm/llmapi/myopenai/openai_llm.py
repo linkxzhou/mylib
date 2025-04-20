@@ -2,7 +2,7 @@ from typing import Any, List, Mapping, Optional, Dict
 from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from pydantic import Field
-from llmapi.myopenai.openai_text import OpenAITextAPI
+from myopenai.openai_text import OpenAITextAPI
 
 class OpenAILLM(LLM):
     """OpenAI 大模型的 LangChain LLM 实现"""

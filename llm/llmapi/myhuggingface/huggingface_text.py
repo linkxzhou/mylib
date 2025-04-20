@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any, Union
 from util.mylog import logger
-from llmapi.myhuggingface.huggingface_base import HuggingFaceBase
+from myhuggingface.huggingface_base import HuggingFaceBase
 from util.util import split_model_name
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
@@ -71,7 +71,7 @@ class HuggingFaceTextAPI(HuggingFaceBase):
                     quantization_config["bnb_4bit_compute_dtype"] = torch.float16
                 
                 # 加载模型
-                self._model = AutoModelForCausallmapi.from_pretrained(
+                self._model = AutoModelForCausafrom_pretrained(
                     self.model_path,
                     cache_dir=self.cache_dir,
                     use_auth_token=self.use_auth_token,
