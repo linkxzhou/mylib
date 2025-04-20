@@ -10,3 +10,4 @@
 
 ## llm
 - llmapi: 提供各个 LLM 的 API 集合的库，支持 LLM，embedding，rerank 等功能 [readme](llm/llmapi/readme.md)
+- agent/translation.py: 翻译 agent，通过翻译->反思->改进，将翻译的语言更加适合设置的目标语言 [readme](llm/agent/translation_readme.md)

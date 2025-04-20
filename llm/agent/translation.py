@@ -228,14 +228,14 @@ Output only the new translation and nothing else."""
 if __name__ == "__main__":
     from llmapi.llm_factory import LLMFactory, LLMChatAdapter
     # 初始化翻译代理
-    llm = LLMFactory.create("siliconflow", model_name="deepseek-ai/DeepSeek-V3")
+    llm = LLMFactory.create("qianfan", model_name="deepseek-v3")
     translator = TranslationAgent(llm)
     
     # 创建LLM适配器
     llm_chat_adapter = LLMChatAdapter(llm)
     
     # 测试翻译功能
-    test_text = "Hello world! This is a test of the translation agent."
+    test_text = '''测试'''
     
     try:
         result = translator.translate(
