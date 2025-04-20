@@ -1,0 +1,96 @@
+from typing import Any, List, Mapping, Optional, Dict
+from langchain.llms.base import LLM
+from langchain.callbacks.manager import CallbackManagerForLLMRun
+from pydantic import Field
+from llmapi.myhuggingface.huggingface_text import HuggingFaceTextAPI
+from util.mylog import logger
+
+class HuggingFaceLLM(LLM):
+    """HuggingFace 本地模型的 LangChain LLM 实现"""
+    
+    client: HuggingFaceTextAPI = Field(default_factory=HuggingFaceTextAPI)
+    model_name: str = Field(default=None)
+    temperature: Optional[float] = Field(default=None)
+    top_p: Optional[float] = Field(default=None)
+    max_tokens: Optional[int] = Field(default=None)
+    
+    class Config:
+        arbitrary_types_allowed = True
+    
+    @property
+    def _llm_type(self) -> str:
+        """返回 LLM 类型"""
+        return "huggingface"
+
+    @property
+    def _supported_params(self) -> List[str]:
+        """返回支持的参数"""
+        return ["temperature", "top_p", "max_tokens", "model"]
+
+    @property
+    def _default_params(self) -> Dict[str, Any]:
+        """获取默认参数"""
+        return {
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "max_tokens": 2048,
+            "model": None,
+        }
+        
+    def _call(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> str:
+        """执行 LLM 调用"""
+        
+        messages = [{"role": "user", "content": prompt}]
+        
+        # 如果提供了历史消息，则使用它们
+        if "messages" in kwargs:
+            messages = kwargs["messages"] + messages
+        
+        response = self.client.chat.create(
+            messages=messages,
+            model=f"huggingface/{self.model_name}",
+            temperature=self.temperature,
+            top_p=self.top_p,
+            max_tokens=self.max_tokens,
+            stop=stop[0] if stop else None
+        )
+        
+        if "error" in response:
+            raise ValueError(f"API调用错误: {response['error']}")
+            
+        if "choices" not in response:
+            raise ValueError("API响应格式错误")
+        
+        result = response["choices"][0]["message"]["content"]
+        return result
+        
+    @property
+    def _identifying_params(self) -> Mapping[str, Any]:
+        """获取模型标识参数"""
+        return {
+            "model_name": self.model_name,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "max_tokens": self.max_tokens
+        }
+
+if __name__ == "__main__":    
+    # 测试 HuggingFace 模型
+    llm = HuggingFaceLLM()
+    logger.info("测试基本调用：")
+    logger.info(llm("你好，我是 HuggingFace"))
+    
+    # 测试带历史消息的调用
+    logger.info("\n测试带历史消息的调用：")
+    history = [
+        {"role": "user", "content": "你是谁？"},
+        {"role": "assistant", "content": "我是 HuggingFace 助手。"}
+    ]
+    response = llm("我们之前聊了什么？", messages=history)
+    logger.info(f"带历史响应：{response}")
