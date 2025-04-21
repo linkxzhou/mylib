@@ -10,7 +10,6 @@ tinyhttpd++ 是重写 tinyhttpd 的 C++ 版本，实现最基本的 HTTP 服务�
 ```
 ├── httpd.h         # HTTP 服务器核心头文件
 ├── httpd.cc        # HTTP 服务器实现
-├── tinyhttpd.cpp   # 入口/主程序
 ├── Makefile        # 构建脚本
 ├── htdocs/         # 网站根目录
 └── readme.md       # 项目说明
@@ -40,6 +39,7 @@ make clean
 - 访问 http://localhost:8080/ 或 http://localhost:8081/ 查看效果
 - 网页文件请放在 `htdocs/` 目录下
 - 支持简单 CGI 脚本（如 .cgi 文件）
+- 启动服务：`./tinyhttpd port` // 指定端口启动，否则是 8081
 
 ### Makefile 说明
 - 支持 debug/release 构建
@@ -49,7 +49,6 @@ make clean
 ### 常见问题
 - **端口被占用**：请检查端口是否已被其他进程占用，或修改 main 函数端口号。
 - **找不到 htdocs 目录**：请确保 `htdocs/` 目录存在且有可访问的文件。
-- **编译错误**：请确保使用 g++ 7.0 及以上版本，支持 C++17。
 
 ### 工作流程
 （1）服务器启动，在指定端口或随机选取端口绑定httpd服务。
