@@ -1,0 +1,21 @@
+### test
+GET http://127.0.0.1:8081/index.html
+
+
+### test
+POST http://127.0.0.1:8081/test.html
+Content-Type: application/json
+
+{"a":1}
+
+### test
+POST http://127.0.0.1:8081/test.cgi
+Content-Type: application/json
+
+{"a":1}
+
+### test
+POST http://127.0.0.1:8081/python.cgi
+Content-Type: application/json
+
+{"a":1}
