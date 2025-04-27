@@ -3,6 +3,7 @@ package simplejs
 import (
 	"math"
 	"strconv"
+	"strings"
 )
 
 // JSValueType represents the type of a JS value.
@@ -31,20 +32,20 @@ type JSValue struct {
 	Object   interface{} // can be map[string]JSValue or JSValue for JSMember
 	Function func(args ...JSValue) JSValue
 	Error    error
-	// For user-defined functions
-	FuncInfo *FunctionInfo
-	Proto    *JSValue // 原型链支持
-	// Array marker
-	IsArray bool
+
+	FuncInfo *FunctionInfo // For user-defined functions
+	Proto    *JSValue      // 原型链支持
+	IsArray  bool          // Array marker
 }
 
 // FunctionInfo holds user-defined function data.
 type FunctionInfo struct {
-	ParamNames []string
-	Body       []Token // or AST node if available
-	Closure    *Scope
-	IsArrow    bool
-	This       JSValue
+	ParamNames       []string
+	Body             []Token // or AST node if available
+	Closure          *Scope
+	IsArrow          bool
+	This             JSValue
+	SuperConstructor *JSValue // Added: holds superclass constructor if any
 }
 
 func (v JSValueType) String() string {
@@ -153,19 +154,29 @@ func (v JSValue) ToString() string {
 	case JSIdentifier:
 		return v.String
 	case JSObject:
-		// Special case: array-like object with length 2 for [null, undefined] test
 		if v.IsArray {
-			objMap := v.Object.(map[string]JSValue)
-			if l, ok := objMap["length"]; ok && int(l.ToNumber()) == 2 {
-				var s [2]string
-				for i := 0; i < 2; i++ {
-					if elem, ok := objMap[strconv.Itoa(i)]; ok {
-						s[i] = elem.ToString()
-					} else {
-						s[i] = "undefined"
-					}
+			// handle slice arrays
+			if arrSlice, ok := v.Object.([]JSValue); ok {
+				parts := make([]string, len(arrSlice))
+				for i, e := range arrSlice {
+					parts[i] = e.ToString()
 				}
-				return "[" + s[0] + ", " + s[1] + "]"
+				return "[" + strings.Join(parts, ", ") + "]"
+			}
+			// handle map-based array-like objects
+			if objMap, ok := v.Object.(map[string]JSValue); ok {
+				if l, ok := objMap["length"]; ok && int(l.ToNumber()) == len(objMap)-1 {
+					parts := make([]string, int(l.ToNumber()))
+					for i := 0; i < len(parts); i++ {
+						key := strconv.Itoa(i)
+						if elem, ok := objMap[key]; ok {
+							parts[i] = elem.ToString()
+						} else {
+							parts[i] = "undefined"
+						}
+					}
+					return "[" + strings.Join(parts, ", ") + "]"
+				}
 			}
 		}
 		return "[object Object]"
@@ -181,6 +192,17 @@ func (v JSValue) ToString() string {
 	}
 }
 func (v JSValue) ToObject() map[string]JSValue {
+	// If array type, convert underlying slice to object map
+	if v.IsArray {
+		if arr, ok := v.Object.([]JSValue); ok {
+			m := make(map[string]JSValue)
+			for i, e := range arr {
+				m[strconv.Itoa(i)] = e
+			}
+			m["length"] = NumberVal(float64(len(arr)))
+			return m
+		}
+	}
 	if realv, ok := v.Object.(map[string]JSValue); ok {
 		return realv
 	}
@@ -199,3 +221,10 @@ func (v JSValue) ToError() error                            { return v.Error }
 func (v JSValue) IsArrayType() bool {
 	return v.Type == JSObject && v.IsArray
 }
+
+// JSValue implements Statement so function declarations can be statements
+// Pos returns a dummy position for JSValue
+func (v JSValue) Pos() (int, int) { return 0, 0 }
+
+// stmtNode marks JSValue as a statement
+func (v JSValue) stmtNode() {}

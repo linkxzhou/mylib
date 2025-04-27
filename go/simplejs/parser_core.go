@@ -2,17 +2,19 @@ package simplejs
 
 import (
 	"fmt"
+	"strings"
 )
 
 // ParseException is an error during parsing.
 type ParseException struct {
-	Msg  string
-	Line int
-	Code string
+	Msg    string
+	Line   int
+	Column int
+	Code   string
 }
 
 func (e ParseException) Error() string {
-	return fmt.Sprintf("Parse error at line %d: %s\nCode: %s", e.Line, e.Msg, e.Code)
+	return fmt.Sprintf("Parse error at line %d, column %d: %s\nCode: %s", e.Line, e.Column, e.Msg, e.Code)
 }
 
 // Parser holds tokens and context.
@@ -21,7 +23,6 @@ type Parser struct {
 	pos         int
 	ctx         *RunContext
 	debugString []string
-	inPattern   bool // true when parsing destructuring pattern
 }
 
 // NewParser creates a parser with tokens and runtime context.
@@ -29,26 +30,26 @@ func NewParser(tokens []Token, ctx *RunContext) *Parser {
 	return &Parser{tokens: tokens, pos: 0, ctx: ctx}
 }
 
-// ParseExpression parses an expression.
-func (p *Parser) ParseExpression() (JSValue, error) {
+// ParseExpression parses an expression and returns its AST node.
+func (p *Parser) ParseExpression() (Expression, error) {
 	return p.parseAssignment()
 }
 
-// ParseProgram parses a sequence of statements until EOF
-func (p *Parser) ParseProgram() (JSValue, error) {
-	var res JSValue = Undefined()
+// ParseProgram parses a sequence of statements until EOF and builds an AST.
+func (p *Parser) ParseProgram() (*Program, error) {
+	prog := &Program{}
 	for p.peek().Type != TokEOF {
 		stmt, err := p.ParseStatement()
 		if err != nil {
-			return stmt, err
+			return nil, err
 		}
-		res = stmt
+		prog.Body = append(prog.Body, stmt)
 		// 跳过多余的分号
 		for p.peek().Type == TokSemicolon {
 			p.next()
 		}
 	}
-	return res, nil
+	return prog, nil
 }
 
 // ReturnPanic is used to unwind stack for return statements
@@ -58,8 +59,8 @@ type ReturnPanic struct {
 
 // errorf creates a ParseException with the current line information
 func (p *Parser) errorf(format string, args ...interface{}) error {
-	line, code := p.currentLineInfo()
-	return ParseException{Msg: fmt.Sprintf(format, args...), Line: line, Code: code}
+	line, col, code := p.currentLineInfo()
+	return ParseException{Msg: fmt.Sprintf(format, args...), Line: line, Column: col, Code: code}
 }
 
 // debug adds a debug message to the parser
@@ -68,7 +69,7 @@ func (p *Parser) debug(format string, args ...interface{}) {
 }
 
 // 获取当前Token所在的行号和原始代码
-func (p *Parser) currentLineInfo() (int, string) {
+func (p *Parser) currentLineInfo() (int, int, string) {
 	if p.pos < len(p.tokens) {
 		tok := p.tokens[p.pos]
 		lineNum := tok.Line
@@ -79,47 +80,15 @@ func (p *Parser) currentLineInfo() (int, string) {
 				codeLine = lines[lineNum-1]
 			}
 		}
-		return lineNum, codeLine
-	}
-	return 0, ""
-}
-
-// skipStatement skips a statement or block without evaluating semantics.
-func (p *Parser) skipStatement() {
-	tok := p.peek()
-	switch tok.Type {
-	case TokLBrace:
-		p.next()
-		depth := 1
-		for depth > 0 && p.peek().Type != TokEOF {
-			if p.peek().Type == TokLBrace {
-				depth++
-			} else if p.peek().Type == TokRBrace {
-				depth--
-			}
-			p.next()
-		}
-	default:
-		for p.peek().Type != TokSemicolon && p.peek().Type != TokRBrace && p.peek().Type != TokEOF {
-			if p.peek().Type == TokLParen {
-				p.next()
-				depth := 1
-				for depth > 0 && p.peek().Type != TokEOF {
-					if p.peek().Type == TokLParen {
-						depth++
-					} else if p.peek().Type == TokRParen {
-						depth--
-					}
-					p.next()
-				}
-			} else {
-				p.next()
+		col := 1
+		if tok.Literal != "" && codeLine != "" {
+			if idx := strings.Index(codeLine, tok.Literal); idx >= 0 {
+				col = idx + 1
 			}
 		}
-		if p.peek().Type == TokSemicolon {
-			p.next()
-		}
+		return lineNum, col, codeLine
 	}
+	return 0, 0, ""
 }
 
 // peek returns current token.

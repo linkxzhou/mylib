@@ -21,14 +21,11 @@ func (ctx *RunContext) Eval(code string) (JSValue, error) {
 	lines := splitLines(code)
 	ctx.sourceLines = &lines
 	parser := NewParser(tokens, ctx)
-	var res JSValue
-	for parser.peek().Type != TokEOF {
-		res, err = parser.ParseStatement()
-		if err != nil {
-			return res, err
-		}
+	prog, err := parser.ParseProgram()
+	if err != nil {
+		return Undefined(), err
 	}
-	return res, nil
+	return prog.Eval(ctx)
 }
 
 // GC triggers garbage collection (optional in Go).
