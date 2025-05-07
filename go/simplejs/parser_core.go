@@ -114,3 +114,13 @@ func (p *Parser) expect(tt TokenType) (Token, error) {
 	}
 	return tok, nil
 }
+
+// save returns the current parser position for backtracking.
+func (p *Parser) save() int {
+	return p.pos
+}
+
+// restore sets the parser position for backtracking.
+func (p *Parser) restore(pos int) {
+	p.pos = pos
+}

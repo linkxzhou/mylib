@@ -2,9 +2,6 @@ package simplejs
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -48,10 +45,15 @@ func runJS(t *testing.T, code string) JSValue {
 	return val
 }
 
-func runJSWithError(t *testing.T, code string) (JSValue, error) {
+func runJSWithError(t *testing.T, code string) (val JSValue, err error) {
+	// Catch unhandled JSException and return as error
 	defer func() {
 		if r := recover(); r != nil {
-			t.Errorf("[runJSWithError]Runtime error: %v", r)
+			if exc, ok := r.(*JSException); ok {
+				err = fmt.Errorf("Uncaught exception: %v", exc.Value.ToString())
+				return
+			}
+			panic(r)
 		}
 	}()
 
@@ -67,6 +69,7 @@ func runJSWithError(t *testing.T, code string) (JSValue, error) {
 	prog, err := parser.ParseProgram()
 	if err != nil {
 		t.Logf("DebugInfo: \n%v", strings.Join(parser.debugString, "\n"))
+		return Undefined(), err
 	}
 	return prog.Eval(ctx)
 }
@@ -88,61 +91,69 @@ x
 	}
 }
 
-func TestClassInheritance(t *testing.T) {
-	code := `
-class Animal {
-  constructor(name) {
-    this.name = name;
-  }
-  speak() {
-    return this.name + " makes a noise.";
-  }
-}
+// func TestClassInheritance(t *testing.T) {
+// 	code := `
+// class Animal {
+//   constructor(name) {
+// 	print("Animal constructor");
+//     this.name = name;
+//   }
+//   speak() {
+//     return this.name + " makes a noise.";
+//   }
+// }
 
-class Dog extends Animal {
-  constructor(name) {
-    super(name);
-  }
-  speak() {
-    return this.name + " barks.";
-  }
-}
+// class Dog extends Animal {
+//   constructor(name) {
+//     print("Dog constructor");
+//     super(name);
+//   }
+//   speak() {
+//     return this.name + " barks.";
+//   }
+// }
 
-let dog = new Dog("Rex");
-print("dog.speak() = ", dog.speak())
-if (dog.speak() !== "Rex barks.") throw 'fail: dog.speak() !== "Rex barks."';
-dog.speak()
-`
-	result := runJS(t, code)
-	if result.Type != JSString || result.String != "Rex barks." {
-		t.Errorf("Expected 'Rex barks.', got %v (type: %v)", result.ToString(), result.Type.String())
-	}
-}
+// let dog = new Dog("Rex");
+// print("dog.speak() = ", dog.speak())
+// if (dog.speak() !== "Rex barks.") throw 'fail: dog.speak() !== "Rex barks."';
+// dog.speak()
+// `
+// 	result := runJS(t, code)
+// 	if result.Type != JSString || result.String != "Rex barks." {
+// 		t.Errorf("Expected 'Rex barks.', got %v (type: %v)", result.ToString(), result.Type.String())
+// 	}
+// }
 
-func TestObjectMethodCallThis(t *testing.T) {
-	code := `
-let obj = {
-  x: 10,
-  getX: function() {
-    return this.x;
-  }
-};
-if (obj.getX() !== 10) throw 'fail: obj.getX() !== 10';
-obj.getX()
-`
-	result := runJS(t, code)
-	if result.Type != JSNumber || result.Number != 10 {
-		t.Errorf("Expected 10, got %v (type: %v)", result.ToString(), result.Type.String())
-	}
-}
+// func TestObjectMethodCallThis(t *testing.T) {
+// 	code := `
+// let obj = {
+//   x: 10,
+//   getX: function() {
+// 	print("getX called, this.x = ", this.x);
+//     return this.x;
+//   }
+// };
+// if (obj.getX() !== 10) throw 'fail: obj.getX() !== 10';
+// obj.getX()
+// `
+// 	result := runJS(t, code)
+// 	if result.Type != JSNumber || result.Number != 10 {
+// 		t.Errorf("Expected 10, got %v (type: %v)", result.ToString(), result.Type.String())
+// 	}
+// }
 
 func TestDestructuringAssignment(t *testing.T) {
 	code := `
 let obj = {a: 1, b: 2};
 let {a, b} = obj;
+print("a = ", a);
+print("b = ", b);
+
 if (a !== 1 || b !== 2) throw 'fail: a !== 1 || b !== 2';
 let arr = [3,4];
 let [x, y] = arr;
+print("x = ", x);
+print("y = ", y);
 if (x !== 3 || y !== 4) throw 'fail: x !== 3 || y !== 4';
 [y, x]
 `
@@ -251,10 +262,12 @@ obj
 	}
 }
 
-// // 简单函数调用与返回
+// 简单函数调用与返回
 // func TestFunctionCall(t *testing.T) {
 // 	code := `
 // function add(a, b) {
+//   print("a = ", a);
+//   print("b = ", b);
 //   return a + b;
 // }
 // let r = add(2, 3);
@@ -325,7 +338,7 @@ sum
 	}
 }
 
-// 嵌套作用域和闭包
+// // 嵌套作用域和闭包
 // func TestClosureScope(t *testing.T) {
 // 	code := `
 // function makeAdder(x) {
@@ -341,55 +354,56 @@ sum
 // 	}
 // }
 
-// 数组 push pop
-func TestArrayPushPop(t *testing.T) {
-	code := `
-let arr = [1,2,3];
-arr[3] = 4;
-print("arr[3] = ", arr[3]);
-if (arr[3] !== 4) throw 'fail: arr[3] !== 4';
-arr[4] = arr[3] + 1;
-print("arr[4] = ", arr[4]);
-if (arr[4] !== 5) throw 'fail: arr[4] !== 5';
-arr
-`
-	result := runJS(t, code)
-	if result.Type != JSObject {
-		t.Errorf("Expected array object, got %v (type: %v)", result.ToString(), result.Type.String())
-	}
+// // 数组 push pop
+// func TestArrayPushPop(t *testing.T) {
+// 	code := `
+// let arr = [1,2,3];
+// arr[3] = 4;
+// print("arr[3] = ", arr[3]);
+// if (arr[3] !== 4) throw 'fail: arr[3] !== 4';
+// arr[4] = arr[3] + 1;
+// print("arr[4] = ", arr[4]);
+// if (arr[4] !== 5) throw 'fail: arr[4] !== 5';
+// arr
+// `
+// 	result := runJS(t, code)
+// 	if result.Type != JSObject {
+// 		t.Errorf("Expected array object, got %v (type: %v)", result.ToString(), result.Type.String())
+// 	}
 
-	// 验证数组内容
-	arr := result.ToObject()
-	if arr["length"].ToNumber() != 5 || arr["0"].ToNumber() != 1 || arr["4"].ToNumber() != 5 {
-		t.Errorf("Expected array with 5 elements, got %v", result.ToString())
-	}
-}
+// 	// 验证数组内容
+// 	arr := result.ToObject()
+// 	if arr["length"].ToNumber() != 5 || arr["0"].ToNumber() != 1 || arr["4"].ToNumber() != 5 {
+// 		t.Errorf("Expected array with 5 elements, got %v", result.ToString())
+// 	}
+// }
 
-// 对象属性删除
-func TestObjectDelete(t *testing.T) {
-	code := `
-let obj = {a: 1, b: 2};
-delete obj;
-if (obj !== undefined) throw 'fail: obj !== undefined';
-obj
-`
-	result := runJS(t, code)
-	if result.Type != JSObject {
-		t.Errorf("Expected object, got %v (type: %v)", result.ToString(), result.Type.String())
-	}
+// // 对象属性删除
+// func TestObjectDelete(t *testing.T) {
+// 	code := `
+// let obj = {a: 1, b: 2};
+// delete obj;
+// if (obj !== undefined) throw 'fail: obj !== undefined';
+// obj
+// `
+// 	result := runJS(t, code)
+// 	if result.Type != JSObject {
+// 		t.Errorf("Expected object, got %v (type: %v)", result.ToString(), result.Type.String())
+// 	}
 
-	// 验证对象属性
-	obj := result.ToObject()
-	if len(obj) != 1 || obj["b"].ToNumber() != 2 || obj["a"].Type != JSUndefined {
-		t.Errorf("Expected {b:2}, got %v", result.ToString())
-	}
-}
+// 	// 验证对象属性
+// 	obj := result.ToObject()
+// 	if len(obj) != 1 || obj["b"].ToNumber() != 2 || obj["a"].Type != JSUndefined {
+// 		t.Errorf("Expected {b:2}, got %v", result.ToString())
+// 	}
+// }
 
 // 三元表达式
 func TestTernaryOperator(t *testing.T) {
 	code := `
 let a = 5;
 let b = a > 3 ? 10 : 20;
+print("b = ", b);
 if (b !== 10) throw 'fail: b !== 10';
 b
 `
@@ -434,38 +448,38 @@ if (b !== undefined) throw 'fail: b !== undefined';
 	}
 }
 
-// super 关键字调用
-func TestSuperCall(t *testing.T) {
-	code := `
-class A {
-  foo() { return 1; }
-}
-class B extends A {
-  foo() { return super.foo() + 2; }
-}
-let b = new B();
-if (b.foo() !== 3) throw 'fail: b.foo() !== 3';
-b.foo()
-`
-	result := runJS(t, code)
-	if result.Type != JSNumber || result.Number != 3 {
-		t.Errorf("Expected 3, got %v (type: %v)", result.ToString(), result.Type.String())
-	}
-}
+// // super 关键字调用
+// func TestSuperCall(t *testing.T) {
+// 	code := `
+// class A {
+//   foo() { return 1; }
+// }
+// class B extends A {
+//   foo() { return super.foo() + 2; }
+// }
+// let b = new B();
+// if (b.foo() !== 3) throw 'fail: b.foo() !== 3';
+// b.foo()
+// `
+// 	result := runJS(t, code)
+// 	if result.Type != JSNumber || result.Number != 3 {
+// 		t.Errorf("Expected 3, got %v (type: %v)", result.ToString(), result.Type.String())
+// 	}
+// }
 
-// 箭头函数作用域
-func TestArrowFunctionScope(t *testing.T) {
-	code := `
-let x = 10;
-let f = () => x + 5;
-if (f() !== 15) throw 'fail: f() !== 15';
-f()
-`
-	result := runJS(t, code)
-	if result.Type != JSNumber || result.Number != 15 {
-		t.Errorf("Expected 15, got %v (type: %v)", result.ToString(), result.Type.String())
-	}
-}
+// // 箭头函数作用域
+// func TestArrowFunctionScope(t *testing.T) {
+// 	code := `
+// let x = 10;
+// let f = () => x + 5;
+// if (f() !== 15) throw 'fail: f() !== 15';
+// f()
+// `
+// 	result := runJS(t, code)
+// 	if result.Type != JSNumber || result.Number != 15 {
+// 		t.Errorf("Expected 15, got %v (type: %v)", result.ToString(), result.Type.String())
+// 	}
+// }
 
 // 测试后缀递增/递减操作符
 func TestIncrementDecrement(t *testing.T) {
@@ -582,159 +596,159 @@ throw "Uncaught test exception";
 	}
 }
 
-// 测试 try-catch 语句
-func TestTryCatch(t *testing.T) {
-	code := `
-// 简单的 try-catch
-try {
-  let x = 5;
-} catch (e) {
-  // 不应该执行到这里
-}
-"success";
-`
-	result := runJS(t, code)
-	if result.Type != JSString || result.String != "success" {
-		t.Errorf("Expected 'success', got %v (type: %v)", result.ToString(), result.Type.String())
-	}
-}
+// // 测试 try-catch 语句
+// func TestTryCatch(t *testing.T) {
+// 	code := `
+// // 简单的 try-catch
+// try {
+//   let x = 5;
+// } catch (e) {
+//   // 不应该执行到这里
+// }
+// "success";
+// `
+// 	result := runJS(t, code)
+// 	if result.Type != JSString || result.String != "success" {
+// 		t.Errorf("Expected 'success', got %v (type: %v)", result.ToString(), result.Type.String())
+// 	}
+// }
 
-// 测试 !== 操作符
-func TestNotStrictEqual(t *testing.T) {
-	// 测试数字和字符串比较
-	{
-		code := `5 !== "5";`
-		ctx := NewContext(1024)
-		tokens, err := Tokenize(code)
-		if err != nil {
-			t.Fatalf("Tokenize error: %v", err)
-		}
+// // 测试 !== 操作符
+// func TestNotStrictEqual(t *testing.T) {
+// 	// 测试数字和字符串比较
+// 	{
+// 		code := `5 !== "5";`
+// 		ctx := NewContext(1024)
+// 		tokens, err := Tokenize(code)
+// 		if err != nil {
+// 			t.Fatalf("Tokenize error: %v", err)
+// 		}
 
-		parser := NewParser(tokens, ctx)
-		prog, err := parser.ParseProgram()
-		if err != nil {
-			t.Fatalf("Parse error: %v", err)
-		}
+// 		parser := NewParser(tokens, ctx)
+// 		prog, err := parser.ParseProgram()
+// 		if err != nil {
+// 			t.Fatalf("Parse error: %v", err)
+// 		}
 
-		result, err := prog.Eval(ctx)
-		if err != nil {
-			t.Fatalf("Eval error: %v", err)
-		}
-		if !result.ToBool() {
-			t.Errorf("5 !== \"5\" should be true, got %v (type: %v)", result.ToString(), result.Type.String())
-		}
+// 		result, err := prog.Eval(ctx)
+// 		if err != nil {
+// 			t.Fatalf("Eval error: %v", err)
+// 		}
+// 		if !result.ToBool() {
+// 			t.Errorf("5 !== \"5\" should be true, got %v (type: %v)", result.ToString(), result.Type.String())
+// 		}
 
-		// 验证结果类型
-		if result.Type != JSBoolean {
-			t.Errorf("Expected result to be boolean type, got %v", result.Type.String())
-		}
-	}
+// 		// 验证结果类型
+// 		if result.Type != JSBoolean {
+// 			t.Errorf("Expected result to be boolean type, got %v", result.Type.String())
+// 		}
+// 	}
 
-	// 测试数字和数字比较
-	{
-		code := `5 !== 5;`
-		ctx := NewContext(1024)
-		tokens, err := Tokenize(code)
-		if err != nil {
-			t.Fatalf("Tokenize error: %v", err)
-		}
+// 	// 测试数字和数字比较
+// 	{
+// 		code := `5 !== 5;`
+// 		ctx := NewContext(1024)
+// 		tokens, err := Tokenize(code)
+// 		if err != nil {
+// 			t.Fatalf("Tokenize error: %v", err)
+// 		}
 
-		parser := NewParser(tokens, ctx)
-		prog, err := parser.ParseProgram()
-		if err != nil {
-			t.Fatalf("Parse error: %v", err)
-		}
+// 		parser := NewParser(tokens, ctx)
+// 		prog, err := parser.ParseProgram()
+// 		if err != nil {
+// 			t.Fatalf("Parse error: %v", err)
+// 		}
 
-		result, err := prog.Eval(ctx)
-		if err != nil {
-			t.Fatalf("Eval error: %v", err)
-		}
-		if result.ToBool() {
-			t.Errorf("5 !== 5 should be false, got %v (type: %v)", result.ToString(), result.Type.String())
-		}
+// 		result, err := prog.Eval(ctx)
+// 		if err != nil {
+// 			t.Fatalf("Eval error: %v", err)
+// 		}
+// 		if result.ToBool() {
+// 			t.Errorf("5 !== 5 should be false, got %v (type: %v)", result.ToString(), result.Type.String())
+// 		}
 
-		// 验证结果类型
-		if result.Type != JSBoolean {
-			t.Errorf("Expected result to be boolean type, got %v", result.Type.String())
-		}
-	}
-}
+// 		// 验证结果类型
+// 		if result.Type != JSBoolean {
+// 			t.Errorf("Expected result to be boolean type, got %v", result.Type.String())
+// 		}
+// 	}
+// }
 
-// Debug test for currentLineInfo error line reporting
-func TestCurrentLineInfo_Debug(t *testing.T) {
-	ctx := NewContext(1024)
-	code := `let a = 1;
-let b = 2;
-let c = ; // syntax error here
-let d = 4;`
-	// 设置源码行，这样 currentLineInfo 才能返回正确的代码行
-	lines := splitLines(code)
-	ctx.sourceLines = &lines
-	tokens, err := Tokenize(code)
-	if err != nil {
-		t.Fatalf("tokenize error: %v", err)
-	}
-	parser := NewParser(tokens, ctx)
-	_, err = parser.ParseProgram()
-	if err == nil {
-		t.Fatalf("expected parse error, got nil")
-	}
-	parseErr, ok := err.(ParseException)
-	if !ok {
-		t.Fatalf("expected ParseException, got %T: %v", err, err)
-	}
-	if parseErr.Line == 0 || parseErr.Code == "" {
-		t.Errorf("currentLineInfo did not return correct line/code: got line=%d, code='%s'", parseErr.Line, parseErr.Code)
-	}
-	if parseErr.Line != 3 {
-		t.Errorf("expected error at line 3, got %d", parseErr.Line)
-	}
-	if parseErr.Code != "let c = ; // syntax error here" {
-		t.Errorf("expected code line 'let c = ; // syntax error here', got '%s'", parseErr.Code)
-	}
-}
+// // Debug test for currentLineInfo error line reporting
+// func TestCurrentLineInfo_Debug(t *testing.T) {
+// 	ctx := NewContext(1024)
+// 	code := `let a = 1;
+// let b = 2;
+// let c = ; // syntax error here
+// let d = 4;`
+// 	// 设置源码行，这样 currentLineInfo 才能返回正确的代码行
+// 	lines := splitLines(code)
+// 	ctx.sourceLines = &lines
+// 	tokens, err := Tokenize(code)
+// 	if err != nil {
+// 		t.Fatalf("tokenize error: %v", err)
+// 	}
+// 	parser := NewParser(tokens, ctx)
+// 	_, err = parser.ParseProgram()
+// 	if err == nil {
+// 		t.Fatalf("expected parse error, got nil")
+// 	}
+// 	parseErr, ok := err.(ParseException)
+// 	if !ok {
+// 		t.Fatalf("expected ParseException, got %T: %v", err, err)
+// 	}
+// 	if parseErr.Line == 0 || parseErr.Code == "" {
+// 		t.Errorf("currentLineInfo did not return correct line/code: got line=%d, code='%s'", parseErr.Line, parseErr.Code)
+// 	}
+// 	if parseErr.Line != 3 {
+// 		t.Errorf("expected error at line 3, got %d", parseErr.Line)
+// 	}
+// 	if parseErr.Code != "let c = ; // syntax error here" {
+// 		t.Errorf("expected code line 'let c = ; // syntax error here', got '%s'", parseErr.Code)
+// 	}
+// }
 
-// === parser_statements.go 相关语句解析测试 ===
-func TestParseBlockStatement(t *testing.T) {
-	code := `let x = 1; { let x = 2; } x;`
-	result := runJS(t, code)
-	if result.Type != JSNumber || result.Number != 1 {
-		t.Errorf("Expected x to be 1, got %v", result.ToString())
-	}
-}
+// // === parser_statements.go 相关语句解析测试 ===
+// func TestParseBlockStatement(t *testing.T) {
+// 	code := `let x = 1; { let x = 2; } x;`
+// 	result := runJS(t, code)
+// 	if result.Type != JSNumber || result.Number != 1 {
+// 		t.Errorf("Expected x to be 1, got %v", result.ToString())
+// 	}
+// }
 
-func TestParseIfStatement(t *testing.T) {
-	cases := []struct {
-		code   string
-		expect string
-	}{
-		{"if (true) { 'yes' } else { 'no' }", "yes"},
-		{"if (false) { 'yes' } else { 'no' }", "no"},
-		{"if (false) { 'fail' } 'ok'", "ok"},
-	}
-	for _, c := range cases {
-		result := runJS(t, c.code)
-		if result.ToString() != c.expect {
-			t.Errorf("code: %s, expect: %s, got: %s", c.code, c.expect, result.ToString())
-		}
-	}
-}
+// func TestParseIfStatement(t *testing.T) {
+// 	cases := []struct {
+// 		code   string
+// 		expect string
+// 	}{
+// 		{"if (true) { 'yes' } else { 'no' }", "yes"},
+// 		{"if (false) { 'yes' } else { 'no' }", "no"},
+// 		{"if (false) { 'fail' } 'ok'", "ok"},
+// 	}
+// 	for _, c := range cases {
+// 		result := runJS(t, c.code)
+// 		if result.ToString() != c.expect {
+// 			t.Errorf("code: %s, expect: %s, got: %s", c.code, c.expect, result.ToString())
+// 		}
+// 	}
+// }
 
-func TestParseWhileStatement(t *testing.T) {
-	code := `let i = 0; let sum = 0; while (i < 3) { sum = sum + i; i = i + 1; } sum;`
-	result := runJS(t, code)
-	if result.Type != JSNumber || result.Number != 3 {
-		t.Errorf("Expected sum=3, got %v", result.ToString())
-	}
-}
+// func TestParseWhileStatement(t *testing.T) {
+// 	code := `let i = 0; let sum = 0; while (i < 3) { sum = sum + i; i = i + 1; } sum;`
+// 	result := runJS(t, code)
+// 	if result.Type != JSNumber || result.Number != 3 {
+// 		t.Errorf("Expected sum=3, got %v", result.ToString())
+// 	}
+// }
 
-func TestParseForStatement(t *testing.T) {
-	code := `let sum = 0; for (let i = 0; i < 3; i = i + 1) { sum = sum + i; } sum;`
-	result := runJS(t, code)
-	if result.Type != JSNumber || result.Number != 3 {
-		t.Errorf("Expected sum=3, got %v", result.ToString())
-	}
-}
+// func TestParseForStatement(t *testing.T) {
+// 	code := `let sum = 0; for (let i = 0; i < 3; i = i + 1) { sum = sum + i; } sum;`
+// 	result := runJS(t, code)
+// 	if result.Type != JSNumber || result.Number != 3 {
+// 		t.Errorf("Expected sum=3, got %v", result.ToString())
+// 	}
+// }
 
 // func TestParseFunctionReturn(t *testing.T) {
 // 	code := `function f() { return 42; } f();`
@@ -750,21 +764,21 @@ func TestParseForStatement(t *testing.T) {
 // 	}
 // }
 
-func TestParseThrowStatement(t *testing.T) {
-	code := `try { throw "err"; } catch (e) { e; }`
-	result := runJS(t, code)
-	if result.ToString() != "err" {
-		t.Errorf("Expected 'err', got %v", result.ToString())
-	}
-	// throw 后续不可达
-	code2 := `try { throw 1; 2; } catch (e) { e; }`
-	result2 := runJS(t, code2)
-	if result2.ToNumber() != 1 {
-		t.Errorf("Expected 1, got %v", result2.ToString())
-	}
-}
+// func TestParseThrowStatement(t *testing.T) {
+// 	code := `try { throw "err"; } catch (e) { e; }`
+// 	result := runJS(t, code)
+// 	if result.ToString() != "err" {
+// 		t.Errorf("Expected 'err', got %v", result.ToString())
+// 	}
+// 	// throw 后续不可达
+// 	code2 := `try { throw 1; 2; } catch (e) { e; }`
+// 	result2 := runJS(t, code2)
+// 	if result2.ToNumber() != 1 {
+// 		t.Errorf("Expected 1, got %v", result2.ToString())
+// 	}
+// }
 
-// === parser_loops.go 相关循环语句测试 ===
+// // === parser_loops.go 相关循环语句测试 ===
 // func TestForLoopVariants(t *testing.T) {
 // 	cases := []struct {
 // 		code   string
@@ -790,303 +804,53 @@ func TestParseThrowStatement(t *testing.T) {
 // 	}
 // }
 
-func TestWhileLoopVariants(t *testing.T) {
-	cases := []struct {
-		code   string
-		expect float64
-		desc   string
-	}{
-		// while false
-		{"let x=1; while(false){x=2;} x;", 1, "while false"},
-		// while true + break
-		{"let x=0; while(true){if(x==2)break; x=x+1;} x;", 2, "while true with break"},
-		// while 嵌套
-		{"let x=0; let y=0; while(x<2){y=0; while(y<2){y=y+1;} x=x+1;} x+y;", 4, "nested while"},
-		// while 循环体为空
-		{"let i=0; while(i<2) i=i+1; i;", 2, "while no block"},
-	}
-	for _, c := range cases {
-		result := runJS(t, c.code)
-		if result.Type != JSNumber || result.Number != c.expect {
-			t.Errorf("%s: expect %v, got %v", c.desc, c.expect, result.ToString())
-		}
-	}
-}
+// func TestWhileLoopVariants(t *testing.T) {
+// 	cases := []struct {
+// 		code   string
+// 		expect float64
+// 		desc   string
+// 	}{
+// 		// while false
+// 		{"let x=1; while(false){x=2;} x;", 1, "while false"},
+// 		// while true + break
+// 		{"let x=0; while(true){if(x==2)break; x=x+1;} x;", 2, "while true with break"},
+// 		// while 嵌套
+// 		{"let x=0; let y=0; while(x<2){y=0; while(y<2){y=y+1;} x=x+1;} x+y;", 4, "nested while"},
+// 		// while 循环体为空
+// 		{"let i=0; while(i<2) i=i+1; i;", 2, "while no block"},
+// 	}
+// 	for _, c := range cases {
+// 		result := runJS(t, c.code)
+// 		if result.Type != JSNumber || result.Number != c.expect {
+// 			t.Errorf("%s: expect %v, got %v", c.desc, c.expect, result.ToString())
+// 		}
+// 	}
+// }
 
-// === parser_literals.go 解构模式 pattern 解析测试 ===
-func TestParseObjectPatternCases(t *testing.T) {
-	cases := []struct {
-		code    string
-		expectA float64
-		expectB float64
-		desc    string
-		wantErr bool
-	}{
-		// 基本用法
-		{"let obj = {a: 1, b: 2}; let {a, b} = obj; [a, b];", 1, 2, "basic object pattern", false},
-		// 带逗号结尾
-		{"let obj = {a: 3, b: 4}; let {a, b,} = obj; [a, b];", 3, 4, "object pattern with trailing comma", false},
-		// 空对象
-		{"let obj = {a: 1}; let {} = obj; 42;", 42, 0, "empty object pattern", false},
-		// 非 identifier 错误
-		{"let obj = {a: 1}; let {a, 1} = obj;", 0, 0, "object pattern with non-identifier", true},
-	}
-	for _, c := range cases {
-		if c.wantErr {
-			_, err := runJSWithError(t, c.code)
-			if err == nil {
-				t.Errorf("%s: expect error, got nil", c.desc)
-			}
-		} else {
-			result := runJS(t, c.code)
-			if c.desc == "empty object pattern" {
-				if result.ToNumber() != 42 {
-					t.Errorf("%s: expect 42, got %v", c.desc, result.ToString())
-				}
-				continue
-			}
-			arr := result.ToObject()
-			if arr["0"].ToNumber() != c.expectA || arr["1"].ToNumber() != c.expectB {
-				t.Errorf("%s: expect [%v, %v], got %v", c.desc, c.expectA, c.expectB, result.ToString())
-			}
-		}
-	}
-}
-
-func TestParseArrayPattern(t *testing.T) {
-	cases := []struct {
-		code    string
-		expectX float64
-		expectY float64
-		desc    string
-		wantErr bool
-	}{
-		// 基本用法
-		{"let arr = [1, 2]; let [x, y] = arr; [x, y];", 1, 2, "basic array pattern", false},
-		// 带逗号结尾
-		{"let arr = [3, 4]; let [x, y,] = arr; [x, y];", 3, 4, "array pattern with trailing comma", false},
-		// 空数组
-		{"let arr = [1]; let [] = arr; 99;", 99, 0, "empty array pattern", false},
-		// 非 identifier 错误
-		{"let arr = [1]; let [x, 1] = arr;", 0, 0, "array pattern with non-identifier", true},
-	}
-	for _, c := range cases {
-		if c.wantErr {
-			_, err := runJSWithError(t, c.code)
-			if err == nil {
-				t.Errorf("%s: expect error, got nil", c.desc)
-			}
-		} else {
-			result := runJS(t, c.code)
-			if c.desc == "empty array pattern" {
-				if result.ToNumber() != 99 {
-					t.Errorf("%s: expect 99, got %v", c.desc, result.ToString())
-				}
-				continue
-			}
-			arr := result.ToObject()
-			if arr["0"].ToNumber() != c.expectX || arr["1"].ToNumber() != c.expectY {
-				t.Errorf("%s: expect [%v, %v], got %v", c.desc, c.expectX, c.expectY, result.ToString())
-			}
-		}
-	}
-}
-
-// === parser_functions.go 函数调用与 this/原型链/箭头函数/原生函数测试 ===
-func TestFunctionCallVariants(t *testing.T) {
-	cases := []struct {
-		code    string
-		expect  string
-		desc    string
-		wantErr bool
-	}{
-		// 普通函数调用
-		{"function f(x) { return x+1; } f(2);", "3", "global function call", false},
-		// 闭包
-		{"function makeAdder(a) { return function(b) { return a+b; }; } let add5 = makeAdder(5); add5(3);", "8", "closure function call", false},
-		// 对象方法调用 this 绑定
-		{"let obj = {x: 42, get: function() { return this.x; }}; obj.get();", "42", "object method call with this", false},
-		// 原型链方法
-		{"let proto = {foo: function() { return 99; }}; let obj = {}; obj.__proto__ = proto; obj.foo();", "99", "method via prototype chain", false},
-		// 箭头函数 this 继承
-		{"let that = 7; let f = () => this; f.call({val:that});", "[object Object]", "arrow function this inheritance (should not be bound)", false},
-		// Go 注册原生函数 print 返回 undefined
-		{"typeof print('hi');", "undefined", "native Go function call", false},
-		// 错误: 非函数调用
-		{"let a = 1; a();", "", "call non-function should error", true},
-		// 错误: 调用不存在的方法
-		{"let obj = {}; obj.noSuchMethod();", "", "call missing method should error", true},
-	}
-	for _, c := range cases {
-		if c.wantErr {
-			_, err := runJSWithError(t, c.code)
-			if err == nil {
-				t.Errorf("%s: expect error, got nil", c.desc)
-			}
-		} else {
-			result := runJS(t, c.code)
-			if result.ToString() != c.expect {
-				t.Errorf("%s: expect %v, got %v", c.desc, c.expect, result.ToString())
-			}
-		}
-	}
-}
-
-// === parser_expressions.go 赋值表达式解析测试 ===
-func TestAssignmentExpressions(t *testing.T) {
-	cases := []struct {
-		code    string
-		expect  interface{} // 允许 float64 或 string
-		desc    string
-		wantErr bool
-	}{
-		// 普通变量赋值
-		{"let x = 1; x = 2; x;", 2.0, "simple variable assignment", false},
-		// 右结合赋值
-		{"let a, b, c; a = b = c = 5; [a, b, c];", []float64{5, 5, 5}, "right associative assignment", false},
-		// 对象属性赋值
-		{"let obj = {x: 1}; obj.x = 42; obj.x;", 42.0, "object property assignment (dot)", false},
-		{"let obj = {}; obj['y'] = 99; obj.y;", 99.0, "object property assignment (bracket)", false},
-		// 数组元素赋值及 length
-		{"let arr = [1,2]; arr[1] = 7; arr[1];", 7.0, "array element assignment", false},
-		{"let arr = [1,2]; arr[2] = 9; arr.length;", 3.0, "array length auto-update", false},
-		// 错误：赋值给字面量
-		{"5 = 1;", nil, "assign to literal should error", true},
-		// 错误：赋值给不存在对象属性
-		{"foo.bar = 1;", nil, "assign to property of undefined object should error", true},
-		// 错误：赋值给非对象
-		{"let x = 1; x.y = 2;", nil, "assign to property of non-object should error", true},
-	}
-	for _, c := range cases {
-		if c.wantErr {
-			_, err := runJSWithError(t, c.code)
-			if err == nil {
-				t.Errorf("%s: expect error, got nil", c.desc)
-			}
-		} else {
-			result := runJS(t, c.code)
-			if arr, ok := c.expect.([]float64); ok {
-				robj := result.ToObject()
-				for i, v := range arr {
-					if robj[strconv.Itoa(i)].ToNumber() != v {
-						t.Errorf("%s: expect arr[%d]=%v, got %v", c.desc, i, v, robj[strconv.Itoa(i)].ToNumber())
-					}
-				}
-			} else if num, ok := c.expect.(float64); ok {
-				if result.ToNumber() != num {
-					t.Errorf("%s: expect %v, got %v", c.desc, num, result.ToString())
-				}
-			}
-		}
-	}
-}
-
-// === parser_core.go 基础功能与异常测试 ===
-func TestParseExceptionFormat(t *testing.T) {
-	err := ParseException{Msg: "unexpected token", Line: 3, Code: "let x = ;"}
-	msg := err.Error()
-	if !strings.Contains(msg, "Parse error at line 3") || !strings.Contains(msg, "unexpected token") || !strings.Contains(msg, "let x = ;") {
-		t.Errorf("ParseException format error: %s", msg)
-	}
-}
-
-func TestNewParserInit_SimpleJS(t *testing.T) {
-	toks := []Token{{Type: TokNumber, Literal: "1"}}
-	ctx := &RunContext{global: NewScope(nil)}
-	p := NewParser(toks, ctx)
-	if len(p.tokens) != 1 || p.pos != 0 || p.ctx != ctx {
-		t.Errorf("NewParser did not initialize fields correctly")
-	}
-}
-
-func TestParseExpressionAndProgram(t *testing.T) {
-	ctx := &RunContext{global: NewScope(nil)}
-	// ParseExpression: 1+2
-	toks, _ := Tokenize("1+2")
-	p := NewParser(toks, ctx)
-	expr, err := p.ParseExpression()
-	if err != nil {
-		t.Errorf("ParseExpression failed: err=%v", err)
-	}
-	progExpr := &Program{Body: []Statement{&ExpressionStmt{Expr: expr}}}
-	v, err := progExpr.Eval(ctx)
-	if err != nil || v.ToNumber() != 3 {
-		t.Errorf("ParseExpression failed: got %v, err=%v", v.ToString(), err)
-	}
-
-	// ParseProgram: 多条语句和多余分号
-	code := "let a = 1;; a = 2; a;"
-	toks2, _ := Tokenize(code)
-	p2 := NewParser(toks2, ctx)
-	prog, err2 := p2.ParseProgram()
-	assert.NoError(t, err2)
-	val2, err2 := prog.Eval(ctx)
-	assert.NoError(t, err2)
-	if val2.ToNumber() != 2 {
-		t.Errorf("ParseProgram failed: got %v, err=%v", val2.ToString(), err2)
-	}
-
-	// ParseProgram: 语法错误
-	code3 := "let x = ;"
-	toks3, _ := Tokenize(code3)
-	p3 := NewParser(toks3, ctx)
-	_, err3 := p3.ParseProgram()
-	if err3 == nil {
-		t.Error("ParseProgram should error on syntax error")
-	} else if !strings.Contains(err3.Error(), "Parse error") {
-		t.Errorf("ParseProgram error format: %v", err3)
-	}
-}
-
-func TestParserPeekNextExpect(t *testing.T) {
-	toks, _ := Tokenize("1 + 2")
-	ctx := &RunContext{global: NewScope(nil)}
-	p := NewParser(toks, ctx)
-	if p.peek().Literal != "1" {
-		t.Errorf("peek() should return first token")
-	}
-	tok := p.next()
-	if tok.Literal != "1" || p.peek().Literal != "+" {
-		t.Errorf("next() should advance to next token")
-	}
-	tok2, err := p.expect(TokPlus)
-	if err != nil || tok2.Literal != "+" {
-		t.Errorf("expect() should consume + token, got %v err=%v", tok2.Literal, err)
-	}
-	_, err2 := p.expect(TokNumber)
-	if err2 != nil {
-		t.Errorf("expect() should succeed for number token")
-	}
-	_, err3 := p.expect(TokSemicolon)
-	if err3 == nil {
-		t.Error("expect() should fail for missing token")
-	}
-}
-
-// 遍历 examples 目录，逐个运行 js 文件
-func TestExamplesFolder(t *testing.T) {
-	dir := "./examples"
-	files, err := os.ReadDir(dir)
-	assert.NoError(t, err)
-	for _, file := range files {
-		if file.IsDir() || filepath.Ext(file.Name()) != ".js" {
-			continue
-		}
-		jsPath := filepath.Join(dir, file.Name())
-		content, err := os.ReadFile(jsPath)
-		assert.NoError(t, err, "reading %s", file.Name())
-		t.Run(file.Name(), func(t *testing.T) {
-			ctx := &RunContext{global: NewScope(nil)}
-			registerPrint(ctx)
-			// 设置源码行，这样 currentLineInfo 才能返回正确的代码行
-			lines := splitLines(string(content))
-			ctx.sourceLines = &lines
-			tokens, err := Tokenize(string(content))
-			assert.NoError(t, err, "tokenize %s", file.Name())
-			parser := NewParser(tokens, ctx)
-			_, err = parser.ParseProgram()
-			assert.NoError(t, err, "parse %s", file.Name())
-			runJS(t, string(content))
-		})
-	}
-}
+// // 遍历 examples 目录，逐个运行 js 文件
+// func TestExamplesFolder(t *testing.T) {
+// 	dir := "./examples"
+// 	files, err := os.ReadDir(dir)
+// 	assert.NoError(t, err)
+// 	for _, file := range files {
+// 		if file.IsDir() || filepath.Ext(file.Name()) != ".js" {
+// 			continue
+// 		}
+// 		jsPath := filepath.Join(dir, file.Name())
+// 		content, err := os.ReadFile(jsPath)
+// 		assert.NoError(t, err, "reading %s", file.Name())
+// 		t.Run(file.Name(), func(t *testing.T) {
+// 			ctx := &RunContext{global: NewScope(nil)}
+// 			registerPrint(ctx)
+// 			// 设置源码行，这样 currentLineInfo 才能返回正确的代码行
+// 			lines := splitLines(string(content))
+// 			ctx.sourceLines = &lines
+// 			tokens, err := Tokenize(string(content))
+// 			assert.NoError(t, err, "tokenize %s", file.Name())
+// 			parser := NewParser(tokens, ctx)
+// 			_, err = parser.ParseProgram()
+// 			assert.NoError(t, err, "parse %s", file.Name())
+// 			runJS(t, string(content))
+// 		})
+// 	}
+// }

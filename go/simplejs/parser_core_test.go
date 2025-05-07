@@ -87,3 +87,85 @@ func TestExpectEOF(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, TokEOF, tok.Type)
 }
+
+// === parser_core.go 基础功能与异常测试 ===
+func TestParseExceptionFormat(t *testing.T) {
+	err := ParseException{Msg: "unexpected token", Line: 3, Code: "let x = ;"}
+	msg := err.Error()
+	if !strings.Contains(msg, "Parse error at line 3") || !strings.Contains(msg, "unexpected token") || !strings.Contains(msg, "let x = ;") {
+		t.Errorf("ParseException format error: %s", msg)
+	}
+}
+
+func TestNewParserInit_SimpleJS(t *testing.T) {
+	toks := []Token{{Type: TokNumber, Literal: "1"}}
+	ctx := &RunContext{global: NewScope(nil)}
+	p := NewParser(toks, ctx)
+	if len(p.tokens) != 1 || p.pos != 0 || p.ctx != ctx {
+		t.Errorf("NewParser did not initialize fields correctly")
+	}
+}
+
+func TestParseExpressionAndProgram(t *testing.T) {
+	ctx := &RunContext{global: NewScope(nil)}
+	// ParseExpression: 1+2
+	toks, _ := Tokenize("1+2")
+	p := NewParser(toks, ctx)
+	expr, err := p.ParseExpression()
+	if err != nil {
+		t.Errorf("ParseExpression failed: err=%v", err)
+	}
+	progExpr := &Program{Body: []Statement{&ExpressionStmt{Expr: expr}}}
+	v, err := progExpr.Eval(ctx)
+	if err != nil || v.ToNumber() != 3 {
+		t.Errorf("ParseExpression failed: got %v, err=%v", v.ToString(), err)
+	}
+
+	// ParseProgram: 多条语句和多余分号
+	code := "let a = 1;; a = 2; a;"
+	toks2, _ := Tokenize(code)
+	p2 := NewParser(toks2, ctx)
+	prog, err2 := p2.ParseProgram()
+	assert.NoError(t, err2)
+	val2, err2 := prog.Eval(ctx)
+	assert.NoError(t, err2)
+	if val2.ToNumber() != 2 {
+		t.Errorf("ParseProgram failed: got %v, err=%v", val2.ToString(), err2)
+	}
+
+	// ParseProgram: 语法错误
+	code3 := "let x = ;"
+	toks3, _ := Tokenize(code3)
+	p3 := NewParser(toks3, ctx)
+	_, err3 := p3.ParseProgram()
+	if err3 == nil {
+		t.Error("ParseProgram should error on syntax error")
+	} else if !strings.Contains(err3.Error(), "Parse error") {
+		t.Errorf("ParseProgram error format: %v", err3)
+	}
+}
+
+func TestParserPeekNextExpect(t *testing.T) {
+	toks, _ := Tokenize("1 + 2")
+	ctx := &RunContext{global: NewScope(nil)}
+	p := NewParser(toks, ctx)
+	if p.peek().Literal != "1" {
+		t.Errorf("peek() should return first token")
+	}
+	tok := p.next()
+	if tok.Literal != "1" || p.peek().Literal != "+" {
+		t.Errorf("next() should advance to next token")
+	}
+	tok2, err := p.expect(TokPlus)
+	if err != nil || tok2.Literal != "+" {
+		t.Errorf("expect() should consume + token, got %v err=%v", tok2.Literal, err)
+	}
+	_, err2 := p.expect(TokNumber)
+	if err2 != nil {
+		t.Errorf("expect() should succeed for number token")
+	}
+	_, err3 := p.expect(TokSemicolon)
+	if err3 == nil {
+		t.Error("expect() should fail for missing token")
+	}
+}

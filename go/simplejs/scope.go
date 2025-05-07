@@ -49,3 +49,12 @@ func (s *Scope) Delete(name string) bool {
 	}
 	return false
 }
+
+// Root returns the root (outermost) scope.
+func (s *Scope) Root() *Scope {
+	curr := s
+	for curr.parent != nil {
+		curr = curr.parent
+	}
+	return curr
+}

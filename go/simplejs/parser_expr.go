@@ -6,7 +6,8 @@ func (p *Parser) parseAssignment() (Expression, error) {
 	if err != nil {
 		return nil, err
 	}
-	if p.peek().Type == TokAssign {
+	switch p.peek().Type {
+	case TokAssign, TokPlusAssign, TokMinusAssign, TokAsteriskAssign, TokSlashAssign:
 		tok := p.next()
 		right, err := p.parseAssignment()
 		if err != nil {

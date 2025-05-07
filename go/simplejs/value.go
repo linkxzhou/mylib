@@ -135,7 +135,9 @@ func (v JSValue) ToBool() bool {
 		return false
 	}
 }
+
 func (v JSValue) ToNumber() float64 { return v.Number }
+
 func (v JSValue) ToString() string {
 	switch v.Type {
 	case JSUndefined:
@@ -191,6 +193,7 @@ func (v JSValue) ToString() string {
 		return ""
 	}
 }
+
 func (v JSValue) ToObject() map[string]JSValue {
 	// If array type, convert underlying slice to object map
 	if v.IsArray {
@@ -208,9 +211,30 @@ func (v JSValue) ToObject() map[string]JSValue {
 	}
 	return nil
 }
+
 func (v JSValue) ToArray() []JSValue {
 	if realv, ok := v.Object.([]JSValue); ok {
 		return realv
+	}
+	// Support JSObject arrays stored as map[string]JSValue with IsArray marker
+	if v.Type == JSObject && v.IsArray {
+		if m, ok := v.Object.(map[string]JSValue); ok {
+			lengthVal, okLen := m["length"]
+			length := 0
+			if okLen {
+				length = int(lengthVal.ToNumber())
+			}
+			arr := make([]JSValue, length)
+			for i := 0; i < length; i++ {
+				idx := strconv.Itoa(i)
+				if elem, ok := m[idx]; ok {
+					arr[i] = elem
+				} else {
+					arr[i] = Undefined()
+				}
+			}
+			return arr
+		}
 	}
 	return nil
 }

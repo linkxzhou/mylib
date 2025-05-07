@@ -12,3 +12,6 @@
 **/.env
 **/c++/tinyhttpd/tinyhttpd
 **/tinylib
+**/simplejs/tests
+**/*.prof
+**/sjson/tests/JSONTestSuite

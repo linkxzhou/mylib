@@ -43,7 +43,16 @@ func (p *Parser) parseFunctionDecl(requireFunction bool) (Expression, error) {
 		return nil, p.errorf("invalid function body")
 	}
 	// 生成 FunctionDecl AST
-	return &FunctionDecl{Name: nameIdent, Params: params, Body: block, Line: block.Line, Col: block.Col}, nil
+	fnDecl := &FunctionDecl{Name: nameIdent, Params: params, Body: block, Line: block.Line, Col: block.Col}
+	// DEBUG LOG: Print function declaration name and params
+	p.debug("[parseFunctionDecl] FunctionDecl: %s, params: %d", func() string {
+		if fnDecl.Name != nil {
+			return fnDecl.Name.Name
+		} else {
+			return "<anonymous>"
+		}
+	}(), len(fnDecl.Params))
+	return fnDecl, nil
 }
 
 // parseNew 生成 NewExpr AST

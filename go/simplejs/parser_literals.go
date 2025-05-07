@@ -4,9 +4,67 @@ import (
 	"strconv"
 )
 
-// parsePrimary handles literals, identifiers, and parentheses.
+// parsePrimary handles literals, identifiers, parentheses, and arrow functions.
 func (p *Parser) parsePrimary() (Expression, error) {
 	tok := p.peek()
+
+	// Try arrow function: (...) => expr or x => expr
+	if tok.Type == TokLParen || tok.Type == TokIdentifier {
+		pos := p.save()
+		var params []*Identifier
+		if tok.Type == TokLParen {
+			// parse '(' params ')'
+			p.next()
+			for p.peek().Type != TokRParen {
+				idTok := p.peek()
+				if idTok.Type != TokIdentifier {
+					p.restore(pos)
+					params = nil
+					break
+				}
+				p.next()
+				params = append(params, &Identifier{Name: idTok.Literal, Line: idTok.Line, Col: 0})
+				if p.peek().Type == TokComma {
+					p.next()
+					continue
+				}
+				break
+			}
+			if params != nil {
+				if p.peek().Type != TokRParen {
+					p.restore(pos)
+					params = nil
+				} else {
+					p.next() // consume ')'
+				}
+			}
+		} else {
+			// single identifier parameter
+			p.next()
+			params = []*Identifier{{Name: tok.Literal, Line: tok.Line, Col: 0}}
+		}
+		if params != nil && p.peek().Type == TokArrow {
+			p.next() // consume '=>'
+			var body Node
+			if p.peek().Type == TokLBrace {
+				block, err := p.parseBlock()
+				if err != nil {
+					return nil, err
+				}
+				body = block
+			} else {
+				expr, err := p.ParseExpression()
+				if err != nil {
+					return nil, err
+				}
+				body = expr
+			}
+			return &ArrowFunctionExpr{Params: params, Body: body, Async: false, Line: tok.Line, Col: 0}, nil
+		}
+		p.restore(pos)
+	}
+
+	// Default literal, identifier, or other primary
 	switch tok.Type {
 	case TokNumber:
 		p.next()
@@ -22,21 +80,28 @@ func (p *Parser) parsePrimary() (Expression, error) {
 		p.next()
 		b := tok.Literal == "true"
 		return &Literal{Value: b, Line: tok.Line, Col: 0}, nil
+	case TokNull:
+		p.next()
+		return &Literal{Value: nil, Line: tok.Line, Col: 0}, nil
+	case TokUndefined:
+		p.next()
+		return &Literal{Value: struct{}{}, Line: tok.Line, Col: 0}, nil
 	case TokFunction:
-		// function expression or declaration without statement context
 		return p.parseFunctionDecl(true)
 	case TokNew:
-		// new expression
 		return p.parseNew()
 	case TokLBracket:
-		// array literal
 		return p.parseArrayLiteral()
 	case TokLBrace:
-		// object literal
 		return p.parseObjectLiteral()
-	default:
+	case TokIdentifier:
 		p.next()
 		return &Identifier{Name: tok.Literal, Line: tok.Line, Col: 0}, nil
+	case TokSuper:
+		p.next()
+		return &SuperExpr{Line: tok.Line, Col: 0}, nil
+	default:
+		return nil, p.errorf("unexpected token %v in primary", tok.Type)
 	}
 }
 
@@ -137,8 +202,11 @@ func (p *Parser) parseObjectPattern() (Expression, error) {
 			if p.peek().Type == TokComma {
 				p.next()
 			}
+		} else if tok.Type == TokComma {
+			p.next()
+			continue
 		} else {
-			return nil, p.errorf("object pattern expects identifier or comma, got %v", p.peek().Type)
+			return nil, p.errorf("object pattern expects identifier or comma, got %v", tok.Type)
 		}
 	}
 	_, err = p.expect(TokRBrace)
@@ -162,7 +230,7 @@ func (p *Parser) parseArrayPattern() (Expression, error) {
 			nameTok := p.next()
 			elements = append(elements, &Identifier{Name: nameTok.Literal, Line: nameTok.Line, Col: 0})
 		} else if tok.Type == TokComma {
-			p.next() // skip comma
+			p.next()
 			continue
 		} else {
 			return nil, p.errorf("array pattern expects identifier or comma, got %v", tok.Type)

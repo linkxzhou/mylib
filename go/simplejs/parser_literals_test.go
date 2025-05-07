@@ -73,6 +73,7 @@ func TestParsePrimaryNewExpr(t *testing.T) {
 	ident, ok := ne.Callee.(*Identifier)
 	assert.True(t, ok)
 	assert.Equal(t, "Obj", ident.Name)
+
 	assert.Len(t, ne.Arguments, 1)
 }
 
@@ -85,6 +86,86 @@ func TestParseObjectPattern(t *testing.T) {
 	assert.NoError(t, err)
 	obj, ok := expr.(*ObjectLiteral)
 	assert.True(t, ok)
-	// 因为 stub 未收集 Properties，当前应该是 nil
-	assert.Nil(t, obj.Properties)
+	// parseObjectPattern now collects Properties; expect 3 entries
+	assert.Len(t, obj.Properties, 3)
+}
+
+// === parser_literals.go 解构模式 pattern 解析测试 ===
+func TestParseObjectPatternCases(t *testing.T) {
+	cases := []struct {
+		code    string
+		expectA float64
+		expectB float64
+		desc    string
+		wantErr bool
+	}{
+		// 基本用法
+		{"let obj = {a: 1, b: 2}; let {a, b} = obj; [a, b];", 1, 2, "basic object pattern", false},
+		// 带逗号结尾
+		{"let obj = {a: 3, b: 4}; let {a, b,} = obj; [a, b];", 3, 4, "object pattern with trailing comma", false},
+		// 空对象
+		{"let obj = {a: 1}; let {} = obj; 42;", 42, 0, "empty object pattern", false},
+		// 非 identifier 错误
+		{"let obj = {a: 1}; let {a, 1} = obj;", 0, 0, "object pattern with non-identifier", true},
+	}
+	for _, c := range cases {
+		t.Logf("Testing code: %s, desc: %s", c.code, c.desc)
+		if c.wantErr {
+			_, err := runJSWithError(t, c.code)
+			if err == nil {
+				t.Errorf("%s: expect error, got nil", c.desc)
+			}
+		} else {
+			result := runJS(t, c.code)
+			if c.desc == "empty object pattern" {
+				if result.ToNumber() != 42 {
+					t.Errorf("%s: expect 42, got %v", c.desc, result.ToString())
+				}
+				continue
+			}
+			arr := result.ToObject()
+			if arr["0"].ToNumber() != c.expectA || arr["1"].ToNumber() != c.expectB {
+				t.Errorf("%s: expect [%v, %v], got %v", c.desc, c.expectA, c.expectB, result.ToString())
+			}
+		}
+	}
+}
+
+func TestParseArrayPattern(t *testing.T) {
+	cases := []struct {
+		code    string
+		expectX float64
+		expectY float64
+		desc    string
+		wantErr bool
+	}{
+		// 基本用法
+		{"let arr = [1, 2]; let [x, y] = arr; [x, y];", 1, 2, "basic array pattern", false},
+		// 带逗号结尾
+		{"let arr = [3, 4]; let [x, y,] = arr; [x, y];", 3, 4, "array pattern with trailing comma", false},
+		// 空数组
+		{"let arr = [1]; let [] = arr; 99;", 99, 0, "empty array pattern", false},
+		// 非 identifier 错误
+		{"let arr = [1]; let [x, 1] = arr;", 0, 0, "array pattern with non-identifier", true},
+	}
+	for _, c := range cases {
+		if c.wantErr {
+			_, err := runJSWithError(t, c.code)
+			if err == nil {
+				t.Errorf("%s: expect error, got nil", c.desc)
+			}
+		} else {
+			result := runJS(t, c.code)
+			if c.desc == "empty array pattern" {
+				if result.ToNumber() != 99 {
+					t.Errorf("%s: expect 99, got %v", c.desc, result.ToString())
+				}
+				continue
+			}
+			arr := result.ToObject()
+			if arr["0"].ToNumber() != c.expectX || arr["1"].ToNumber() != c.expectY {
+				t.Errorf("%s: expect [%v, %v], got %v", c.desc, c.expectX, c.expectY, result.ToString())
+			}
+		}
+	}
 }
