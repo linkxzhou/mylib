@@ -1,23 +1,60 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/mylib/go/sjson"
 )
 
-func parse_json_file(file_path string) {
+func parse_sjson_file(file_path string) {
 	b, file_err := ioutil.ReadFile(file_path)
 	if file_err != nil {
+		fmt.Println("读取文件错误:", file_err)
 		os.Exit(-1)
 	}
 
-	var f interface{}
-	err := sjson.Unmarshal(b, &f)
+	// 使用自定义sjson库解析
+	var fSjson interface{}
+	errSjson := sjson.Unmarshal(b, &fSjson)
+	if errSjson != nil {
+		os.Exit(1)
+	}
 
-	if err != nil {
+	os.Exit(0)
+}
+
+func parse_stdjson_file(file_path string) {
+	b, file_err := ioutil.ReadFile(file_path)
+	if file_err != nil {
+		fmt.Println("读取文件错误:", file_err)
+		os.Exit(-1)
+	}
+
+	// 使用标准库json解析
+	var fStd interface{}
+	errStd := json.Unmarshal(b, &fStd)
+	if errStd != nil {
+		os.Exit(1)
+	}
+
+	os.Exit(0)
+}
+
+func parse_fastjson_file(file_path string) {
+	b, file_err := ioutil.ReadFile(file_path)
+	if file_err != nil {
+		fmt.Println("读取文件错误:", file_err)
+		os.Exit(-1)
+	}
+
+	// 使用json-iterator库解析
+	var fJsoniter interface{}
+	errJsoniter := jsoniter.Unmarshal(b, &fJsoniter)
+	if errJsoniter != nil {
 		os.Exit(1)
 	}
 
@@ -67,29 +104,39 @@ func parse_json_string() {
 		os.Exit(1)
 	}
 	fmt.Printf("生成的JSON: %v\n\n", data)
-
-	// 手动构建JSON
-	fmt.Println("\n示例4: 手动构建JSON")
-	manualObj := sjson.Object{
-		"status": sjson.String("ok"),
-		"code":   sjson.Number(200),
-		"user": sjson.Object{
-			"id":   sjson.Number(1001),
-			"name": sjson.String("王五"),
-		},
-		"tags": sjson.Array{
-			sjson.String("标签1"),
-			sjson.String("标签2"),
-		},
-	}
-
-	fmt.Printf("手动构建的JSON: %s\n", manualObj.String())
 }
 
 func main() {
 	if len(os.Args) < 2 {
 		parse_json_string()
+		return
+	}
+
+	// 解析命令行参数
+	arg := os.Args[1]
+	if arg == "-a" {
+		// 如果参数是-a，使用sjson解析
+		if len(os.Args) < 3 {
+			fmt.Println("请提供要解析的JSON文件路径")
+			os.Exit(1)
+		}
+		parse_sjson_file(os.Args[2])
+	} else if arg == "-b" {
+		// 如果参数是-b，使用标准库json解析
+		if len(os.Args) < 3 {
+			fmt.Println("请提供要解析的JSON文件路径")
+			os.Exit(1)
+		}
+		parse_stdjson_file(os.Args[2])
+	} else if arg == "-c" {
+		// 如果参数是-c，使用json-iterator解析
+		if len(os.Args) < 3 {
+			fmt.Println("请提供要解析的JSON文件路径")
+			os.Exit(1)
+		}
+		parse_fastjson_file(os.Args[2])
 	} else {
-		parse_json_file(os.Args[1])
+		// 默认使用sjson解析
+		parse_sjson_file(arg)
 	}
 }

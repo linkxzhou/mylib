@@ -9,6 +9,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+var jsonfast = jsoniter.ConfigFastest
+
 func TestSjsonUnmarshal(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -518,18 +520,7 @@ func BenchmarkComplexDecode(b *testing.B) {
 func BenchmarkSingleDecode(b *testing.B) {
 	jsonStr := `{"name":"测试","age":30,"active":true,"scores":[95,87,72]}`
 
-	b.Run("SjsonWithCache", func(b *testing.B) {
-		oldConfig := GetDefaultConfig()
-		defer SetDefaultConfig(oldConfig)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			var result map[string]interface{}
-			_ = Unmarshal([]byte(jsonStr), &result)
-		}
-	})
-
-	b.Run("SjsonNoCache", func(b *testing.B) {
+	b.Run("Sjson", func(b *testing.B) {
 		config := Config{}
 
 		b.ResetTimer()
@@ -544,6 +535,14 @@ func BenchmarkSingleDecode(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			var result map[string]interface{}
 			_ = json.Unmarshal([]byte(jsonStr), &result)
+		}
+	})
+
+	b.Run("Jsoniter", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result map[string]interface{}
+			_ = jsonfast.Unmarshal([]byte(jsonStr), &result)
 		}
 	})
 }
@@ -564,7 +563,7 @@ func BenchmarkMultiDecode(b *testing.B) {
 		`{"id":10,"name":"item10","price":100.0,"featured":true}`,
 	}
 
-	b.Run("SjsonNoCache", func(b *testing.B) {
+	b.Run("Sjson", func(b *testing.B) {
 		config := Config{}
 
 		b.ResetTimer()
@@ -581,6 +580,15 @@ func BenchmarkMultiDecode(b *testing.B) {
 			var result map[string]interface{}
 			idx := i % len(jsonStrings)
 			_ = json.Unmarshal([]byte(jsonStrings[idx]), &result)
+		}
+	})
+
+	b.Run("Jsoniter", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result map[string]interface{}
+			idx := i % len(jsonStrings)
+			_ = jsonfast.Unmarshal([]byte(jsonStrings[idx]), &result)
 		}
 	})
 }
@@ -614,18 +622,7 @@ func BenchmarkStructDecode(b *testing.B) {
 		}
 	}`
 
-	b.Run("SjsonWithCache", func(b *testing.B) {
-		oldConfig := GetDefaultConfig()
-		defer SetDefaultConfig(oldConfig)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			var product Product
-			_ = Unmarshal([]byte(jsonStr), &product)
-		}
-	})
-
-	b.Run("SjsonNoCache", func(b *testing.B) {
+	b.Run("Sjson", func(b *testing.B) {
 		config := Config{}
 
 		b.ResetTimer()
@@ -642,6 +639,14 @@ func BenchmarkStructDecode(b *testing.B) {
 			_ = json.Unmarshal([]byte(jsonStr), &product)
 		}
 	})
+
+	b.Run("Jsoniter", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var product Product
+			_ = jsonfast.Unmarshal([]byte(jsonStr), &product)
+		}
+	})
 }
 
 // 测试带有缓存的复杂数组解码性能
@@ -654,7 +659,7 @@ func BenchmarkArrayDecode(b *testing.B) {
 		{"id": 5, "name": "Item 5", "tags": ["tag1", "tag5"]}
 	]`
 
-	b.Run("SjsonNoCache", func(b *testing.B) {
+	b.Run("Sjson", func(b *testing.B) {
 		config := Config{}
 
 		b.ResetTimer()
@@ -959,7 +964,7 @@ func BenchmarkCompareMedium(b *testing.B) {
 		json.Unmarshal(mediumFixture, &data)
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			_, _ = jsoniter.Marshal(data)
+			_, _ = jsonfast.Marshal(data)
 		}
 	})
 
@@ -986,7 +991,36 @@ func BenchmarkCompareMedium(b *testing.B) {
 		var data MediumPayload
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			jsoniter.Unmarshal(mediumFixture, &data)
+			jsonfast.Unmarshal(mediumFixture, &data)
+		}
+	})
+}
+
+func BenchmarkUnmarshalCompareMedium(b *testing.B) {
+	b.Run("SjsonUnmarshal", func(b *testing.B) {
+		b.ResetTimer()
+		var data MediumPayload
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			Unmarshal(mediumFixture, &data)
+		}
+	})
+
+	b.Run("StdUnmarshal", func(b *testing.B) {
+		b.ResetTimer()
+		var data MediumPayload
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			json.Unmarshal(mediumFixture, &data)
+		}
+	})
+
+	b.Run("JsoniterUnmarshal", func(b *testing.B) {
+		b.ResetTimer()
+		var data MediumPayload
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			jsonfast.Unmarshal(mediumFixture, &data)
 		}
 	})
 }

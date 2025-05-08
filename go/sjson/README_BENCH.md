@@ -130,10 +130,19 @@ BenchmarkCompareMedium/JsoniterUnmarshal-14    	 5809028	      2028 ns/op	     3
 
 ## 4. 与其他 JSON 库的性能对比
 ```
+第一轮：
 BenchmarkCompareMedium/SjsonEncode-14         	 4837003	      2472 ns/op	    4073 B/op	      64 allocs/op
 BenchmarkCompareMedium/StdEncode-14           	47469918	       251.2 ns/op	     216 B/op	       2 allocs/op
 BenchmarkCompareMedium/JsoniterEncode-14      	50867079	       239.8 ns/op	     216 B/op	       2 allocs/op
 BenchmarkCompareMedium/SjsonDecode-14         	 2031243	      5920 ns/op	    5924 B/op	     115 allocs/op
 BenchmarkCompareMedium/StdDecode-14           	 1475060	      8225 ns/op	     504 B/op	      11 allocs/op
 BenchmarkCompareMedium/JsoniterDecode-14      	 5912746	      2051 ns/op	     384 B/op	      41 allocs/op
+
+第二轮：
+BenchmarkCompareMedium/SjsonMarshal-14         	35773339	       329.0 ns/op	     216 B/op	       2 allocs/op
+BenchmarkCompareMedium/StdMarshal-14           	50904760	       248.4 ns/op	     216 B/op	       2 allocs/op
+BenchmarkCompareMedium/JsoniterMarshal-14      	48260007	       242.7 ns/op	     216 B/op	       2 allocs/op
+BenchmarkCompareMedium/SjsonUnmarshal-14       	 2104412	      5856 ns/op	    5924 B/op	     115 allocs/op
+BenchmarkCompareMedium/StdUnmarshal-14         	 1468572	      8210 ns/op	     504 B/op	      11 allocs/op
+BenchmarkCompareMedium/JsoniterUnmarshal-14    	 5912791	      2068 ns/op	     352 B/op	      38 allocs/op
 ```
