@@ -3,7 +3,6 @@ package sjson
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 )
 
 // 解码任意值到目标反射值
@@ -20,11 +19,6 @@ func (d *Decoder) decodeValue(dst reflect.Value) error {
 		}
 		// 递归解码指针指向的值
 		return d.decodeValue(dst.Elem())
-	}
-
-	// 目标必须可设置
-	if !dst.CanSet() {
-		return fmt.Errorf("解码目标不可设置")
 	}
 
 	// 使用一个switch语句而不是多个if-else来提高性能
@@ -76,7 +70,12 @@ func (d *Decoder) decodeBool(value bool, dst reflect.Value) error {
 	}
 
 	if kind == reflect.Interface && dst.NumMethod() == 0 {
-		dst.Set(reflect.ValueOf(value))
+		if value {
+			dst.Set(trueValue)
+		} else {
+			dst.Set(falseValue)
+		}
+
 		return nil
 	}
 
@@ -84,56 +83,39 @@ func (d *Decoder) decodeBool(value bool, dst reflect.Value) error {
 }
 
 // 解码数字
-func (d *Decoder) decodeNumber(value string, dst reflect.Value) error {
-	// 快速判断整数
-	isInt := true
-	for i := 0; i < len(value); i++ {
-		c := value[i]
-		if c == '.' || c == 'e' || c == 'E' {
-			isInt = false
-			break
-		}
-	}
-
+func (d *Decoder) decodeNumber(value []byte, dst reflect.Value) error {
 	// 根据当前值的类型优化解析路径
-	kind := dst.Kind()
-
-	// 整数路径
-	if isInt {
-		// 整数优化路径
-		if kind >= reflect.Int && kind <= reflect.Int64 {
-			n, err := strconv.ParseInt(value, 10, 64)
-			if err != nil {
-				return fmt.Errorf("无法将 %s 解析为整数: %w", value, err)
-			}
-			dst.SetInt(n)
-			return nil
+	switch kind := dst.Kind(); {
+	case kind >= reflect.Int && kind <= reflect.Int64:
+		// 整数类型
+		n, err := parseIntFromBytes(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("无法将 %s 解析为整数: %w", value, err)
 		}
+		dst.SetInt(n)
+		return nil
 
-		if kind >= reflect.Uint && kind <= reflect.Uint64 {
-			n, err := strconv.ParseUint(value, 10, 64)
-			if err != nil {
-				return fmt.Errorf("无法将 %s 解析为无符号整数: %w", value, err)
-			}
-			dst.SetUint(n)
-			return nil
+	case kind >= reflect.Uint && kind <= reflect.Uint64:
+		// 无符号整数类型
+		n, err := parseUintFromBytes(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("无法将 %s 解析为无符号整数: %w", value, err)
 		}
-	}
+		dst.SetUint(n)
+		return nil
 
-	// 浮点数路径
-	if kind == reflect.Float32 || kind == reflect.Float64 {
-		n, err := strconv.ParseFloat(value, 64)
+	case kind == reflect.Float32 || kind == reflect.Float64:
+		// 浮点数类型
+		n, err := parseFloatFromBytes(value, 64)
 		if err != nil {
 			return fmt.Errorf("无法将 %s 解析为浮点数: %w", value, err)
 		}
 		dst.SetFloat(n)
 		return nil
-	}
 
-	// 接口路径
-	if kind == reflect.Interface && dst.NumMethod() == 0 {
-		// 对于空接口，始终使用float64表示数字，以保持与原始实现的兼容性
-		n, err := strconv.ParseFloat(value, 64)
+	case kind == reflect.Interface && dst.NumMethod() == 0:
+		// 空接口类型，使用 float64 表示数字以保持兼容性
+		n, err := parseFloatFromBytes(value, 64)
 		if err != nil {
 			return fmt.Errorf("无法将 %s 解析为数字: %w", value, err)
 		}
@@ -141,20 +123,20 @@ func (d *Decoder) decodeNumber(value string, dst reflect.Value) error {
 		return nil
 	}
 
-	return fmt.Errorf("无法将数字解码到 %s 类型", dst.Type())
+	return nil
 }
 
 // 解码字符串
-func (d *Decoder) decodeString(value string, dst reflect.Value) error {
+func (d *Decoder) decodeString(value []byte, dst reflect.Value) error {
 	kind := dst.Kind()
 
 	if kind == reflect.String {
-		dst.SetString(value)
+		dst.SetString(bytesToString(value))
 		return nil
 	}
 
 	if kind == reflect.Interface && dst.NumMethod() == 0 {
-		dst.Set(reflect.ValueOf(value))
+		dst.Set(reflect.ValueOf(bytesToString(value)))
 		return nil
 	}
 

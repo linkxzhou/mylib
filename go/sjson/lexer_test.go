@@ -15,12 +15,12 @@ func TestLexer_NextToken(t *testing.T) {
 			name:  "基本标记",
 			input: "{}[]:,",
 			expected: []Token{
-				{Type: LeftBraceToken, Value: "{", Pos: 0},
-				{Type: RightBraceToken, Value: "}", Pos: 1},
-				{Type: LeftBracketToken, Value: "[", Pos: 2},
-				{Type: RightBracketToken, Value: "]", Pos: 3},
-				{Type: ColonToken, Value: ":", Pos: 4},
-				{Type: CommaToken, Value: ",", Pos: 5},
+				{Type: LeftBraceToken, Value: []byte("{"), Pos: 0},
+				{Type: RightBraceToken, Value: []byte("}"), Pos: 1},
+				{Type: LeftBracketToken, Value: []byte("["), Pos: 2},
+				{Type: RightBracketToken, Value: []byte("]"), Pos: 3},
+				{Type: ColonToken, Value: []byte(":"), Pos: 4},
+				{Type: CommaToken, Value: []byte(","), Pos: 5},
 				{Type: EOFToken, Pos: 6},
 			},
 		},
@@ -28,11 +28,11 @@ func TestLexer_NextToken(t *testing.T) {
 			name:  "数字",
 			input: "123 -456 7.89 1e10 -2.5e-3",
 			expected: []Token{
-				{Type: NumberToken, Value: "123", Pos: 0},
-				{Type: NumberToken, Value: "-456", Pos: 4},
-				{Type: NumberToken, Value: "7.89", Pos: 9},
-				{Type: NumberToken, Value: "1e10", Pos: 14},
-				{Type: NumberToken, Value: "-2.5e-3", Pos: 19},
+				{Type: NumberToken, Value: []byte("123"), Pos: 0},
+				{Type: NumberToken, Value: []byte("-456"), Pos: 4},
+				{Type: NumberToken, Value: []byte("7.89"), Pos: 9},
+				{Type: NumberToken, Value: []byte("1e10"), Pos: 14},
+				{Type: NumberToken, Value: []byte("-2.5e-3"), Pos: 19},
 				{Type: EOFToken, Pos: 26},
 			},
 		},
@@ -40,9 +40,9 @@ func TestLexer_NextToken(t *testing.T) {
 			name:  "关键字",
 			input: "true false null",
 			expected: []Token{
-				{Type: TrueToken, Value: "true", Pos: 0},
-				{Type: FalseToken, Value: "false", Pos: 5},
-				{Type: NullToken, Value: "null", Pos: 11},
+				{Type: TrueToken, Value: []byte("true"), Pos: 0},
+				{Type: FalseToken, Value: []byte("false"), Pos: 5},
+				{Type: NullToken, Value: []byte("null"), Pos: 11},
 				{Type: EOFToken, Pos: 15},
 			},
 		},
@@ -50,8 +50,8 @@ func TestLexer_NextToken(t *testing.T) {
 			name:  "基本字符串",
 			input: `"hello" "world"`,
 			expected: []Token{
-				{Type: StringToken, Value: "hello", Pos: 0},
-				{Type: StringToken, Value: "world", Pos: 8},
+				{Type: StringToken, Value: []byte("hello"), Pos: 0},
+				{Type: StringToken, Value: []byte("world"), Pos: 8},
 				{Type: EOFToken, Pos: 15},
 			},
 		},
@@ -59,7 +59,7 @@ func TestLexer_NextToken(t *testing.T) {
 			name:  "Unicode转义",
 			input: `"\u0041\u4F60\u597D"`,
 			expected: []Token{
-				{Type: StringToken, Value: "A你好", Pos: 0},
+				{Type: StringToken, Value: []byte("A你好"), Pos: 0},
 				{Type: EOFToken, Pos: 20},
 			},
 		},
@@ -67,16 +67,16 @@ func TestLexer_NextToken(t *testing.T) {
 			name:  "简单JSON对象",
 			input: `{"name":"张三", "age":30}`,
 			expected: []Token{
-				{Type: LeftBraceToken, Value: "{", Pos: 0},
-				{Type: StringToken, Value: "name", Pos: 1},
-				{Type: ColonToken, Value: ":", Pos: 7},
-				{Type: StringToken, Value: "张三", Pos: 8},     // "张三" is 6 bytes in UTF-8
-				{Type: CommaToken, Value: ",", Pos: 16},      // Position after "张三"
-				{Type: StringToken, Value: "age", Pos: 18},   // Position after ", "
-				{Type: ColonToken, Value: ":", Pos: 23},      // Position after "age"
-				{Type: NumberToken, Value: "30", Pos: 24},    // Position after ":"
-				{Type: RightBraceToken, Value: "}", Pos: 26}, // Position after "30"
-				{Type: EOFToken, Pos: 27},                    // Position after "}"
+				{Type: LeftBraceToken, Value: []byte("{"), Pos: 0},
+				{Type: StringToken, Value: []byte("name"), Pos: 1},
+				{Type: ColonToken, Value: []byte(":"), Pos: 7},
+				{Type: StringToken, Value: []byte("张三"), Pos: 8},     // "张三" is 6 bytes in UTF-8
+				{Type: CommaToken, Value: []byte(","), Pos: 16},      // Position after "张三"
+				{Type: StringToken, Value: []byte("age"), Pos: 18},   // Position after ", "
+				{Type: ColonToken, Value: []byte(":"), Pos: 23},      // Position after "age"
+				{Type: NumberToken, Value: []byte("30"), Pos: 24},    // Position after ":"
+				{Type: RightBraceToken, Value: []byte("}"), Pos: 26}, // Position after "30"
+				{Type: EOFToken, Pos: 27},                            // Position after "}"
 			},
 		},
 	}
@@ -84,13 +84,13 @@ func TestLexer_NextToken(t *testing.T) {
 	for _, tt := range tests {
 		testCase := tt // 避免闭包问题
 		t.Run(testCase.name, func(t *testing.T) {
-			lexer := NewLexer(testCase.input)
+			lexer := NewLexer([]byte(testCase.input))
 			for i, expected := range testCase.expected {
 				got := lexer.NextToken()
 				if got.Type != expected.Type {
 					t.Errorf("标记 #%d 类型错误: 期望 %v, 得到 %v", i, expected.Type, got.Type)
 				}
-				if got.Value != expected.Value {
+				if string(got.Value) != string(expected.Value) {
 					t.Errorf("标记 #%d 值错误: 期望 %q, 得到 %q", i, expected.Value, got.Value)
 				}
 				if got.Pos != expected.Pos {
@@ -103,13 +103,13 @@ func TestLexer_NextToken(t *testing.T) {
 
 // Benchmark for simple JSON input
 func BenchmarkLexerSimple(b *testing.B) {
-	input := `{
+	input := []byte(`{
 		"name": "张三",
 		"age": 30,
 		"city": "北京",
 		"active": true,
 		"scores": [100, 95, 88]
-	}`
+	}`)
 	for i := 0; i < b.N; i++ {
 		lexer := NewLexer(input)
 		for {
@@ -153,7 +153,7 @@ func BenchmarkLexerComplex(b *testing.B) {
 			}
 		}
 	}`)
-	input := sb.String()
+	input := []byte(sb.String())
 
 	b.ResetTimer() // Reset timer after setup
 	for i := 0; i < b.N; i++ {
@@ -169,7 +169,7 @@ func BenchmarkLexerComplex(b *testing.B) {
 
 // Benchmark focusing on string parsing with escapes
 func BenchmarkLexerStringEscapes(b *testing.B) {
-	input := `{"escapes": "Hello\nWorld\tTab\"Quote\\Backslash\u0041\u4F60\u597D"}`
+	input := []byte(`{"escapes": "Hello\nWorld\tTab\"Quote\\Backslash\u0041\u4F60\u597D"}`)
 	for i := 0; i < b.N; i++ {
 		lexer := NewLexer(input)
 		for {
@@ -184,7 +184,7 @@ func BenchmarkLexerStringEscapes(b *testing.B) {
 // BenchmarkLexerAllTokens 测试包含所有token类型的复杂JSON解析性能
 func BenchmarkLexerAllTokens(b *testing.B) {
 	// 构建包含所有类型Token的JSON
-	jsonStr := `{
+	jsonStr := []byte(`{
 		"nullValue": null,
 		"boolValues": {
 			"trueValue": true,
@@ -229,7 +229,7 @@ func BenchmarkLexerAllTokens(b *testing.B) {
 			"emptyObject": {},
 			"emptyArray": []
 		}
-	}`
+	}`)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -246,7 +246,7 @@ func BenchmarkLexerAllTokens(b *testing.B) {
 // BenchmarkLexerBatchProcessing 测试批量处理性能
 func BenchmarkLexerBatchProcessing(b *testing.B) {
 	// 使用相同的复杂JSON
-	jsonStr := `{
+	jsonStr := []byte(`{
 		"nullValue": null,
 		"boolValues": {
 			"trueValue": true,
@@ -291,7 +291,7 @@ func BenchmarkLexerBatchProcessing(b *testing.B) {
 			"emptyObject": {},
 			"emptyArray": []
 		}
-	}`
+	}`)
 
 	b.Run("单个标记处理", func(b *testing.B) {
 		b.ResetTimer()
@@ -303,15 +303,6 @@ func BenchmarkLexerBatchProcessing(b *testing.B) {
 					break
 				}
 			}
-		}
-	})
-
-	b.Run("批量标记处理", func(b *testing.B) {
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			lexer := NewLexer(jsonStr)
-			tokens := lexer.ParseAll()
-			_ = tokens
 		}
 	})
 }

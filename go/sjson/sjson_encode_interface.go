@@ -24,15 +24,12 @@ func (e sliceEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, erro
 	elemEncoder := getEncoder(e.elemType)
 
 	var err error
-	// 第一个元素单独处理，避免每次循环都检查前缀逗号
-	buf, err = elemEncoder.appendToBytes(buf, src.Index(0))
-	if err != nil {
-		return buf, err
-	}
 
 	// 编码剩余元素
-	for i := 1; i < length; i++ {
-		buf = append(buf, ',')
+	for i := 0; i < length; i++ {
+		if i > 0 {
+			buf = append(buf, ',')
+		}
 		buf, err = elemEncoder.appendToBytes(buf, src.Index(i))
 		if err != nil {
 			return buf, err
@@ -50,11 +47,8 @@ func (e interfaceEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, 
 		return append(buf, nullString...), nil
 	}
 
-	// 提取接口中的具体值
-	elem := src.Elem()
-
 	// 直接调用encodeValueToBytes，它会为elem找到合适的编码器
-	return encodeValueToBytes(buf, elem)
+	return encodeValueToBytes(buf, src.Elem())
 }
 
 type ptrEncoder struct {

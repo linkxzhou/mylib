@@ -82,7 +82,7 @@ BenchmarkParserDirectVsLexer/手动Lexer+Parser-14          	41891000	       290
 ```
 
 ## 3. sjson.go性能优化
-测试命令：go test -bench=BenchmarkComplexDecode -benchmem -benchtime=10s -cpuprofile=cpu.prof -memprofile=mem.prof
+测试命令：go test -bench=BenchmarkCompareMedium -benchmem -benchtime=10s -cpuprofile=cpu.prof -memprofile=mem.prof
 ```
 第一轮：
 BenchmarkComplexJSON/Original-14         	13598248	      5525 ns/op	    9993 B/op	     178 allocs/op
@@ -129,6 +129,8 @@ BenchmarkCompareMedium/JsoniterUnmarshal-14    	 5809028	      2028 ns/op	     3
 ```
 
 ## 4. 与其他 JSON 库的性能对比
+测试命令：go test -bench=BenchmarkCompareMedium -benchmem -benchtime=10s -cpuprofile=cpu.prof -memprofile=mem.prof
+
 ```
 第一轮：
 BenchmarkCompareMedium/SjsonEncode-14         	 4837003	      2472 ns/op	    4073 B/op	      64 allocs/op
@@ -145,4 +147,25 @@ BenchmarkCompareMedium/JsoniterMarshal-14      	48260007	       242.7 ns/op	    
 BenchmarkCompareMedium/SjsonUnmarshal-14       	 2104412	      5856 ns/op	    5924 B/op	     115 allocs/op
 BenchmarkCompareMedium/StdUnmarshal-14         	 1468572	      8210 ns/op	     504 B/op	      11 allocs/op
 BenchmarkCompareMedium/JsoniterUnmarshal-14    	 5912791	      2068 ns/op	     352 B/op	      38 allocs/op
+
+第三轮：
+BenchmarkCompareMedium/SjsonMarshal-14         	37409500	       316.3 ns/op	     216 B/op	       2 allocs/op
+BenchmarkCompareMedium/StdMarshal-14           	51325837	       241.2 ns/op	     216 B/op	       2 allocs/op
+BenchmarkCompareMedium/JsoniterMarshal-14      	52111992	       229.6 ns/op	     216 B/op	       2 allocs/op
+BenchmarkCompareMedium/SjsonUnmarshal-14       	 2724361	      4396 ns/op	     168 B/op	       6 allocs/op
+BenchmarkCompareMedium/StdUnmarshal-14         	 1499334	      7980 ns/op	     504 B/op	      11 allocs/op
+BenchmarkCompareMedium/JsoniterUnmarshal-14    	 6126705	      1995 ns/op	     352 B/op	      38 allocs/op
+```
+
+## 5. byte_utils.go 和 strconv 对比
+测试命令：go test -bench=BenchmarkParseIntComparison -benchmem -benchtime=10s -cpuprofile=cpu.prof -memprofile=mem.prof
+```
+BenchmarkParseIntComparison/parseIntFromBytes-14         	984710859	        12.35 ns/op	       0 B/op	       0 allocs/op
+BenchmarkParseIntComparison/strconv.ParseInt-14          	651232766	        19.15 ns/op	       0 B/op	       0 allocs/op
+```
+
+测试命令：go test -bench=BenchmarkParseFloatComparison -benchmem -benchtime=10s -cpuprofile=cpu.prof -memprofile=mem.prof
+```
+BenchmarkParseFloatComparison/parseFloatFromBytes-14         	886025876	        13.81 ns/op	       0 B/op	       0 allocs/op
+BenchmarkParseFloatComparison/strconv.ParseFloat-14          	414038884	        28.85 ns/op	       0 B/op	       0 allocs/op
 ```

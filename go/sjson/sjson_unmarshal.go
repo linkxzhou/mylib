@@ -11,7 +11,7 @@ func Unmarshal(data []byte, v interface{}) error {
 
 // UnmarshalWithConfig 将JSON字节切片直接解码到Go对象，使用指定配置
 func UnmarshalWithConfig(data []byte, v interface{}, config Config) error {
-	decoder := newDecoder(string(data), config)
+	decoder := newDecoder(data, config)
 	return decoder.Decode(v)
 }
 

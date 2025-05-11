@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"math"
+
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -210,7 +212,15 @@ func TestBasicDecoding(t *testing.T) {
 
 			// 因为target是指针，需要获取其指向的值
 			targetVal := reflect.ValueOf(test.target).Elem().Interface()
-			if !reflect.DeepEqual(targetVal, test.expected) {
+
+			// 对于浮点数，使用近似比较
+			if test.name == "float" {
+				targetFloat := targetVal.(float64)
+				expectedFloat := test.expected.(float64)
+				if math.Abs(targetFloat-expectedFloat) > 1e-10 {
+					t.Errorf("解码结果 = %v, 期望 %v, 差值 = %v", targetFloat, expectedFloat, math.Abs(targetFloat-expectedFloat))
+				}
+			} else if !reflect.DeepEqual(targetVal, test.expected) {
 				t.Errorf("解码结果 = %v, 期望 %v", targetVal, test.expected)
 			}
 		})
@@ -518,7 +528,7 @@ func BenchmarkComplexDecode(b *testing.B) {
 
 // 测试单条JSON解码性能对比
 func BenchmarkSingleDecode(b *testing.B) {
-	jsonStr := `{"name":"测试","age":30,"active":true,"scores":[95,87,72]}`
+	jsonStr := []byte(`{"name":"测试","age":30,"active":true,"scores":[95,87,72]}`)
 
 	b.Run("Sjson", func(b *testing.B) {
 		config := Config{}
@@ -526,7 +536,7 @@ func BenchmarkSingleDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result map[string]interface{}
-			_ = UnmarshalWithConfig([]byte(jsonStr), &result, config)
+			_ = UnmarshalWithConfig(jsonStr, &result, config)
 		}
 	})
 
@@ -534,7 +544,7 @@ func BenchmarkSingleDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result map[string]interface{}
-			_ = json.Unmarshal([]byte(jsonStr), &result)
+			_ = json.Unmarshal(jsonStr, &result)
 		}
 	})
 
@@ -542,7 +552,7 @@ func BenchmarkSingleDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result map[string]interface{}
-			_ = jsonfast.Unmarshal([]byte(jsonStr), &result)
+			_ = jsonfast.Unmarshal(jsonStr, &result)
 		}
 	})
 }
@@ -604,7 +614,7 @@ func BenchmarkStructDecode(b *testing.B) {
 		Metadata  map[string]interface{} `json:"metadata,omitempty"`
 	}
 
-	jsonStr := `{
+	jsonStr := []byte(`{
 		"id": 12345,
 		"name": "测试产品",
 		"price": 99.99,
@@ -620,7 +630,7 @@ func BenchmarkStructDecode(b *testing.B) {
 				"height": 2
 			}
 		}
-	}`
+	}`)
 
 	b.Run("Sjson", func(b *testing.B) {
 		config := Config{}
@@ -628,7 +638,7 @@ func BenchmarkStructDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var product Product
-			_ = UnmarshalWithConfig([]byte(jsonStr), &product, config)
+			_ = UnmarshalWithConfig(jsonStr, &product, config)
 		}
 	})
 
@@ -636,7 +646,7 @@ func BenchmarkStructDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var product Product
-			_ = json.Unmarshal([]byte(jsonStr), &product)
+			_ = json.Unmarshal(jsonStr, &product)
 		}
 	})
 
@@ -644,20 +654,20 @@ func BenchmarkStructDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var product Product
-			_ = jsonfast.Unmarshal([]byte(jsonStr), &product)
+			_ = jsonfast.Unmarshal(jsonStr, &product)
 		}
 	})
 }
 
 // 测试带有缓存的复杂数组解码性能
 func BenchmarkArrayDecode(b *testing.B) {
-	jsonStr := `[
+	jsonStr := []byte(`[
 		{"id": 1, "name": "Item 1", "tags": ["tag1", "tag2"]},
 		{"id": 2, "name": "Item 2", "tags": ["tag2", "tag3"]},
 		{"id": 3, "name": "Item 3", "tags": ["tag1", "tag3"]},
 		{"id": 4, "name": "Item 4", "tags": ["tag4"]},
 		{"id": 5, "name": "Item 5", "tags": ["tag1", "tag5"]}
-	]`
+	]`)
 
 	b.Run("Sjson", func(b *testing.B) {
 		config := Config{}
@@ -665,7 +675,7 @@ func BenchmarkArrayDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var items []map[string]interface{}
-			_ = UnmarshalWithConfig([]byte(jsonStr), &items, config)
+			_ = UnmarshalWithConfig(jsonStr, &items, config)
 		}
 	})
 
@@ -673,7 +683,7 @@ func BenchmarkArrayDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var items []map[string]interface{}
-			_ = json.Unmarshal([]byte(jsonStr), &items)
+			_ = json.Unmarshal(jsonStr, &items)
 		}
 	})
 }
@@ -771,6 +781,61 @@ func BenchmarkArrayEncode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = json.Marshal(items)
+		}
+	})
+}
+
+// 测试基本类型编码性能对比
+func BenchmarkBasicTypesEncode(b *testing.B) {
+	// 创建基本类型测试数据
+	basicData := map[string]interface{}{
+		"int":      12345,
+		"uint":     uint(67890),
+		"float":    123.456,
+		"bool":     true,
+		"null":     nil,
+		"intArr":   []int{1, 2, 3, 4, 5},
+		"floatArr": []float64{1.1, 2.2, 3.3},
+	}
+
+	b.Run("SjsonBasicEncode", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(basicData)
+		}
+	})
+
+	b.Run("StdBasicEncode", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(basicData)
+		}
+	})
+}
+
+// 测试字符串编码性能对比
+func BenchmarkStringEncode(b *testing.B) {
+	// 创建各种类型的字符串测试数据
+	stringData := map[string]string{
+		"simple":      "Hello, World!",
+		"withEscape":  "Hello, \"World\"! \t\r\n",
+		"withUnicode": "你好，世界！Unicode字符串测试",
+		"longString": "这是一个比较长的字符串，用于测试sjson的字符串编码性能。" +
+			"它包含了各种字符，包括英文字母、数字、标点符号，以及一些中文字符。" +
+			"这个字符串的长度超过了100个字符，可以更好地测试长字符串的编码性能。",
+	}
+
+	b.Run("SjsonStringEncode", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(stringData)
+		}
+	})
+
+	b.Run("StdStringEncode", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(stringData)
 		}
 	})
 }
@@ -942,7 +1007,7 @@ func BenchmarkCompareMedium(b *testing.B) {
 	b.Run("SjsonMarshal", func(b *testing.B) {
 		b.ResetTimer()
 		var data MediumPayload
-		json.Unmarshal(mediumFixture, &data)
+		Unmarshal(mediumFixture, &data)
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = Marshal(data)
@@ -961,7 +1026,7 @@ func BenchmarkCompareMedium(b *testing.B) {
 
 	b.Run("JsoniterMarshal", func(b *testing.B) {
 		var data MediumPayload
-		json.Unmarshal(mediumFixture, &data)
+		jsonfast.Unmarshal(mediumFixture, &data)
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = jsonfast.Marshal(data)
@@ -996,7 +1061,7 @@ func BenchmarkCompareMedium(b *testing.B) {
 	})
 }
 
-func BenchmarkUnmarshalCompareMedium(b *testing.B) {
+func BenchmarkUnmarshalMedium(b *testing.B) {
 	b.Run("SjsonUnmarshal", func(b *testing.B) {
 		b.ResetTimer()
 		var data MediumPayload

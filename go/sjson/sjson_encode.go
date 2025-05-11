@@ -2,27 +2,20 @@ package sjson
 
 import (
 	"reflect"
-	"strconv"
 	"sync"
 )
 
 // 预定义常量字符串，减少内存分配
-const (
-	emptyArray     = "[]"
-	emptyObject    = "{}"
-	emptyString    = `""`
-	nullString     = "null"
-	trueString     = "true"
-	falseString    = "false"
-	zeroString     = "0"
-	oneString      = "1"
-	minusOneString = "-1"
-)
-
-// 常用数字缓存，最多支持[-512, 512]的整数快速转换
-const (
-	numberCacheSize = 1024
-	numberCacheZero = 512 // 零点偏移
+var (
+	emptyArray     = []byte("[]")
+	emptyObject    = []byte("{}")
+	emptyString    = []byte(`""`)
+	nullString     = []byte("null")
+	trueString     = []byte("true")
+	falseString    = []byte("false")
+	zeroString     = []byte("0")
+	oneString      = []byte("1")
+	minusOneString = []byte("-1")
 )
 
 // 为常用类型预分配的直接编码器
@@ -35,18 +28,7 @@ var (
 	stringEncoderInst    = stringEncoder{}
 	interfaceEncoderInst = interfaceEncoder{}
 	defaultEncoderInst   = defaultEncoder{}
-	runeEncoderInst      = runeEncoder{}
 )
-
-var numberCache [numberCacheSize]string
-
-// 初始化数字缓存
-func init() {
-	// 为常用的整数预生成字符串
-	for i := 0; i < numberCacheSize; i++ {
-		numberCache[i] = strconv.FormatInt(int64(i-numberCacheZero), 10)
-	}
-}
 
 // Encoder 是直接编码器接口，直接将Go类型编码为JSON
 type Encoder interface {
@@ -109,12 +91,7 @@ func getEncoder(t reflect.Type) Encoder {
 	case reflect.Bool:
 		enc = boolEncoderInst
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		// 特殊处理 int32 类型的 rune
-		if t.Kind() == reflect.Int32 && t == reflect.TypeOf(rune(0)) {
-			enc = runeEncoderInst
-		} else {
-			enc = intEncoderInst
-		}
+		enc = intEncoderInst
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		enc = uintEncoderInst
 	case reflect.Float32, reflect.Float64:

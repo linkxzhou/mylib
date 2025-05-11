@@ -4,8 +4,12 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-	"strings"
 	"sync"
+)
+
+var (
+	trueValue  = reflect.ValueOf(true)
+	falseValue = reflect.ValueOf(false)
 )
 
 // 用于缓存反射值的对象池
@@ -33,7 +37,7 @@ type Decoder struct {
 }
 
 // 创建新的直接解码器
-func newDecoder(input string, config Config) *Decoder {
+func newDecoder(input []byte, config Config) *Decoder {
 	lexer := NewLexer(input)
 	d := &Decoder{
 		lexer:  lexer,
@@ -71,7 +75,7 @@ func (d *Decoder) Decode(v interface{}) error {
 	}
 
 	// 解码值到指针所指向的对象
-	if err := d.decodeValue(rv.Elem()); err != nil {
+	if err := d.decodeValue(rv); err != nil {
 		return err
 	}
 
@@ -81,53 +85,4 @@ func (d *Decoder) Decode(v interface{}) error {
 	}
 
 	return nil
-}
-
-// 获取结构体类型的字段信息
-func getStructFields(t reflect.Type) []structField {
-	if cachedFields, ok := structFieldsCache.Load(t); ok {
-		return cachedFields.([]structField)
-	}
-
-	numField := t.NumField()
-	fields := make([]structField, 0, numField)
-
-	for i := 0; i < numField; i++ {
-		f := t.Field(i)
-		// 跳过未导出字段
-		if f.PkgPath != "" && !f.Anonymous {
-			continue
-		}
-
-		// 解析json标签
-		tag := f.Tag.Get("json")
-		if tag == "-" {
-			continue
-		}
-
-		name := f.Name
-		omitempty := false
-
-		if tag != "" {
-			parts := strings.Split(tag, ",")
-			if parts[0] != "" {
-				name = parts[0]
-			}
-			for _, opt := range parts[1:] {
-				if opt == "omitempty" {
-					omitempty = true
-					break
-				}
-			}
-		}
-
-		fields = append(fields, structField{
-			name:      name,
-			index:     i,
-			omitempty: omitempty,
-		})
-	}
-
-	structFieldsCache.Store(t, fields)
-	return fields
 }

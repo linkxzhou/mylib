@@ -28,6 +28,57 @@ type NestedStruct struct {
 	Extra    map[string][]int   `json:"extra"`
 }
 
+// 用于深度嵌套测试的结构体定义
+type DeepNestedItem struct {
+	ID        int                    `json:"id"`
+	Name      string                 `json:"name"`
+	Value     float64                `json:"value"`
+	IsEnabled bool                   `json:"is_enabled"`
+	Tags      []string               `json:"tags,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+}
+
+type DeepNestedLevel3 struct {
+	Level      int              `json:"level"`
+	Items      []DeepNestedItem `json:"items"`
+	Properties map[string]int   `json:"properties"`
+	Config     struct {
+		Timeout  int    `json:"timeout"`
+		Endpoint string `json:"endpoint"`
+		Retries  int    `json:"retries"`
+	} `json:"config"`
+}
+
+type DeepNestedLevel2 struct {
+	ID       string             `json:"id"`
+	Name     string             `json:"name"`
+	Children []DeepNestedLevel3 `json:"children"`
+	Settings map[string]string  `json:"settings"`
+}
+
+type DeepNestedLevel1 struct {
+	ID       int                    `json:"id"`
+	Title    string                 `json:"title"`
+	Sections []DeepNestedLevel2     `json:"sections"`
+	Metadata map[string]interface{} `json:"metadata"`
+}
+
+type DeepNestedRoot struct {
+	Version     string             `json:"version"`
+	Description string             `json:"description"`
+	CreatedAt   string             `json:"created_at"`
+	UpdatedAt   string             `json:"updated_at"`
+	Data        []DeepNestedLevel1 `json:"data"`
+	Statistics  struct {
+		TotalItems     int                `json:"total_items"`
+		ProcessedItems int                `json:"processed_items"`
+		SuccessRate    float64            `json:"success_rate"`
+		AverageTime    float64            `json:"average_time"`
+		Metrics        map[string]float64 `json:"metrics"`
+	} `json:"statistics"`
+	Config map[string]interface{} `json:"config"`
+}
+
 // 测试Marshal与标准库json.Marshal结果一致性
 func TestMarshalMatchesMarshal(t *testing.T) {
 	tests := []interface{}{
@@ -219,6 +270,150 @@ func TestMarshalSortedKeys(t *testing.T) {
 	}
 }
 
+// 测试深度嵌套结构体的编码性能
+func BenchmarkDeepNestedStruct(b *testing.B) {
+	// 创建深度嵌套的测试数据
+	deepNestedObj := createDeepNestedTestData()
+
+	b.Run("Marshal-DeepNested", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(deepNestedObj)
+		}
+	})
+
+	b.Run("Jsoniter-DeepNested", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(deepNestedObj)
+		}
+	})
+
+	b.Run("StdMarshal-DeepNested", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(deepNestedObj)
+		}
+	})
+}
+
+// 创建深度嵌套的测试数据
+func createDeepNestedTestData() DeepNestedRoot {
+	// 创建一些基础数据项
+	createItems := func(count int, prefix string) []DeepNestedItem {
+		items := make([]DeepNestedItem, count)
+		for i := 0; i < count; i++ {
+			items[i] = DeepNestedItem{
+				ID:        i + 1,
+				Name:      fmt.Sprintf("%s项目%d", prefix, i+1),
+				Value:     float64(i) * 0.1,
+				IsEnabled: i%2 == 0,
+				Tags:      []string{fmt.Sprintf("tag%d", i), fmt.Sprintf("category%d", i%3)},
+				Metadata: map[string]interface{}{
+					"priority": i % 3,
+					"score":    float64(i*5) + 0.5,
+					"labels":   []string{fmt.Sprintf("label%d", i), "common"},
+				},
+			}
+		}
+		return items
+	}
+
+	// 创建第三层嵌套
+	createLevel3 := func(count int, prefix string) []DeepNestedLevel3 {
+		level3Items := make([]DeepNestedLevel3, count)
+		for i := 0; i < count; i++ {
+			props := make(map[string]int)
+			for j := 0; j < 3; j++ {
+				props[fmt.Sprintf("prop%d", j)] = i*j + 10
+			}
+
+			level3Items[i] = DeepNestedLevel3{
+				Level:      i + 1,
+				Items:      createItems(3, fmt.Sprintf("%s-L3-%d-", prefix, i)),
+				Properties: props,
+			}
+
+			level3Items[i].Config.Timeout = 1000 * (i + 1)
+			level3Items[i].Config.Endpoint = fmt.Sprintf("https://api.example.com/v%d/endpoint", i+1)
+			level3Items[i].Config.Retries = i + 2
+		}
+		return level3Items
+	}
+
+	// 创建第二层嵌套
+	createLevel2 := func(count int, prefix string) []DeepNestedLevel2 {
+		level2Items := make([]DeepNestedLevel2, count)
+		for i := 0; i < count; i++ {
+			settings := make(map[string]string)
+			for j := 0; j < 5; j++ {
+				settings[fmt.Sprintf("setting%d", j)] = fmt.Sprintf("value-%d-%d", i, j)
+			}
+
+			level2Items[i] = DeepNestedLevel2{
+				ID:       fmt.Sprintf("ID-L2-%d", i),
+				Name:     fmt.Sprintf("%s二级节点%d", prefix, i),
+				Children: createLevel3(2, fmt.Sprintf("%s-L2-%d", prefix, i)),
+				Settings: settings,
+			}
+		}
+		return level2Items
+	}
+
+	// 创建第一层嵌套
+	createLevel1 := func(count int) []DeepNestedLevel1 {
+		level1Items := make([]DeepNestedLevel1, count)
+		for i := 0; i < count; i++ {
+			metadata := map[string]interface{}{
+				"created_by": fmt.Sprintf("user%d", i),
+				"department": fmt.Sprintf("dept%d", i%3),
+				"status":     i%4 == 0,
+				"metrics": map[string]float64{
+					"accuracy": float64(i) * 0.1,
+					"speed":    float64(i*2) + 0.5,
+				},
+			}
+
+			level1Items[i] = DeepNestedLevel1{
+				ID:       i + 100,
+				Title:    fmt.Sprintf("一级标题%d", i),
+				Sections: createLevel2(3, fmt.Sprintf("L1-%d-", i)),
+				Metadata: metadata,
+			}
+		}
+		return level1Items
+	}
+
+	// 创建根对象
+	root := DeepNestedRoot{
+		Version:     "1.0.0",
+		Description: "深度嵌套结构体性能测试数据",
+		CreatedAt:   "2025-05-10T21:30:00+08:00",
+		UpdatedAt:   "2025-05-10T21:30:00+08:00",
+		Data:        createLevel1(3),
+		Config: map[string]interface{}{
+			"max_depth":    5,
+			"allow_nested": true,
+			"timeout":      30000,
+			"batch_size":   100,
+		},
+	}
+
+	// 设置统计信息
+	root.Statistics.TotalItems = 150
+	root.Statistics.ProcessedItems = 142
+	root.Statistics.SuccessRate = 94.67
+	root.Statistics.AverageTime = 0.125
+	root.Statistics.Metrics = map[string]float64{
+		"cpu_usage":    45.2,
+		"memory_usage": 78.5,
+		"io_wait":      0.35,
+		"network":      12.8,
+	}
+
+	return root
+}
+
 // --------- 性能基准测试 ---------
 
 // 基本类型编码基准测试
@@ -294,6 +489,12 @@ func BenchmarkComplexTypes(b *testing.B) {
 	b.Run("Marshal-Complex", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_, _ = Marshal(complexObj)
+		}
+	})
+
+	b.Run("Jsoniter-Complex", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(complexObj)
 		}
 	})
 

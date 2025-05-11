@@ -13,5 +13,6 @@
 **/c++/tinyhttpd/tinyhttpd
 **/tinylib
 **/simplejs/tests
+**/simplejs/example
 **/*.prof
 **/sjson/tests/JSONTestSuite

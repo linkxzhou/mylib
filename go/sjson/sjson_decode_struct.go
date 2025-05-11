@@ -27,9 +27,7 @@ func (d *Decoder) decodeObject(dst reflect.Value) error {
 
 		case reflect.Interface:
 			if dst.NumMethod() == 0 {
-				// 创建空map并设置到接口
-				emptyMap := reflect.MakeMap(reflect.TypeOf(map[string]interface{}{}))
-				dst.Set(emptyMap)
+				dst.Set(reflect.MakeMap(reflect.TypeOf(map[string]interface{}{})))
 				return nil
 			}
 		}
@@ -45,17 +43,15 @@ func (d *Decoder) decodeObject(dst reflect.Value) error {
 		return d.decodeStruct(dst)
 	case reflect.Interface:
 		if dst.NumMethod() == 0 {
-			// 创建一个map[string]interface{}
-			mapType := reflect.TypeOf(map[string]interface{}{})
-			mapValue := reflect.MakeMap(mapType)
+			emptyMapValue := reflect.MakeMap(reflect.TypeOf(map[string]interface{}{}))
 
 			// 解码到这个map
-			if err := d.decodeMap(mapValue); err != nil {
+			if err := d.decodeMap(emptyMapValue); err != nil {
 				return err
 			}
 
 			// 设置到接口值
-			dst.Set(mapValue)
+			dst.Set(emptyMapValue)
 			return nil
 		}
 	}
@@ -103,8 +99,8 @@ func (d *Decoder) decodeMap(dst reflect.Value) error {
 			return err
 		}
 
-		// 设置键值对
-		keyValue := reflect.ValueOf(key)
+		// 设置键值对，确保键是字符串类型
+		keyValue := reflect.ValueOf(bytesToString(key))
 		dst.SetMapIndex(keyValue, valueElem)
 
 		// 检查是否有更多的键值对
@@ -121,43 +117,36 @@ func (d *Decoder) decodeMap(dst reflect.Value) error {
 	return nil
 }
 
-// 缓存字段查找
-var fieldLookupCache = sync.Map{} // map[reflect.Type]map[string]int
+// 缓存结构体字段映射
+var fieldMapCache = sync.Map{} // map[reflect.Type]map[string]int
 
-// 获取字段索引
-func getFieldIndex(structType reflect.Type, key string) int {
-	// 检查类型缓存
-	var typeCache map[string]int
-	if cache, ok := fieldLookupCache.Load(structType); ok {
-		typeCache = cache.(map[string]int)
-		// 检查键缓存
-		if idx, ok := typeCache[key]; ok {
-			return idx
-		}
-	} else {
-		// 创建新的类型缓存
-		typeCache = make(map[string]int)
-		fieldLookupCache.Store(structType, typeCache)
+// 获取字段映射（带缓存）
+func getFieldMap(structType reflect.Type, fields []structField) map[string]int {
+	// 检查缓存
+	if cachedMap, ok := fieldMapCache.Load(structType); ok {
+		return cachedMap.(map[string]int)
 	}
 
-	// 遍历字段查找匹配的字段
-	fields := getStructFields(structType)
+	// 创建新的映射
+	fieldMap := make(map[string]int, len(fields))
 	for _, field := range fields {
-		if field.name == key {
-			// 缓存结果并返回
-			typeCache[key] = field.index
-			return field.index
-		}
+		fieldMap[bytesToString(field.name)] = field.index
 	}
 
-	// 没有找到，缓存-1
-	typeCache[key] = -1
-	return -1
+	// 存入缓存
+	fieldMapCache.Store(structType, fieldMap)
+	return fieldMap
 }
 
 // 解码结构体
 func (d *Decoder) decodeStruct(dst reflect.Value) error {
 	structType := dst.Type()
+
+	// 预先获取所有字段信息，避免重复查找
+	fields := getStructFields(structType)
+
+	// 获取字段映射（使用缓存）
+	fieldMap := getFieldMap(structType, fields)
 
 	for {
 		// 键必须是字符串
@@ -174,10 +163,10 @@ func (d *Decoder) decodeStruct(dst reflect.Value) error {
 		}
 		d.nextToken()
 
-		// 查找结构体字段（使用缓存）
-		fieldIndex := getFieldIndex(structType, key)
+		// 查找结构体字段
+		fieldIndex, exists := fieldMap[bytesToString(key)]
 
-		if fieldIndex >= 0 {
+		if exists && fieldIndex >= 0 {
 			// 字段存在，解码值
 			field := dst.Field(fieldIndex)
 			if field.CanSet() {

@@ -179,7 +179,7 @@ func TestUnmarshalErrors(t *testing.T) {
 // 基准测试比较旧的解析方式和新的直接解析方式
 func BenchmarkVsOldUnmarshal(b *testing.B) {
 	// 测试数据
-	jsonData := `{
+	jsonData := []byte(`{
 		"string": "测试字符串",
 		"number": 123.456,
 		"bool": true,
@@ -201,26 +201,14 @@ func BenchmarkVsOldUnmarshal(b *testing.B) {
 			{"id": 2, "name": "item2", "value": 2},
 			{"id": 3, "name": "item3", "value": 3}
 		]
-	}`
-
-	// 禁用直接模式，测试旧解析方式
-	oldConfig := defaultConfig
-
-	// 测试旧解析方式
-	b.Run("OldParser", func(b *testing.B) {
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			var result DecodeTestStruct
-			_ = UnmarshalWithConfig([]byte(jsonData), &result, oldConfig)
-		}
-	})
+	}`)
 
 	// 测试新的直接解析方式
 	b.Run("Parser", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result DecodeTestStruct
-			_ = Unmarshal([]byte(jsonData), &result)
+			_ = Unmarshal(jsonData, &result)
 		}
 	})
 
@@ -229,48 +217,93 @@ func BenchmarkVsOldUnmarshal(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result DecodeTestStruct
-			_ = json.Unmarshal([]byte(jsonData), &result)
+			_ = json.Unmarshal(jsonData, &result)
 		}
 	})
-
-	// 恢复默认配置
-	defaultConfig = oldConfig
 }
 
 // 测试不同类型的JSON数据的性能
-func BenchmarkUnmarshal(b *testing.B) {
+func BenchmarkUnmarshalCompareTypes(b *testing.B) {
 	// 测试简单数据类型
-	simpleJSON := `123`
+	simpleJSON := []byte(`123`)
 	b.Run("Simple", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result interface{}
-			_ = Unmarshal([]byte(simpleJSON), &result)
+			_ = Unmarshal(simpleJSON, &result)
+		}
+	})
+
+	b.Run("StdlibSimple", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result interface{}
+			_ = json.Unmarshal(simpleJSON, &result)
+		}
+	})
+
+	b.Run("JsoniterSimple", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result interface{}
+			_ = jsonfast.Unmarshal(simpleJSON, &result)
 		}
 	})
 
 	// 测试小对象
-	smallObjJSON := `{"name":"张三","age":30}`
+	smallObjJSON := []byte(`{"name":"张三","age":30}`)
 	b.Run("SmallObject", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result map[string]interface{}
-			_ = Unmarshal([]byte(smallObjJSON), &result)
+			_ = Unmarshal(smallObjJSON, &result)
+		}
+	})
+
+	b.Run("StdlibSmallObject", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result map[string]interface{}
+			_ = json.Unmarshal(smallObjJSON, &result)
+		}
+	})
+
+	b.Run("JsoniterSmallObject", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result map[string]interface{}
+			_ = jsonfast.Unmarshal(smallObjJSON, &result)
 		}
 	})
 
 	// 测试数组
-	arrayJSON := `[1,2,3,4,5,6,7,8,9,10]`
+	arrayJSON := []byte(`[1,2,3,4,5,6,7,8,9,10]`)
 	b.Run("Array", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result []interface{}
-			_ = Unmarshal([]byte(arrayJSON), &result)
+			_ = Unmarshal(arrayJSON, &result)
+		}
+	})
+
+	b.Run("StdlibArray", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result []interface{}
+			_ = json.Unmarshal(arrayJSON, &result)
+		}
+	})
+
+	b.Run("JsoniterArray", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result []interface{}
+			_ = jsonfast.Unmarshal(arrayJSON, &result)
 		}
 	})
 
 	// 测试嵌套对象
-	nestedJSON := `{
+	nestedJSON := []byte(`{
 		"name": "张三",
 		"age": 30,
 		"address": {
@@ -282,12 +315,28 @@ func BenchmarkUnmarshal(b *testing.B) {
 			{"type": "email", "value": "test@example.com"},
 			{"type": "phone", "value": "123456789"}
 		]
-	}`
+	}`)
 	b.Run("NestedObject", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var result map[string]interface{}
-			_ = Unmarshal([]byte(nestedJSON), &result)
+			_ = Unmarshal(nestedJSON, &result)
+		}
+	})
+
+	b.Run("StdlibNestedObject", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result map[string]interface{}
+			_ = json.Unmarshal(nestedJSON, &result)
+		}
+	})
+
+	b.Run("JsoniterNestedObject", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var result map[string]interface{}
+			_ = jsonfast.Unmarshal(nestedJSON, &result)
 		}
 	})
 }

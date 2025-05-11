@@ -34,28 +34,16 @@ func releaseEncoderStream(stream *encoderStream) {
 func Marshal(v interface{}) ([]byte, error) {
 	// 从对象池获取编码器流
 	stream := getEncoderStream()
-
-	// 预分配一定容量，但不改变内容
-	if v != nil && cap(stream.buffer) < 512 {
-		// 创建一个更大容量的buffer
-		newBuffer := make([]byte, len(stream.buffer), 512)
-		copy(newBuffer, stream.buffer)
-		stream.buffer = newBuffer
-	}
+	defer releaseEncoderStream(stream)
 
 	// 保存编码后的结果
 	var err error
 	stream.buffer, err = encodeValueToBytes(stream.buffer, reflect.ValueOf(v))
 	if err != nil {
-		releaseEncoderStream(stream)
 		return nil, err
 	}
 
-	// 创建副本并返回结果
-	result := make([]byte, len(stream.buffer))
-	copy(result, stream.buffer)
-
-	releaseEncoderStream(stream)
+	result := append([]byte(nil), stream.buffer...)
 	return result, nil
 }
 
@@ -66,5 +54,5 @@ func MarshalString(v interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(bytes), nil
+	return bytesToString(bytes), nil
 }

@@ -46,6 +46,33 @@ func init() {
 	}
 }
 
+func escapeStringToBytes(buf []byte, c byte) []byte {
+	switch c {
+	case '"':
+		buf = append(buf, '\\', '"')
+	case '\\':
+		buf = append(buf, '\\', '\\')
+	case '\b':
+		buf = append(buf, '\\', 'b')
+	case '\f':
+		buf = append(buf, '\\', 'f')
+	case '\n':
+		buf = append(buf, '\\', 'n')
+	case '\r':
+		buf = append(buf, '\\', 'r')
+	case '\t':
+		buf = append(buf, '\\', 't')
+	default:
+		// 小于32的控制字符需要转义为\uXXXX
+		if c < 32 {
+			buf = append(buf, unicodeHex[c]...)
+		} else {
+			buf = append(buf, c)
+		}
+	}
+	return buf
+}
+
 type stringEncoder struct{}
 
 // 为stringEncoder添加appendToBytes方法
@@ -58,54 +85,22 @@ func (e stringEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, err
 
 	buf = append(buf, '"')
 
-	// 快速路径：检查是否需要转义
-	needsEscape := false
-	for i := 0; i < len(s); i++ {
-		if c := s[i]; c < utf8.RuneSelf && !safeSet[c] {
-			needsEscape = true
-			break
-		}
-	}
-
-	if !needsEscape {
-		// 不需要转义，直接写入
-		buf = append(buf, s...)
-		buf = append(buf, '"')
-		return buf, nil
-	}
-
-	// 需要转义的情况
+	// 单次循环，边检查边处理
 	start := 0
 	for i := 0; i < len(s); {
 		if c := s[i]; c < utf8.RuneSelf {
-			if safeSet[c] {
+			if !safeSet[c] {
+				// 需要转义的字符
+				if start < i {
+					buf = append(buf, s[start:i]...)
+				}
+				buf = escapeStringToBytes(buf, c)
 				i++
-				continue
+				start = i
+			} else {
+				// 安全字符，继续
+				i++
 			}
-			if start < i {
-				buf = append(buf, s[start:i]...)
-			}
-			switch c {
-			case '"':
-				buf = append(buf, '\\', '"')
-			case '\\':
-				buf = append(buf, '\\', '\\')
-			case '\b':
-				buf = append(buf, '\\', 'b')
-			case '\f':
-				buf = append(buf, '\\', 'f')
-			case '\n':
-				buf = append(buf, '\\', 'n')
-			case '\r':
-				buf = append(buf, '\\', 'r')
-			case '\t':
-				buf = append(buf, '\\', 't')
-			default:
-				// 小于32的控制字符需要转义为\uXXXX
-				buf = append(buf, unicodeHex[c]...)
-			}
-			i++
-			start = i
 		} else {
 			// 处理非ASCII字符（UTF-8）
 			_, size := utf8.DecodeRuneInString(s[i:])
@@ -113,9 +108,11 @@ func (e stringEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, err
 		}
 	}
 
+	// 添加剩余部分
 	if start < len(s) {
 		buf = append(buf, s[start:]...)
 	}
+
 	buf = append(buf, '"')
 	return buf, nil
 }
@@ -141,25 +138,7 @@ func (e byteSliceEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, 
 			if safeSet[c] {
 				buf = append(buf, c)
 			} else {
-				switch c {
-				case '"':
-					buf = append(buf, '\\', '"')
-				case '\\':
-					buf = append(buf, '\\', '\\')
-				case '\b':
-					buf = append(buf, '\\', 'b')
-				case '\f':
-					buf = append(buf, '\\', 'f')
-				case '\n':
-					buf = append(buf, '\\', 'n')
-				case '\r':
-					buf = append(buf, '\\', 'r')
-				case '\t':
-					buf = append(buf, '\\', 't')
-				default:
-					// 小于32的控制字符需要转义为\uXXXX
-					buf = append(buf, unicodeHex[c]...)
-				}
+				buf = escapeStringToBytes(buf, c)
 			}
 			i++
 		} else {
