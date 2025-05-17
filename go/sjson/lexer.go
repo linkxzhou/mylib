@@ -189,16 +189,25 @@ func (l *Lexer) lexString() Token {
 
 	// 优化：处理非转义字符块
 	chunkStart := l.pos
+
 	// 预分配内存减少重新分配
-	buf.Grow(32) // 为常见字符串预分配一些空间
+	if buf.Cap() < 32 {
+		buf.Grow(32) // 为常见字符串预分配一些空间
+	}
 
 	// 快速路径：无转义字符的情况
-	endQuotePos := bytes.IndexByte(l.input[l.pos:], '"')
-	if endQuotePos >= 0 && !bytes.ContainsRune(l.input[l.pos:l.pos+endQuotePos], '\\') {
-		// 没有转义字符，直接提取字符串
-		value := l.input[l.pos : l.pos+endQuotePos]
-		l.pos += endQuotePos + 1 // +1 跳过结束引号
-		return Token{Type: StringToken, Value: value, Pos: startPos}
+	// 单次循环扫描，避免两次遍历
+	start := l.pos
+	for ; l.pos < len(l.input); l.pos++ {
+		c := l.input[l.pos]
+		if c == '"' {
+			value := l.input[start:l.pos]
+			l.pos++ // 跳过结束引号
+			return Token{Type: StringToken, Value: value, Pos: startPos}
+		}
+		if c == '\\' {
+			break
+		}
 	}
 
 	// 慢路径：处理带转义字符的情况

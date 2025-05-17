@@ -1,6 +1,7 @@
 package sjson
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 )
@@ -8,56 +9,74 @@ import (
 // 各种类型的直接编码器实现
 type nullEncoder struct{}
 
-func (e nullEncoder) appendToBytes(buf []byte, _ reflect.Value) ([]byte, error) {
-	return append(buf, nullString...), nil
+//go:inline
+//go:nosplit
+func (e nullEncoder) appendToBytes(stream *encoderStream, _ reflect.Value) error {
+	stream.buffer = append(stream.buffer, nullString...)
+	return nil
 }
 
 type boolEncoder struct{}
 
-func (e boolEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+//go:inline
+//go:nosplit
+func (e boolEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	if src.Bool() {
-		return append(buf, trueString...), nil
+		stream.buffer = append(stream.buffer, trueString...)
+	} else {
+		stream.buffer = append(stream.buffer, falseString...)
 	}
-	return append(buf, falseString...), nil
+	return nil
 }
 
 type intEncoder struct{}
 
-func (e intEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
-	return strconv.AppendInt(buf, src.Int(), 10), nil
+//go:inline
+//go:nosplit
+func (e intEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
+	intValue := src.Int()
+	if intValue < 0 {
+		stream.buffer = append(stream.buffer, '-')
+		stream.buffer = appendInt(stream.buffer, int64(intValue), 10)
+	} else {
+		stream.buffer = appendInt(stream.buffer, intValue, 10)
+	}
+
+	return nil
 }
 
 type uintEncoder struct{}
 
-func (e uintEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
-	return strconv.AppendUint(buf, src.Uint(), 10), nil
+//go:inline
+//go:nosplit
+func (e uintEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
+	stream.buffer = appendUint(stream.buffer, src.Uint(), 10)
+	return nil
 }
 
-type floatEncoder struct{}
+type float32Encoder struct{}
 
-func (e floatEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
-	f := src.Float()
+func (e float32Encoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
+	stream.buffer = strconv.AppendFloat(stream.buffer, src.Float(), 'f', -1, 64)
+	return nil
+}
 
-	// 优化常见的整数值浮点数，减少科学计数法表示
-	if f == 0 {
-		return append(buf, zeroString...), nil
-	}
+type float64Encoder struct{}
 
-	if f == 1 {
-		return append(buf, oneString...), nil
-	}
-
-	if f == -1 {
-		return append(buf, minusOneString...), nil
-	}
-
-	// 直接使用 strconv.AppendFloat 更有效率
-	return strconv.AppendFloat(buf, f, 'g', -1, src.Type().Bits()), nil
+func (e float64Encoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
+	stream.buffer = strconv.AppendFloat(stream.buffer, src.Float(), 'f', -1, 32)
+	return nil
 }
 
 type defaultEncoder struct{}
 
-func (e defaultEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func (e defaultEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	// 默认策略：转换为字符串返回
-	return stringEncoderInst.appendToBytes(buf, src)
+	return stringEncoderInst.appendToBytes(stream, src)
+}
+
+type noSupportEncoder struct{}
+
+func (e noSupportEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
+	return fmt.Errorf("unsupported map key type: %v", src.Type())
 }

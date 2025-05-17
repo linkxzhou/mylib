@@ -7,15 +7,12 @@ import (
 
 // 预定义常量字符串，减少内存分配
 var (
-	emptyArray     = []byte("[]")
-	emptyObject    = []byte("{}")
-	emptyString    = []byte(`""`)
-	nullString     = []byte("null")
-	trueString     = []byte("true")
-	falseString    = []byte("false")
-	zeroString     = []byte("0")
-	oneString      = []byte("1")
-	minusOneString = []byte("-1")
+	emptyArray  = []byte("[]")
+	emptyObject = []byte("{}")
+	emptyString = []byte(`""`)
+	nullString  = []byte("null")
+	trueString  = []byte("true")
+	falseString = []byte("false")
 )
 
 // 为常用类型预分配的直接编码器
@@ -24,37 +21,42 @@ var (
 	boolEncoderInst      = boolEncoder{}
 	intEncoderInst       = intEncoder{}
 	uintEncoderInst      = uintEncoder{}
-	floatEncoderInst     = floatEncoder{}
+	float32EncoderInst   = float32Encoder{}
+	float64EncoderInst   = float64Encoder{}
 	stringEncoderInst    = stringEncoder{}
 	interfaceEncoderInst = interfaceEncoder{}
 	defaultEncoderInst   = defaultEncoder{}
+	noSupportEncoderInst = noSupportEncoder{}
 )
 
 // Encoder 是直接编码器接口，直接将Go类型编码为JSON
 type Encoder interface {
 	// 新增基于字节的编码方法
-	appendToBytes([]byte, reflect.Value) ([]byte, error)
+	appendToBytes(*encoderStream, reflect.Value) error
 }
 
 // 直接编码器缓存
 var EncoderCache sync.Map // map[reflect.Type]Encoder
 
 // 使用小对象缓存池，避免频繁创建编码器实例
-var sliceEncoderPool sync.Map // map[reflect.Type]Encoder
-var mapEncoderPool sync.Map   // map[reflect.Type]Encoder
-var ptrEncoderPool sync.Map   // map[reflect.Type]Encoder
+var sliceEncoderPool sync.Map
+var mapEncoderPool sync.Map
+var ptrEncoderPool sync.Map
 
 // encodeValueToBytes 直接将Go值编码到字节切片中
-func encodeValueToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func encodeValueToBytes(stream *encoderStream, src reflect.Value, typ reflect.Type) error {
 	if !src.IsValid() {
-		return append(buf, nullString...), nil
+		stream.buffer = append(stream.buffer, nullString...)
+		return nil
 	}
 
-	encoder := getEncoder(src.Type())
-	return encoder.appendToBytes(buf, src)
+	encoder := getEncoder(typ)
+	return encoder.appendToBytes(stream, src)
 }
 
 // 优化: 检测空值
+//
+//go:inline
 func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
@@ -94,8 +96,10 @@ func getEncoder(t reflect.Type) Encoder {
 		enc = intEncoderInst
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		enc = uintEncoderInst
-	case reflect.Float32, reflect.Float64:
-		enc = floatEncoderInst
+	case reflect.Float32:
+		enc = float32EncoderInst
+	case reflect.Float64:
+		enc = float64EncoderInst
 	case reflect.String:
 		enc = stringEncoderInst
 	case reflect.Slice, reflect.Array:
@@ -114,11 +118,13 @@ func getEncoder(t reflect.Type) Encoder {
 		}
 	case reflect.Map:
 		// 针对 map[string]interface{} 类型优化
-		if t.Key().Kind() == reflect.String {
+		switch t.Key().Kind() {
+		case reflect.String,
+			reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			if t.Elem().Kind() == reflect.Interface {
 				enc = mapStringInterfaceEncoder{}
 			} else {
-				// 检查是否有缓存的 mapEncoder
 				if cachedEnc, ok := mapEncoderPool.Load(t.Elem()); ok {
 					enc = cachedEnc.(Encoder)
 				} else {
@@ -127,9 +133,8 @@ func getEncoder(t reflect.Type) Encoder {
 					enc = mapEnc
 				}
 			}
-		} else {
-			// 非字符串键的 map 暂不支持，使用默认编码器
-			enc = defaultEncoderInst
+		default:
+			enc = noSupportEncoderInst
 		}
 	case reflect.Struct:
 		// 结构体编码器优化，预缓存字段信息

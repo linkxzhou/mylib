@@ -18,16 +18,17 @@ type structEncoder struct {
 }
 
 // 添加appendToBytes方法，将结构体直接编码到字节切片
-func (e *structEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func (e *structEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	if src.Kind() == reflect.Ptr {
 		if src.IsNil() {
-			return append(buf, nullString...), nil
+			stream.buffer = append(stream.buffer, nullString...)
+			return nil
 		}
 		src = src.Elem()
 	}
 
 	// 开始对象
-	buf = append(buf, '{')
+	stream.buffer = append(stream.buffer, '{')
 
 	var err error
 
@@ -43,22 +44,22 @@ func (e *structEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, er
 
 		// 添加逗号分隔符（非第一个字段）
 		if i > 0 {
-			buf = append(buf, ',')
+			stream.buffer = append(stream.buffer, ',')
 		}
 
 		// 写入字段名（使用之前实现的appendMapKey函数）
-		buf = append(buf, '"')
-		buf = append(buf, field.name...)
-		buf = append(buf, '"', ':')
+		stream.buffer = append(stream.buffer, '"')
+		stream.buffer = append(stream.buffer, field.name...)
+		stream.buffer = append(stream.buffer, '"', ':')
 
 		elemEncoder := getEncoder(field.typ)
 		// 编码字段值
-		buf, err = elemEncoder.appendToBytes(buf, f)
+		err = elemEncoder.appendToBytes(stream, f)
 		if err != nil {
-			return buf, err
+			return err
 		}
 	}
 
-	buf = append(buf, '}')
-	return buf, nil
+	stream.buffer = append(stream.buffer, '}')
+	return nil
 }

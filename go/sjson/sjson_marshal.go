@@ -37,8 +37,7 @@ func Marshal(v interface{}) ([]byte, error) {
 	defer releaseEncoderStream(stream)
 
 	// 保存编码后的结果
-	var err error
-	stream.buffer, err = encodeValueToBytes(stream.buffer, reflect.ValueOf(v))
+	err := encodeValueToBytes(stream, reflect.ValueOf(v), reflect.TypeOf(v))
 	if err != nil {
 		return nil, err
 	}

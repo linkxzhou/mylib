@@ -8,6 +8,7 @@
 ## Golang
 - expr：golang的表达式支持库，查看 [readme](go/expr/readme.md)
 - simplejs：golang的js解析库，查看 [readme](go/simplejs/readme.md)
+- sjson：golang实现的高性能json解析库，查看 [readme](go/sjson/readme.md)
 
 ## llm
 - llmapi: 提供各个 LLM 的 API 集合的库，支持 LLM，embedding，rerank 等功能 [readme](llm/llmapi/readme.md)

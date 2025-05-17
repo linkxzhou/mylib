@@ -4,8 +4,20 @@ import (
 	"errors"
 	"math"
 	"reflect"
+	"strconv"
 	"unsafe"
 )
+
+var digits [][]byte
+var maxInt64Bytes = []byte("9223372036854775808")
+
+func init() {
+	// 预计算0-9999的字节表示
+	digits = make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		digits[i] = []byte(strconv.Itoa(i))
+	}
+}
 
 // 直接从字节切片解析整数，避免string转换
 func parseIntFromBytes(b []byte, base int, bitSize int) (int64, error) {
@@ -275,6 +287,32 @@ func stringToBytes(s string) []byte {
 }
 
 // bytesToString 将 []byte 转换为 string，零拷贝（不安全）
+//
+//go:inline
 func bytesToString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
+}
+
+//go:inline
+//go:nosplit
+//go:nocheckptr
+func appendUint(dst []byte, u uint64, base int) []byte {
+	// 快速路径：小于10000直接查表
+	if u < 10000 {
+		return append(dst, digits[u]...)
+	}
+
+	// 大数处理：直接使用标准库
+	return strconv.AppendUint(dst, u, base)
+}
+
+//go:inline
+//go:nosplit
+//go:nocheckptr
+func appendInt(dst []byte, i int64, base int) []byte {
+	if i < 0 {
+		dst = append(dst, '-')
+		return appendUint(dst, uint64(-i), base)
+	}
+	return appendUint(dst, uint64(i), base)
 }

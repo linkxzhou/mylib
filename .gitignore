@@ -16,3 +16,5 @@
 **/simplejs/example
 **/*.prof
 **/sjson/tests/JSONTestSuite
+**/rust/hypervisor/tinyemu
+**/target

@@ -46,6 +46,7 @@ func init() {
 	}
 }
 
+//go:inline
 func escapeStringToBytes(buf []byte, c byte) []byte {
 	switch c {
 	case '"':
@@ -76,14 +77,15 @@ func escapeStringToBytes(buf []byte, c byte) []byte {
 type stringEncoder struct{}
 
 // 为stringEncoder添加appendToBytes方法
-func (e stringEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func (e stringEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	s := src.String()
 
 	if s == "" {
-		return append(buf, emptyString...), nil
+		stream.buffer = append(stream.buffer, emptyString...)
+		return nil
 	}
 
-	buf = append(buf, '"')
+	stream.buffer = append(stream.buffer, '"')
 
 	// 单次循环，边检查边处理
 	start := 0
@@ -92,9 +94,9 @@ func (e stringEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, err
 			if !safeSet[c] {
 				// 需要转义的字符
 				if start < i {
-					buf = append(buf, s[start:i]...)
+					stream.buffer = append(stream.buffer, s[start:i]...)
 				}
-				buf = escapeStringToBytes(buf, c)
+				stream.buffer = escapeStringToBytes(stream.buffer, c)
 				i++
 				start = i
 			} else {
@@ -110,44 +112,48 @@ func (e stringEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, err
 
 	// 添加剩余部分
 	if start < len(s) {
-		buf = append(buf, s[start:]...)
+		stream.buffer = append(stream.buffer, s[start:]...)
 	}
 
-	buf = append(buf, '"')
-	return buf, nil
+	stream.buffer = append(stream.buffer, '"')
+	return nil
 }
 
 // []byte 专用编码器
 type byteSliceEncoder struct{}
 
 // 为byteSliceEncoder添加appendToBytes方法
-func (e byteSliceEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func (e byteSliceEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	if src.IsNil() {
-		return append(buf, nullString...), nil
+		stream.buffer = append(stream.buffer, nullString...)
+		return nil
 	}
 
 	// 编码字节切片为JSON字符串
 	b := src.Bytes()
 	if len(b) == 0 {
-		return append(buf, emptyString...), nil
+		stream.buffer = append(stream.buffer, emptyString...)
+		return nil
 	}
 
-	buf = append(buf, '"')
+	stream.buffer = append(stream.buffer, '"')
+
 	for i := 0; i < len(b); {
 		if c := b[i]; c < utf8.RuneSelf {
 			if safeSet[c] {
-				buf = append(buf, c)
+				stream.buffer = append(stream.buffer, c)
 			} else {
-				buf = escapeStringToBytes(buf, c)
+				stream.buffer = escapeStringToBytes(stream.buffer, c)
 			}
 			i++
 		} else {
 			// 处理非ASCII字符（UTF-8）
 			_, size := utf8.DecodeRune(b[i:])
-			buf = append(buf, b[i:i+size]...)
+			stream.buffer = append(stream.buffer, b[i:i+size]...)
 			i += size
 		}
 	}
-	buf = append(buf, '"')
-	return buf, nil
+
+	stream.buffer = append(stream.buffer, '"')
+	return nil
 }

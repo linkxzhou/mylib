@@ -1,0 +1,12 @@
+[package]
+name = "crate_name"
+version = "0.1.0"
+authors = ["Author Name <author@example.com>"]
+
+# 使用 `cargo build` 编译时需要的配置
+[profile.dev]
+panic = "abort" # 禁用panic时栈展开
+
+# 使用 `cargo build --release` 编译时需要的配置
+[profile.release]
+panic = "abort" # 禁用 panic 时栈展开

@@ -159,8 +159,10 @@ func TestMarshalString(t *testing.T) {
 		{true, `true`},
 		{false, `false`},
 		{123, `123`},
+		{100000000000, `100000000000`},
 		{3.14, `3.14`},
 		{"hello", `"hello"`},
+		{"world", `"world"`},
 		{[]int{}, `[]`},
 		{[]int{1, 2, 3}, `[1,2,3]`},
 		{map[string]int{}, `{}`},
@@ -267,6 +269,110 @@ func TestMarshalSortedKeys(t *testing.T) {
 	expected := `{"a":1,"m":13,"z":26}`
 	if result != expected {
 		t.Errorf("MarshalString未正确排序键: 得到 %s, 期望 %s", result, expected)
+	}
+}
+
+// TestMarshalInterfaceTypes 测试各种 interface{} 类型的编码
+func TestMarshalInterfaceTypes(t *testing.T) {
+	// 包含各种类型的数组
+	mixedArray := []interface{}{
+		"字符串",
+		123,
+		45.67,
+		true,
+		nil,
+		[]int{1, 2, 3},
+		map[string]string{"key": "value"},
+		struct {
+			Name string `json:"name"`
+			Age  int    `json:"age"`
+		}{"测试用户", 30},
+	}
+
+	// 深度嵌套的interface{}
+	deepInterface := interface{}(
+		map[string]interface{}{
+			"level1": map[string]interface{}{
+				"level2": map[string]interface{}{
+					"level3": map[string]interface{}{
+						"level4": map[string]interface{}{
+							"value": "最深层值",
+							"array": []interface{}{
+								1,
+								map[string]interface{}{
+									"nested": "嵌套在数组中",
+								},
+							},
+						},
+						"siblings": []string{"a", "b", "c"},
+					},
+					"data": []interface{}{
+						map[string]interface{}{
+							"id":   1,
+							"name": "项目1",
+						},
+						map[string]interface{}{
+							"id":   2,
+							"name": "项目2",
+						},
+					},
+				},
+				"config": map[string]interface{}{
+					"enabled": true,
+					"timeout": 30,
+					"options": []string{"opt1", "opt2"},
+				},
+			},
+		},
+	)
+
+	testCases := []struct {
+		name  string
+		value interface{}
+	}{
+		{"基本类型-nil", nil},
+		{"基本类型-字符串", "字符串值"},
+		{"基本类型-整数", 123},
+		{"基本类型-浮点数", -45.67},
+		{"基本类型-布尔值", true},
+		{"复合类型-数组", []interface{}{1, "二", 3.0, true, nil}},
+		{"复合类型-简单Map", map[string]interface{}{"name": "接口测试", "value": 100}},
+		{"复合类型-混合数组", mixedArray},
+		{"复合类型-深度嵌套", deepInterface},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// 使用标准库json.Marshal方法
+			stdJSON, err := json.Marshal(tc.value)
+			if err != nil {
+				t.Errorf("标准库json.Marshal失败: %v", err)
+				return
+			}
+
+			// 使用自己实现的Marshal方法
+			ourJSON, err := Marshal(tc.value)
+			if err != nil {
+				t.Errorf("我们的Marshal失败: %v", err)
+				return
+			}
+
+			// 只进行解码后的对象比较，避免格式差异导致字符串不同
+			var stdObj, ourObj interface{}
+			if err := json.Unmarshal(stdJSON, &stdObj); err != nil {
+				t.Errorf("解析标准库JSON失败: %v, JSON: %s", err, stdJSON)
+				return
+			}
+
+			if err := json.Unmarshal(ourJSON, &ourObj); err != nil {
+				t.Errorf("解析我们的Marshal JSON失败: %v, JSON: %s", err, ourJSON)
+				return
+			}
+
+			if !reflect.DeepEqual(stdObj, ourObj) {
+				t.Errorf("Marshal结果与标准库不兼容\nMarshal: %s\nStdJSON: %s", ourJSON, stdJSON)
+			}
+		})
 	}
 }
 
@@ -418,9 +524,39 @@ func createDeepNestedTestData() DeepNestedRoot {
 
 // 基本类型编码基准测试
 func BenchmarkBasicTypes(b *testing.B) {
+	// 整数
+	b.Run("Marshal-NumberInt", func(b *testing.B) {
+		number := 12345
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(number)
+		}
+	})
+
+	b.Run("StdMarshal-NumberInt", func(b *testing.B) {
+		number := 12345
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(number)
+		}
+	})
+
+	b.Run("JsoniterMarshal-NumberInt", func(b *testing.B) {
+		number := 12345
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(number)
+		}
+	})
+
 	// 数字
 	b.Run("Marshal-Number", func(b *testing.B) {
 		number := 12345.6789
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = Marshal(number)
 		}
@@ -428,14 +564,27 @@ func BenchmarkBasicTypes(b *testing.B) {
 
 	b.Run("StdMarshal-Number", func(b *testing.B) {
 		number := 12345.6789
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = json.Marshal(number)
+		}
+	})
+
+	b.Run("JsoniterMarshal-Number", func(b *testing.B) {
+		number := 12345.6789
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(number)
 		}
 	})
 
 	// 字符串
 	b.Run("Marshal-String", func(b *testing.B) {
 		s := "这是一个性能测试用的字符串，需要包含一些中文和特殊字符!@#$%^&*()"
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = Marshal(s)
 		}
@@ -443,14 +592,25 @@ func BenchmarkBasicTypes(b *testing.B) {
 
 	b.Run("StdMarshal-String", func(b *testing.B) {
 		s := "这是一个性能测试用的字符串，需要包含一些中文和特殊字符!@#$%^&*()"
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = json.Marshal(s)
+		}
+	})
+
+	b.Run("JsoniterMarshal-String", func(b *testing.B) {
+		s := "这是一个性能测试用的字符串，需要包含一些中文和特殊字符!@#$%^&*()"
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(s)
 		}
 	})
 }
 
 // 复杂结构编码基准测试
-func BenchmarkComplexTypes(b *testing.B) {
+func BenchmarkStructTypes(b *testing.B) {
 	// 复杂结构体
 	complexObj := NestedStruct{
 		ID: 1,
@@ -480,27 +640,29 @@ func BenchmarkComplexTypes(b *testing.B) {
 				Tags:     []string{"child", "inactive"},
 			},
 		},
-		Extra: map[string][]int{
-			"scores":  {90, 95, 100},
-			"ranking": {1, 3, 5},
-		},
 	}
 
 	b.Run("Marshal-Complex", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = Marshal(complexObj)
 		}
 	})
 
-	b.Run("Jsoniter-Complex", func(b *testing.B) {
+	b.Run("StdMarshal-Complex", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			_, _ = jsonfast.Marshal(complexObj)
+			_, _ = json.Marshal(complexObj)
 		}
 	})
 
-	b.Run("StdMarshal-Complex", func(b *testing.B) {
+	b.Run("Jsoniter-Complex", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			_, _ = json.Marshal(complexObj)
+			_, _ = jsonfast.Marshal(complexObj)
 		}
 	})
 }
@@ -514,12 +676,24 @@ func BenchmarkLargeArray(b *testing.B) {
 	}
 
 	b.Run("Marshal-LargeArray", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = Marshal(largeArray)
 		}
 	})
 
 	b.Run("StdMarshal-LargeArray", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(largeArray)
+		}
+	})
+
+	b.Run("Jsoniter-LargeArray", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = json.Marshal(largeArray)
 		}
@@ -535,12 +709,16 @@ func BenchmarkLargeMap(b *testing.B) {
 	}
 
 	b.Run("Marshal-LargeMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = Marshal(largeMap)
 		}
 	})
 
 	b.Run("StdMarshal-LargeMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = json.Marshal(largeMap)
 		}
@@ -563,12 +741,16 @@ func BenchmarkMarshalString(b *testing.B) {
 	}
 
 	b.Run("MarshalString", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_, _ = MarshalString(complexObj)
 		}
 	})
 
 	b.Run("Marshal+ToString", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			data, _ := Marshal(complexObj)
 			_ = string(data)
@@ -576,9 +758,299 @@ func BenchmarkMarshalString(b *testing.B) {
 	})
 
 	b.Run("StdMarshal+ToString", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			data, _ := json.Marshal(complexObj)
 			_ = string(data)
+		}
+	})
+}
+
+// Map类型编码基准测试
+func BenchmarkMapTypes(b *testing.B) {
+	// 简单Map
+	simpleMap := map[string]string{
+		"key1":       "value1",
+		"key2":       "value2",
+		"key3":       "value3",
+		"中文键":        "中文值",
+		"special!@#": "special!@#$%^",
+	}
+
+	// 嵌套Map
+	nestedMap := map[string]interface{}{
+		"string":  "字符串值",
+		"number":  123.456,
+		"boolean": true,
+		"null":    nil,
+		"array":   []interface{}{1, "二", true, nil, 4.5},
+		"object": map[string]interface{}{
+			"name":  "嵌套对象",
+			"value": 100,
+			"flags": []bool{true, false, true},
+		},
+	}
+
+	// 复杂Map（多层嵌套）
+	complexMap := map[string]interface{}{
+		"id":   12345,
+		"name": "复杂Map测试",
+		"metadata": map[string]interface{}{
+			"created": "2025-05-17",
+			"author":  "测试用户",
+			"version": 2.0,
+			"tags":    []string{"test", "benchmark", "map"},
+		},
+		"data": []map[string]interface{}{
+			{
+				"id": 1,
+				"properties": map[string]interface{}{
+					"color":     "red",
+					"size":      "large",
+					"available": true,
+				},
+				"counts": []int{10, 20, 30},
+			},
+			{
+				"id": 2,
+				"properties": map[string]interface{}{
+					"color":     "blue",
+					"size":      "medium",
+					"available": false,
+				},
+				"counts": []int{5, 15, 25},
+			},
+		},
+		"settings": map[string]map[string]interface{}{
+			"display": {
+				"theme":      "dark",
+				"fontSize":   14,
+				"fullscreen": false,
+			},
+			"notification": {
+				"enabled":   true,
+				"frequency": "daily",
+				"channels":  []string{"email", "sms", "push"},
+			},
+		},
+	}
+
+	b.Run("Marshal-SimpleMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(simpleMap)
+		}
+	})
+
+	b.Run("StdMarshal-SimpleMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(simpleMap)
+		}
+	})
+
+	b.Run("Jsoniter-SimpleMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(simpleMap)
+		}
+	})
+
+	b.Run("Marshal-NestedMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(nestedMap)
+		}
+	})
+
+	b.Run("StdMarshal-NestedMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(nestedMap)
+		}
+	})
+
+	b.Run("Jsoniter-NestedMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(nestedMap)
+		}
+	})
+
+	b.Run("Marshal-ComplexMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(complexMap)
+		}
+	})
+
+	b.Run("StdMarshal-ComplexMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(complexMap)
+		}
+	})
+
+	b.Run("Jsoniter-ComplexMap", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(complexMap)
+		}
+	})
+}
+
+// Interface类型编码基准测试
+func BenchmarkInterfaceTypes(b *testing.B) {
+	// 各种类型的interface{}值
+	interfaceValues := []interface{}{
+		nil,
+		"字符串值",
+		123,
+		-45.67,
+		true,
+		[]interface{}{1, "二", 3.0, true, nil},
+		map[string]interface{}{
+			"name":  "接口测试",
+			"value": 100,
+		},
+	}
+
+	// 包含各种类型的数组
+	mixedArray := []interface{}{
+		"字符串",
+		123,
+		45.67,
+		true,
+		nil,
+		[]int{1, 2, 3},
+		map[string]string{"key": "value"},
+		struct {
+			Name string `json:"name"`
+			Age  int    `json:"age"`
+		}{"测试用户", 30},
+	}
+
+	// 深度嵌套的interface{}
+	deepInterface := interface{}(
+		map[string]interface{}{
+			"level1": map[string]interface{}{
+				"level2": map[string]interface{}{
+					"level3": map[string]interface{}{
+						"level4": map[string]interface{}{
+							"value": "最深层值",
+							"array": []interface{}{
+								1,
+								map[string]interface{}{
+									"nested": "嵌套在数组中",
+								},
+							},
+						},
+						"siblings": []string{"a", "b", "c"},
+					},
+					"data": []interface{}{
+						map[string]interface{}{
+							"id":   1,
+							"name": "项目1",
+						},
+						map[string]interface{}{
+							"id":   2,
+							"name": "项目2",
+						},
+					},
+				},
+				"config": map[string]interface{}{
+					"enabled": true,
+					"timeout": 30,
+					"options": []string{"opt1", "opt2"},
+				},
+			},
+		},
+	)
+
+	for _, val := range interfaceValues {
+		name := fmt.Sprintf("Marshal-Interface-%v", val)
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			b.ReportAllocs()
+			for j := 0; j < b.N; j++ {
+				_, _ = Marshal(val)
+			}
+		})
+
+		name = fmt.Sprintf("StdMarshal-Interface-%v", val)
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			b.ReportAllocs()
+			for j := 0; j < b.N; j++ {
+				_, _ = json.Marshal(val)
+			}
+		})
+
+		name = fmt.Sprintf("Jsoniter-Interface-%v", val)
+		b.Run(name, func(b *testing.B) {
+			b.ResetTimer()
+			b.ReportAllocs()
+			for j := 0; j < b.N; j++ {
+				_, _ = jsonfast.Marshal(val)
+			}
+		})
+	}
+
+	b.Run("Marshal-MixedArray", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(mixedArray)
+		}
+	})
+
+	b.Run("StdMarshal-MixedArray", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(mixedArray)
+		}
+	})
+
+	b.Run("Jsoniter-MixedArray", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(mixedArray)
+		}
+	})
+
+	b.Run("Marshal-DeepInterface", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = Marshal(deepInterface)
+		}
+	})
+
+	b.Run("StdMarshal-DeepInterface", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = json.Marshal(deepInterface)
+		}
+	})
+
+	b.Run("Jsoniter-DeepInterface", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, _ = jsonfast.Marshal(deepInterface)
 		}
 	})
 }

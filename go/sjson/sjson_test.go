@@ -1060,32 +1060,3 @@ func BenchmarkCompareMedium(b *testing.B) {
 		}
 	})
 }
-
-func BenchmarkUnmarshalMedium(b *testing.B) {
-	b.Run("SjsonUnmarshal", func(b *testing.B) {
-		b.ResetTimer()
-		var data MediumPayload
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			Unmarshal(mediumFixture, &data)
-		}
-	})
-
-	b.Run("StdUnmarshal", func(b *testing.B) {
-		b.ResetTimer()
-		var data MediumPayload
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			json.Unmarshal(mediumFixture, &data)
-		}
-	})
-
-	b.Run("JsoniterUnmarshal", func(b *testing.B) {
-		b.ResetTimer()
-		var data MediumPayload
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			jsonfast.Unmarshal(mediumFixture, &data)
-		}
-	})
-}

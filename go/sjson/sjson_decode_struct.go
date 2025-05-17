@@ -27,7 +27,10 @@ func (d *Decoder) decodeObject(dst reflect.Value) error {
 
 		case reflect.Interface:
 			if dst.NumMethod() == 0 {
-				dst.Set(reflect.MakeMap(reflect.TypeOf(map[string]interface{}{})))
+				m := make(map[string]interface{}, 0)
+				emptyMapValue := reflect.ValueOf(m)
+
+				dst.Set(emptyMapValue)
 				return nil
 			}
 		}
@@ -43,7 +46,8 @@ func (d *Decoder) decodeObject(dst reflect.Value) error {
 		return d.decodeStruct(dst)
 	case reflect.Interface:
 		if dst.NumMethod() == 0 {
-			emptyMapValue := reflect.MakeMap(reflect.TypeOf(map[string]interface{}{}))
+			m := make(map[string]interface{}, 0)
+			emptyMapValue := reflect.ValueOf(m)
 
 			// 解码到这个map
 			if err := d.decodeMap(emptyMapValue); err != nil {
@@ -77,6 +81,8 @@ func (d *Decoder) decodeMap(dst reflect.Value) error {
 	}
 
 	elemType := dst.Type().Elem()
+	// 优化：对 map[string]interface{} 特殊处理
+	mapInterface, isInterface := dst.Interface().(map[string]interface{})
 
 	for {
 		// 键必须是字符串
@@ -93,15 +99,24 @@ func (d *Decoder) decodeMap(dst reflect.Value) error {
 		}
 		d.nextToken()
 
-		// 解码值
-		valueElem := reflect.New(elemType).Elem()
-		if err := d.decodeValue(valueElem); err != nil {
-			return err
-		}
-
 		// 设置键值对，确保键是字符串类型
-		keyValue := reflect.ValueOf(bytesToString(key))
-		dst.SetMapIndex(keyValue, valueElem)
+		if isInterface {
+			var valueElem interface{}
+			if err := d.decodeValue(reflect.ValueOf(&valueElem).Elem()); err != nil {
+				return err
+			}
+
+			mapInterface[bytesToString(key)] = valueElem
+		} else {
+			// 解码值
+			valueElem := reflect.New(elemType).Elem()
+			if err := d.decodeValue(valueElem); err != nil {
+				return err
+			}
+
+			keyElem := reflect.ValueOf(bytesToString(key))
+			dst.SetMapIndex(keyElem, valueElem)
+		}
 
 		// 检查是否有更多的键值对
 		if d.token.Type == CommaToken {
@@ -121,6 +136,9 @@ func (d *Decoder) decodeMap(dst reflect.Value) error {
 var fieldMapCache = sync.Map{} // map[reflect.Type]map[string]int
 
 // 获取字段映射（带缓存）
+//
+//go:inline
+//go:nosplit
 func getFieldMap(structType reflect.Type, fields []structField) map[string]int {
 	// 检查缓存
 	if cachedMap, ok := fieldMapCache.Load(structType); ok {

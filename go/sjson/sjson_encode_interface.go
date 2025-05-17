@@ -8,17 +8,19 @@ type sliceEncoder struct {
 	elemType reflect.Type
 }
 
-func (e sliceEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func (e sliceEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	if src.IsNil() {
-		return append(buf, nullString...), nil
+		stream.buffer = append(stream.buffer, nullString...)
+		return nil
 	}
 
 	length := src.Len()
 	if length == 0 {
-		return append(buf, emptyArray...), nil
+		stream.buffer = append(stream.buffer, emptyArray...)
+		return nil
 	}
 
-	buf = append(buf, '[')
+	stream.buffer = append(stream.buffer, '[')
 
 	// 获取元素的编码器
 	elemEncoder := getEncoder(e.elemType)
@@ -28,36 +30,42 @@ func (e sliceEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, erro
 	// 编码剩余元素
 	for i := 0; i < length; i++ {
 		if i > 0 {
-			buf = append(buf, ',')
+			stream.buffer = append(stream.buffer, ',')
 		}
-		buf, err = elemEncoder.appendToBytes(buf, src.Index(i))
+		err = elemEncoder.appendToBytes(stream, src.Index(i))
 		if err != nil {
-			return buf, err
+			return err
 		}
 	}
 
-	buf = append(buf, ']')
-	return buf, nil
+	stream.buffer = append(stream.buffer, ']')
+	return nil
 }
 
 type interfaceEncoder struct{}
 
-func (e interfaceEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func (e interfaceEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	if src.IsNil() {
-		return append(buf, nullString...), nil
+		stream.buffer = append(stream.buffer, nullString...)
+		return nil
 	}
 
-	// 直接调用encodeValueToBytes，它会为elem找到合适的编码器
-	return encodeValueToBytes(buf, src.Elem())
+	// 获取接口中实际的值
+	elem := src.Elem()
+
+	// 获取元素的编码器
+	elemEncoder := getEncoder(elem.Type())
+	return elemEncoder.appendToBytes(stream, elem)
 }
 
 type ptrEncoder struct {
 	elemType reflect.Type
 }
 
-func (e ptrEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error) {
+func (e ptrEncoder) appendToBytes(stream *encoderStream, src reflect.Value) error {
 	if src.IsNil() {
-		return append(buf, nullString...), nil
+		stream.buffer = append(stream.buffer, nullString...)
+		return nil
 	}
 
 	// 获取指针指向的值
@@ -65,5 +73,5 @@ func (e ptrEncoder) appendToBytes(buf []byte, src reflect.Value) ([]byte, error)
 
 	// 使用预先缓存的元素编码器
 	elemEncoder := getEncoder(e.elemType)
-	return elemEncoder.appendToBytes(buf, elemVal)
+	return elemEncoder.appendToBytes(stream, elemVal)
 }
