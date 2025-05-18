@@ -9,13 +9,12 @@ import (
 )
 
 var digits [][]byte
-var maxInt64Bytes = []byte("9223372036854775808")
 
 func init() {
 	// 预计算0-9999的字节表示
 	digits = make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		digits[i] = []byte(strconv.Itoa(i))
+		digits[i] = strconv.AppendInt(nil, int64(i), 10)
 	}
 }
 

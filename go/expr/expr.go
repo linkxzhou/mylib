@@ -33,6 +33,15 @@ const (
 	kInt                      // 4
 	kFloat                    // 8
 	kRaw                      // 16
+
+	kBoolStrTrue  = "true"
+	kBoolStrFalse = "false"
+	kInvalidStr   = "invalid"
+	kBoolStr      = "bool"
+	kIntStr       = "int"
+	kFloatStr     = "float"
+	kRawStr       = "raw"
+	kUndefinedStr = "undefined"
 )
 
 const (
@@ -55,26 +64,28 @@ const (
 type (
 	Value interface {
 		Kind() Kind
-		Add(v2 Value) (Value, error)
-		Sub(v2 Value) (Value, error)
-		Mul(v2 Value) (Value, error)
-		Quo(v2 Value) (Value, error)
-		Rem(v2 Value) (Value, error)
-		And(v2 Value) (Value, error)
-		Or(v2 Value) (Value, error)
-		Shl(v2 Value) (Value, error)
-		Shr(v2 Value) (Value, error)
-		AndNot(v2 Value) (Value, error)
-		Xor() (Value, error)
-		Land(v2 Value) (Value, error)
-		Lor(v2 Value) (Value, error)
+		Add(Value) (Value, error)
+		Sub(Value) (Value, error)
+		Mul(Value) (Value, error)
+		Quo(Value) (Value, error)
+		Rem(Value) (Value, error)
+		And(Value) (Value, error)
+		Or(Value) (Value, error)
+		Shl(Value) (Value, error)
+		Shr(Value) (Value, error)
+		AndNot(Value) (Value, error)
+		Xor(Value) (Value, error)
+		Xor1() (Value, error) // ^1 一个参数场景
+		Land(Value) (Value, error)
+		Lor(Value) (Value, error)
 		Not() (Value, error)
-		Eq(v2 Value) (Value, error)
-		Ne(v2 Value) (Value, error)
-		Gt(v2 Value) (Value, error)
-		Ge(v2 Value) (Value, error)
-		Lt(v2 Value) (Value, error)
-		Le(v2 Value) (Value, error)
+		Neg() (Value, error)
+		Eq(Value) (Value, error)
+		Ne(Value) (Value, error)
+		Gt(Value) (Value, error)
+		Ge(Value) (Value, error)
+		Lt(Value) (Value, error)
+		Le(Value) (Value, error)
 
 		Int() int64
 		Float() float64
@@ -108,17 +119,17 @@ func NewValue(v interface{}) (Value, error) {
 func (k Kind) String() string {
 	switch k {
 	case kInvalid:
-		return "invalid"
+		return kInvalidStr
 	case kBool:
-		return "bool"
+		return kBoolStr
 	case kInt:
-		return "int"
+		return kIntStr
 	case kFloat:
-		return "float"
+		return kFloatStr
 	case kRaw:
-		return "raw"
+		return kRawStr
 	}
-	return "undefined"
+	return kUndefinedStr
 }
 
 func support(v Value, kind Kind) error {
@@ -130,9 +141,14 @@ func support(v Value, kind Kind) error {
 
 func (v Bool) Int() int64     { return 0 }
 func (v Bool) Float() float64 { return 0 }
-func (v Bool) String() string { return fmt.Sprintf("%v", bool(v)) }
-func (v Bool) Bool() bool     { return bool(v) }
-func (v Bool) Kind() Kind     { return kBool }
+func (v Bool) String() string {
+	if bool(v) {
+		return kBoolStrTrue
+	}
+	return kBoolStrFalse
+}
+func (v Bool) Bool() bool { return bool(v) }
+func (v Bool) Kind() Kind { return kBool }
 
 func (v Bool) Add(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Bool) Sub(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
@@ -144,10 +160,12 @@ func (v Bool) Or(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
 func (v Bool) Shl(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Bool) Shr(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Bool) AndNot(v2 Value) (Value, error) { return nil, ErrUnsupportedType }
-func (v Bool) Xor() (Value, error)            { return nil, ErrUnsupportedType }
+func (v Bool) Xor(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
+func (v Bool) Xor1() (Value, error)           { return nil, ErrUnsupportedType }
 func (v Bool) Land(v2 Value) (Value, error)   { return Bool(v.Bool() && v2.Bool()), nil }
 func (v Bool) Lor(v2 Value) (Value, error)    { return Bool(v.Bool() || v2.Bool()), nil }
 func (v Bool) Not() (Value, error)            { return Bool(!v.Bool()), nil }
+func (v Bool) Neg() (Value, error)            { return nil, ErrUnsupportedType }
 func (v Bool) Eq(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
 func (v Bool) Ne(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
 func (v Bool) Gt(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
@@ -155,12 +173,11 @@ func (v Bool) Ge(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
 func (v Bool) Lt(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
 func (v Bool) Le(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
 
-func (v Int) Int() int64     { return int64(v) }
-func (v Int) Float() float64 { return float64(v) }
-func (v Int) String() string { return fmt.Sprintf("%v", int64(v)) }
-func (v Int) Bool() bool     { return v != 0 }
-func (v Int) Kind() Kind     { return kInt }
-
+func (v Int) Int() int64                  { return int64(v) }
+func (v Int) Float() float64              { return float64(v) }
+func (v Int) String() string              { return strconv.FormatInt(int64(v), 10) }
+func (v Int) Bool() bool                  { return v != 0 }
+func (v Int) Kind() Kind                  { return kInt }
 func (v Int) Add(v2 Value) (Value, error) { return Int(int64(v) + v2.Int()), support(v, kInt|kFloat) }
 func (v Int) Sub(v2 Value) (Value, error) { return Int(int64(v) - v2.Int()), support(v, kInt|kFloat) }
 func (v Int) Mul(v2 Value) (Value, error) { return Int(int64(v) * v2.Int()), support(v, kInt|kFloat) }
@@ -178,12 +195,16 @@ func (v Int) Shr(v2 Value) (Value, error) { return Int(int64(v) >> v2.Int()), su
 func (v Int) AndNot(v2 Value) (Value, error) {
 	return Int(int64(v) &^ v2.Int()), support(v, kInt|kFloat)
 }
-func (v Int) Xor() (Value, error)          { return Int(^int64(v)), nil }
+func (v Int) Xor(v2 Value) (Value, error)  { return Int(int64(v) ^ v2.Int()), nil }
+func (v Int) Xor1() (Value, error)         { return Int(^int64(v)), nil }
 func (v Int) Land(v2 Value) (Value, error) { return Bool(v.Bool() && v2.Bool()), nil }
 func (v Int) Lor(v2 Value) (Value, error)  { return Bool(v.Bool() || v2.Bool()), nil }
 func (v Int) Not() (Value, error)          { return Bool(!v.Bool()), nil }
-func (v Int) Eq(v2 Value) (Value, error)   { return Bool(int64(v) == v2.Int()), support(v, kInt|kFloat) }
-func (v Int) Ne(v2 Value) (Value, error)   { return Bool(int64(v) != v2.Int()), support(v, kInt|kFloat) }
+func (v Int) Neg() (Value, error) {
+	return Int(-1 * int64(v)), nil
+}
+func (v Int) Eq(v2 Value) (Value, error) { return Bool(int64(v) == v2.Int()), support(v, kInt|kFloat) }
+func (v Int) Ne(v2 Value) (Value, error) { return Bool(int64(v) != v2.Int()), support(v, kInt|kFloat) }
 func (v Int) Gt(v2 Value) (Value, error) {
 	return Bool(float64(v) > v2.Float()), support(v, kInt|kFloat)
 }
@@ -199,10 +220,9 @@ func (v Int) Le(v2 Value) (Value, error) {
 
 func (v Float) Int() int64     { return int64(v) }
 func (v Float) Float() float64 { return float64(v) }
-func (v Float) String() string { return fmt.Sprintf("%v", float64(v)) }
+func (v Float) String() string { return strconv.FormatFloat(float64(v), 'f', -1, 64) }
 func (v Float) Bool() bool     { return v != 0 }
 func (v Float) Kind() Kind     { return kFloat }
-
 func (v Float) Add(v2 Value) (Value, error) {
 	return Float(float64(v) + v2.Float()), support(v, kInt|kFloat)
 }
@@ -221,10 +241,14 @@ func (v Float) Or(v2 Value) (Value, error)     { return nil, ErrUnsupportedType 
 func (v Float) Shl(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Float) Shr(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Float) AndNot(v2 Value) (Value, error) { return nil, ErrUnsupportedType }
-func (v Float) Xor() (Value, error)            { return nil, ErrUnsupportedType }
+func (v Float) Xor(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
+func (v Float) Xor1() (Value, error)           { return nil, ErrUnsupportedType }
 func (v Float) Land(v2 Value) (Value, error)   { return nil, ErrUnsupportedType }
 func (v Float) Lor(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Float) Not() (Value, error)            { return nil, ErrUnsupportedType }
+func (v Float) Neg() (Value, error) {
+	return Float(-1 * float64(v)), nil
+}
 func (v Float) Eq(v2 Value) (Value, error) {
 	return Bool(float64(v) == v2.Float()), support(v, kInt|kFloat)
 }
@@ -249,7 +273,6 @@ func (v Raw) Float() float64 { return 0 }
 func (v Raw) String() string { return string(v) }
 func (v Raw) Bool() bool     { return string(v) != "" }
 func (v Raw) Kind() Kind     { return kRaw }
-
 func (v Raw) Add(v2 Value) (Value, error) {
 	return Raw(string(v) + v2.String()), support(v, kRaw)
 }
@@ -262,10 +285,12 @@ func (v Raw) Or(v2 Value) (Value, error)     { return nil, ErrUnsupportedType }
 func (v Raw) Shl(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Raw) Shr(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Raw) AndNot(v2 Value) (Value, error) { return nil, ErrUnsupportedType }
-func (v Raw) Xor() (Value, error)            { return nil, ErrUnsupportedType }
+func (v Raw) Xor(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
+func (v Raw) Xor1() (Value, error)           { return nil, ErrUnsupportedType }
 func (v Raw) Land(v2 Value) (Value, error)   { return nil, ErrUnsupportedType }
 func (v Raw) Lor(v2 Value) (Value, error)    { return nil, ErrUnsupportedType }
 func (v Raw) Not() (Value, error)            { return nil, ErrUnsupportedType }
+func (v Raw) Neg() (Value, error)            { return nil, ErrUnsupportedType }
 func (v Raw) Eq(v2 Value) (Value, error) {
 	return Bool(string(v) == v2.String()), support(v, kRaw)
 }
@@ -411,9 +436,9 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 	case *ast.Ident:
 		// support true/false
 		switch strings.ToLower(n.Name) {
-		case "true":
+		case kBoolStrTrue:
 			return Bool(true), nil
-		case "false":
+		case kBoolStrFalse:
 			return Bool(false), nil
 		}
 
@@ -458,9 +483,11 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 		default:
 			return nil, fmt.Errorf("unsupported token: %s(%v)", n.Value, n.Kind)
 		}
+
 		if e.cacheValues != nil {
 			e.cacheValues[pos] = v
 		}
+
 		return v, nil
 
 	case *ast.ParenExpr:
@@ -485,13 +512,23 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 		case token.ADD:
 			return eval(e, getter, n.X)
 		case token.SUB:
-			return eval(e, getter, n.X)
+			x, err := eval(e, getter, n.X)
+			if err != nil {
+				return x, err
+			}
+			return x.Neg()
 		case token.NOT:
 			x, err := eval(e, getter, n.X)
-			if err == nil {
-				x, err = x.Not()
+			if err != nil {
+				return x, err
 			}
-			return x, err
+			return x.Not()
+		case token.XOR:
+			x, err := eval(e, getter, n.X)
+			if err != nil {
+				return x, err
+			}
+			return x.Xor1()
 		default:
 			return nil, fmt.Errorf("unsupported unary op: %v", n.Op)
 		}
@@ -518,7 +555,7 @@ func eval(e *Expr, getter Getter, node ast.Expr) (Value, error) {
 		case token.REM:
 			return x.Rem(y)
 		case token.XOR:
-			return x.Xor()
+			return x.Xor(y)
 		case token.OR:
 			return x.Or(y)
 		case token.AND:
@@ -597,15 +634,15 @@ func WithBuiltinList(builtinList ...map[string]BuiltinFn) PoolOption {
 
 func (p *Pool) get(s string) (*Expr, bool) {
 	p.locker.RLock()
-	defer p.locker.RUnlock()
 	e, ok := p.pool[s]
+	p.locker.RUnlock()
 	return e, ok && e != nil
 }
 
 func (p *Pool) set(s string, e *Expr) {
 	p.locker.Lock()
-	defer p.locker.Unlock()
 	p.pool[s] = e
+	p.locker.Unlock()
 }
 
 func (p *Pool) builtinCall(name string, args ...Value) (Value, error) {
@@ -620,17 +657,17 @@ func (p *Pool) builtinCall(name string, args ...Value) (Value, error) {
 }
 
 func ValuesToInterfaces(args ...Value) []interface{} {
-	var rInterfaces []interface{}
-	for _, v := range args {
+	rInterfaces := make([]interface{}, len(args))
+	for i, v := range args {
 		switch v.Kind() {
 		case kBool:
-			rInterfaces = append(rInterfaces, v.Bool())
+			rInterfaces[i] = v.Bool()
 		case kInt:
-			rInterfaces = append(rInterfaces, v.Int())
+			rInterfaces[i] = v.Int()
 		case kFloat:
-			rInterfaces = append(rInterfaces, v.Float())
+			rInterfaces[i] = v.Float()
 		case kRaw:
-			rInterfaces = append(rInterfaces, v.String())
+			rInterfaces[i] = v.String()
 		}
 	}
 	return rInterfaces
