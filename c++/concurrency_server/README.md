@@ -2,6 +2,47 @@
 
 本项目实现了多种不同的后端服务器并发模型，展示了各种网络编程和并发处理技术。所有实现都使用 C++11 标准，不依赖第三方库。
 
+## 项目结构
+```
+concurrency_server/
+├── base/                           # 基础组件目录
+│   └── server_base.h              # 服务器基类，提供通用的socket操作
+├── benchmark/                      # 性能测试工具目录
+├── main.cpp                        # 主程序入口，支持多种服务器模型切换
+├── Makefile                        # 编译配置文件
+├── README.md                       # 项目说明文档
+│
+├── 基础并发模型
+├── single_process_server.h         # 单进程模型 - 串行处理，适合学习
+├── multi_thread_server.h           # 多线程模型 - 每连接一线程
+├── multi_process_server.h          # 多进程模型 - 每连接一进程
+├── thread_pool_server.h            # 线程池模型 - 固定数量工作线程
+├── process_pool1_server.h          # 进程池模型1 - 预创建进程池
+├── process_pool2_server.h          # 进程池模型2 - 改进的进程池实现
+│
+├── I/O多路复用模型
+├── select_server.h                 # Select模型 - 跨平台I/O多路复用
+├── poll_server.h                   # Poll模型 - 改进的select实现
+├── epoll_server.h                  # Epoll模型 - Linux高性能I/O复用
+├── kqueue_server.h                 # Kqueue模型 - BSD/macOS高性能I/O复用
+│
+├── 高级并发架构
+├── reactor_server.h                # Reactor模式 - 事件驱动架构
+├── proactor_server.h               # Proactor模式 - 异步I/O架构
+├── event_loop_server.h             # 事件循环模型 - 单线程事件驱动
+├── half_sync_async_server.h        # 半同步半异步模式 - 分层处理
+├── leader_follower_server.h        # Leader-Follower模式 - 动态角色切换
+├── producer_consumer_server.h      # 生产者消费者模式 - 解耦处理
+├── pipeline_server.h               # 管道模式 - 流水线处理
+├── work_stealing_server.h          # 工作窃取模式 - 负载均衡
+├── hybrid_server.h                 # 混合模式 - 多种技术结合
+│
+├── 现代并发技术
+├── coroutine_server.h              # 协程模型 - 用户态轻量级线程
+├── fiber_server.h                  # 纤程模型 - 协作式多任务
+├── actor_server.h                  # Actor模型 - 消息传递并发
+```
+
 ## 支持的并发模型
 
 ### 1. SingleProcess (单进程模型)
