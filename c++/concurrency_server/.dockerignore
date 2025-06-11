@@ -1,0 +1,30 @@
+# 编译产物
+concurrency_server
+*.o
+*.a
+*.so
+
+# 基准测试结果
+benchmark/benchmark_results/
+
+# Git 相关
+.git/
+.gitignore
+
+# IDE 相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp

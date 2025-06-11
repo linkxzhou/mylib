@@ -7,7 +7,9 @@
 #include <cstddef>
 
 // Define _XOPEN_SOURCE for ucontext functions on macOS
-#define _XOPEN_SOURCE
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
+#endif
 #if __APPLE__ && __MACH__
 #include <ucontext.h>
 #else

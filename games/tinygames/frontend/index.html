@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Tiny Games Hub - 迷你游戏中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: 
+                radial-gradient(ellipse at top left, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at top right, rgba(255, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom left, rgba(0, 255, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(255, 255, 0, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #1e3a8a 100%);
+            color: #00ffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+            perspective: 2000px;
+            transform-style: preserve-3d;
+            /* 固定3D效果位置 */
+            transform: perspective(2000px) rotateX(0.2deg) rotateY(0.3deg) translateZ(5px);
+        }
+
+        @keyframes bodyFloat {
+            0%, 100% {
+                transform: perspective(2000px) rotateX(0deg) rotateY(0deg) translateZ(0px);
+            }
+            25% {
+                transform: perspective(2000px) rotateX(0.3deg) rotateY(0.2deg) translateZ(5px);
+            }
+            50% {
+                transform: perspective(2000px) rotateX(0deg) rotateY(0.4deg) translateZ(10px);
+            }
+            75% {
+                transform: perspective(2000px) rotateX(-0.2deg) rotateY(0.1deg) translateZ(3px);
+            }
+        }
+
+        /* 3D背景层效果 - 固定位置 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background: 
+                conic-gradient(from 0deg at 30% 70%, 
+                    rgba(0, 255, 255, 0.15) 0deg, 
+                    rgba(255, 0, 255, 0.15) 90deg, 
+                    rgba(0, 255, 0, 0.12) 180deg, 
+                    rgba(255, 255, 0, 0.12) 270deg, 
+                    rgba(0, 255, 255, 0.15) 360deg),
+                conic-gradient(from 180deg at 70% 30%, 
+                    rgba(255, 100, 0, 0.08) 0deg, 
+                    rgba(100, 0, 255, 0.08) 120deg, 
+                    rgba(255, 0, 100, 0.08) 240deg, 
+                    rgba(255, 100, 0, 0.08) 360deg);
+            /* 固定3D效果位置 */
+            transform: perspective(1500px) rotateX(1deg) rotateY(45deg) rotateZ(0deg) scale(1.05) translateZ(15px);
+            z-index: -2;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes rotate3dEnhanced {
+            0% { 
+                transform: perspective(1500px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1) translateZ(0px);
+            }
+            25% {
+                transform: perspective(1500px) rotateX(2deg) rotateY(90deg) rotateZ(1deg) scale(1.05) translateZ(20px);
+            }
+            50% { 
+                transform: perspective(1500px) rotateX(1deg) rotateY(180deg) rotateZ(0deg) scale(1.1) translateZ(10px);
+            }
+            75% {
+                transform: perspective(1500px) rotateX(-1deg) rotateY(270deg) rotateZ(-1deg) scale(1.03) translateZ(30px);
+            }
+            100% { 
+                transform: perspective(1500px) rotateX(0deg) rotateY(360deg) rotateZ(0deg) scale(1) translateZ(0px);
+            }
+        }
+
+        /* 额外的3D背景层 - 固定位置 */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.08) 0%, transparent 70%),
+                radial-gradient(circle at 75% 75%, rgba(255, 0, 255, 0.08) 0%, transparent 70%),
+                radial-gradient(circle at 75% 25%, rgba(0, 255, 0, 0.06) 0%, transparent 70%),
+                radial-gradient(circle at 25% 75%, rgba(255, 255, 0, 0.06) 0%, transparent 70%);
+            /* 固定3D效果位置 */
+            transform: perspective(2000px) rotateX(0.5deg) rotateY(1deg) translateZ(-30px) scale(1.01);
+            z-index: -3;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes floatBackground {
+            0%, 100% {
+                transform: perspective(2000px) rotateX(0deg) rotateY(0deg) translateZ(-50px) scale(1);
+            }
+            33% {
+                transform: perspective(2000px) rotateX(1deg) rotateY(2deg) translateZ(-20px) scale(1.02);
+            }
+            66% {
+                transform: perspective(2000px) rotateX(-0.5deg) rotateY(-1deg) translateZ(-80px) scale(0.98);
+            }
+        }
+
+        /* 科幻背景动画 - 增强3D效果 */
+        .cyber-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse 800px 400px at 20% 80%, rgba(0, 255, 255, 0.2) 0%, transparent 60%),
+                radial-gradient(ellipse 600px 300px at 80% 20%, rgba(255, 0, 255, 0.2) 0%, transparent 60%),
+                radial-gradient(ellipse 400px 200px at 40% 40%, rgba(0, 255, 0, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 300px 600px at 60% 70%, rgba(255, 100, 0, 0.1) 0%, transparent 50%);
+            animation: pulse3d 6s ease-in-out infinite alternate;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes pulse3d {
+            0% { 
+                opacity: 0.6;
+                transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1);
+            }
+            50% {
+                opacity: 0.9;
+                transform: perspective(1000px) rotateX(2deg) rotateY(1deg) scale(1.05);
+            }
+            100% { 
+                opacity: 1;
+                transform: perspective(1000px) rotateX(-1deg) rotateY(-0.5deg) scale(1.02);
+            }
+        }
+
+        /* 网格背景 - 3D透视效果 */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 120%;
+            height: 120%;
+            z-index: -1;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.15) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.15) 2px, transparent 2px),
+                linear-gradient(45deg, rgba(255, 0, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(-45deg, rgba(0, 255, 0, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px, 60px 60px, 30px 30px, 30px 30px;
+            animation: grid3d-move 25s linear infinite;
+            transform-origin: center center;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes grid3d-move {
+            0% { 
+                transform: perspective(1500px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0);
+            }
+            25% {
+                transform: perspective(1500px) rotateX(1deg) rotateY(0.5deg) translate3d(20px, 10px, 50px);
+            }
+            50% {
+                transform: perspective(1500px) rotateX(0deg) rotateY(1deg) translate3d(40px, 20px, 0);
+            }
+            75% {
+                transform: perspective(1500px) rotateX(-0.5deg) rotateY(0.5deg) translate3d(60px, 30px, -30px);
+            }
+            100% { 
+                transform: perspective(1500px) rotateX(0deg) rotateY(0deg) translate3d(80px, 40px, 0);
+            }
+        }
+
+        /* 头部导航 */
+        .header {
+            position: relative;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #00ffff;
+            padding: 1rem 2rem;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ffff; }
+            to { text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff; }
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        /* 主页容器 */
+        #homepage {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            margin-top: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #00ff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: rainbow 3s ease-in-out infinite;
+        }
+
+        @keyframes rainbow {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        /* 游戏网格 */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .game-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .game-card:hover::before {
+            left: 100%;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+            border-color: #ff00ff;
+        }
+
+        .game-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #00ffff;
+        }
+
+        .game-description {
+            color: #aaa;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .game-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #00ff00;
+        }
+
+        .game-status.coming-soon {
+            background: rgba(255, 255, 0, 0.2);
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid #333;
+            color: #666;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+        }
+
+        /* 游戏页面样式 */
+        .game-page {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            z-index: 2000;
+        }
+
+        .game-page.active {
+            display: block;
+        }
+
+        .game-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #00ffff;
+            color: #000;
+        }
+
+        .game-title-display {
+            color: #00ffff;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        #three-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            min-width: 300px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            /* 隐藏滚动条但保持滚动功能 */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        /* 隐藏 Webkit 浏览器的滚动条 */
+        #ui-overlay::-webkit-scrollbar {
+            display: none;
+        }
+
+        .control-panel {
+            margin-bottom: 15px;
+        }
+
+        .control-panel label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #00ffff;
+        }
+
+        .control-panel input, .control-panel button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ffff;
+            font-family: inherit;
+        }
+
+        .control-panel button {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-panel button:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        #stats {
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg"></div>
+    <div class="grid-bg"></div>
+    
+    <!-- 主页 -->
+    <div id="homepage">
+        <header class="header">
+            <nav class="nav">
+                <div class="logo" data-i18n="title">TINY GAMES HUB</div>
+                <div class="lang-selector">
+                    <button class="lang-btn active" onclick="switchLanguage('zh')">中文</button>
+                    <button class="lang-btn" onclick="switchLanguage('en')">English</button>
+                    <button class="lang-btn" onclick="switchLanguage('ja')">日本語</button>
+                </div>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <section class="hero-section">
+                <h1 class="hero-title" data-i18n="hero.title">赛博游戏中心</h1>
+                <p class="hero-subtitle" data-i18n="hero.subtitle">探索未来世界的3D游戏体验</p>
+            </section>
+
+            <section class="games-grid">
+                <div class="game-card" onclick="enterGame('web3d-sandbox')">
+                    <span class="game-icon">🎮</span>
+                    <h3 class="game-title" data-i18n="games.sandbox.title">3D沙盒世界</h3>
+                    <p class="game-description" data-i18n="games.sandbox.description">在这个3D世界中创建和操控各种几何体，体验实时物理引擎和动画效果。</p>
+                    <span class="game-status" data-i18n="status.available">可游玩</span>
+                </div>
+
+                <div class="game-card" onclick="enterGame('space-explorer')">
+                    <span class="game-icon">🚀</span>
+                    <h3 class="game-title" data-i18n="games.space.title">太空探索者</h3>
+                    <p class="game-description" data-i18n="games.space.description">驾驶宇宙飞船探索神秘的太空，发现新的星球和文明。</p>
+                    <span class="game-status coming-soon" data-i18n="status.coming_soon">即将推出</span>
+                </div>
+
+                <div class="game-card" onclick="enterGame('cyber-city')">
+                    <span class="game-icon">🏙️</span>
+                    <h3 class="game-title" data-i18n="games.city.title">赛博都市</h3>
+                    <p class="game-description" data-i18n="games.city.description">在霓虹闪烁的未来都市中冒险，体验赛博朋克风格的3D世界。</p>
+                    <span class="game-status coming-soon" data-i18n="status.coming_soon">即将推出</span>
+                </div>
+
+                <div class="game-card" onclick="enterGame('quantum-lab')">
+                    <span class="game-icon">⚛️</span>
+                    <h3 class="game-title" data-i18n="games.quantum.title">量子实验室</h3>
+                    <p class="game-description" data-i18n="games.quantum.description">在量子物理的奇妙世界中进行实验，观察粒子的神奇行为。</p>
+                    <span class="game-status coming-soon" data-i18n="status.coming_soon">即将推出</span>
+                </div>
+
+                <div class="game-card" onclick="enterGame('neural-network')">
+                    <span class="game-icon">🧠</span>
+                    <h3 class="game-title" data-i18n="games.neural.title">神经网络</h3>
+                    <p class="game-description" data-i18n="games.neural.description">可视化人工智能的学习过程，构建和训练你自己的神经网络。</p>
+                    <span class="game-status coming-soon" data-i18n="status.coming_soon">即将推出</span>
+                </div>
+
+                <div class="game-card" onclick="enterGame('matrix-world')">
+                    <span class="game-icon">💊</span>
+                    <h3 class="game-title" data-i18n="games.matrix.title">矩阵世界</h3>
+                    <p class="game-description" data-i18n="games.matrix.description">进入数字矩阵，体验虚拟现实与真实世界的边界模糊。</p>
+                    <span class="game-status coming-soon" data-i18n="status.coming_soon">即将推出</span>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p data-i18n="footer.copyright">&copy; 2024 Cyber Games Hub. 探索无限可能的游戏世界。</p>
+        </footer>
+    </div>
+
+    <!-- 游戏页面 -->
+    <div id="game-page" class="game-page">
+        <div class="game-header">
+            <button class="back-btn" onclick="exitGame()" data-i18n="game.back">← 返回主页</button>
+            <div class="game-title-display" id="current-game-title">3D沙盒世界</div>
+        </div>
+        
+        <div id="three-container"></div>
+        <div id="ui-overlay">
+            <h3 data-i18n="game.controls">游戏控制</h3>
+            <div class="control-panel">
+                <label data-i18n="game.scene_control">场景控制:</label>
+                <button onclick="addCube()" data-i18n="game.add_cube">添加立方体</button>
+                <button onclick="addSphere()" data-i18n="game.add_sphere">添加球体</button>
+                <button onclick="clearScene()" data-i18n="game.clear_scene">清空场景</button>
+            </div>
+            <div class="control-panel">
+                <label data-i18n="game.animation_control">动画控制:</label>
+                <button onclick="toggleAnimation()" data-i18n="game.toggle_animation">开始/停止动画</button>
+                <button onclick="resetCamera()" data-i18n="game.reset_camera">重置相机</button>
+            </div>
+            <div class="control-panel">
+                <label data-i18n="game.backend_communication">与后端通信:</label>
+                <input type="text" id="message-input" data-i18n-placeholder="game.input_message" placeholder="输入消息">
+                <button onclick="sendMessage()" data-i18n="game.send_message">发送到后端</button>
+            </div>
+            <div id="stats">
+                <div><span data-i18n="game.object_count">对象数量:</span> <span id="object-count">0</span></div>
+                <div>FPS: <span id="fps">0</span></div>
+                <div><span data-i18n="game.backend_response">后端响应:</span> <span id="backend-response">无</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./src/main.js" type="module"></script>
+</body>
+</html>

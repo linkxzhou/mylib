@@ -24,3 +24,4 @@
 **/concurrency_server/benchmark/benchmark_results
 **/concurrency_server/*.o
 **/concurrency_server/*_server
+**/idea

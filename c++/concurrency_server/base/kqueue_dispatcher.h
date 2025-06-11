@@ -54,7 +54,7 @@ public:
         // 添加到kqueue
         std::vector<struct kevent> change_list;
         
-        if (events && EventType::READ) {
+        if (has_event(events, EventType::READ)) {
             struct kevent change_event;
             EV_SET(&change_event, fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, nullptr);
             change_list.push_back(change_event);
@@ -92,7 +92,7 @@ public:
         std::vector<struct kevent> change_list;
         
         // 移除旧事件
-        if (old_events && EventType::READ) {
+        if (has_event(old_events, EventType::READ)) {
             struct kevent change_event;
             EV_SET(&change_event, fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
             change_list.push_back(change_event);
@@ -105,7 +105,7 @@ public:
         }
         
         // 添加新事件
-        if (events && EventType::READ) {
+        if (has_event(events, EventType::READ)) {
             struct kevent change_event;
             EV_SET(&change_event, fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, nullptr);
             change_list.push_back(change_event);
@@ -137,7 +137,7 @@ public:
         // 从kqueue中移除
         std::vector<struct kevent> change_list;
         
-        if (events && EventType::READ) {
+        if (has_event(events, EventType::READ)) {
             struct kevent change_event;
             EV_SET(&change_event, fd, EVFILT_READ, EV_DELETE, 0, 0, nullptr);
             change_list.push_back(change_event);

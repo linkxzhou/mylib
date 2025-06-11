@@ -6,7 +6,6 @@
 #include "coroutine.h"
 #include <cassert>
 #include <cstring>
-#include <algorithm>
 #include <cstdlib>
 
 namespace coroutine {

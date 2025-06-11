@@ -146,7 +146,7 @@ private:
     uint32_t convert_to_epoll_events(EventType events) {
         uint32_t epoll_events = 0;
         
-        if (events && EventType::READ) {
+        if (has_event(events, EventType::READ)) {
             epoll_events |= EPOLLIN;
         }
         if (events && EventType::WRITE) {

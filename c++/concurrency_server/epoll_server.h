@@ -13,7 +13,7 @@ class EpollServer : public ServerBase {
 public:
     EpollServer(int port = 8080, int max_events = 1024) 
         : ServerBase(port) {
-        dispatcher_ = std::make_unique<EpollDispatcher>(max_events);
+        dispatcher_ = std::unique_ptr<EpollDispatcher>(new EpollDispatcher(max_events));
     }
     
     ~EpollServer() = default;
@@ -31,7 +31,7 @@ public:
         
         // 将监听socket加入事件分发器（使用边缘触发）
         auto server_callback = [this](int fd, EventType events) {
-            if (events & EventType::READ) {
+            if (has_event(events, EventType::READ)) {
                 handle_new_connection();
             }
         };
@@ -92,14 +92,14 @@ private:
             
             // 将新客户端加入事件分发器（使用边缘触发）
             auto client_callback = [this](int fd, EventType events) {
-                if (events & EventType::READ) {
+                if (has_event(events, EventType::READ)) {
                     handle_client_data(fd);
-                } else if (events & (EventType::ERROR | EventType::HANGUP)) {
+                } else if (has_event(events, EventType::ERROR | EventType::HANGUP)) {
                     handle_client_disconnect(fd);
                 }
             };
             
-            if (!dispatcher_->add_event(client_fd, EventType::read | EventType::EDGE_TRIGGERED, client_callback)) {
+            if (!dispatcher_->add_event(client_fd, EventType::READ | EventType::EDGE_TRIGGERED, client_callback)) {
                 std::cerr << "Failed to add client socket to dispatcher" << std::endl;
                 close(client_fd);
                 continue;

@@ -138,7 +138,7 @@ public:
     
 private:
     void update_fd_sets(int fd, EventType events, bool add) {
-        if (events && EventType::READ) {
+        if (has_event(events, EventType::READ)) {
             if (add) {
                 FD_SET(fd, &master_read_set_);
             } else {

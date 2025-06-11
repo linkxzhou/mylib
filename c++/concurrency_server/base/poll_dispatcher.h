@@ -153,7 +153,7 @@ private:
     short convert_to_poll_events(EventType events) {
         short poll_events = 0;
         
-        if (events && EventType::READ) {
+        if (has_event(events, EventType::READ)) {
             poll_events |= POLLIN;
         }
         if (events && EventType::WRITE) {
