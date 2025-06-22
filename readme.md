@@ -5,6 +5,7 @@
 - simplejs：c的js解析库，查看 [readme](c++/simplejs/readme.md)
 - tinyhttpd：c的http服务器，查看 [readme](c++/tinyhttpd/readme.md)
 - concurrency_server: c++实现的并发服务器，查看 [readme](c++/concurrency_server/README.md)
+- high_performance_server: 开源高性能服务器样例，查看 [readme](c++/high_performance_server/README.md)
 
 ## Golang
 - expr：golang的表达式支持库，查看 [readme](go/expr/readme.md)
