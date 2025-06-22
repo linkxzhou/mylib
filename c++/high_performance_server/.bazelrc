@@ -1,0 +1,27 @@
+# 启用 Bzlmod
+common --enable_bzlmod
+
+# C++ 编译选项
+build --cxxopt=-std=c++17
+build --copt=-O2
+build --copt=-Wall
+
+# 系统库路径 - 使用 --action_env 而不是直接包含路径
+build --action_env=CPLUS_INCLUDE_PATH=/opt/homebrew/include
+build --action_env=LIBRARY_PATH=/opt/homebrew/lib
+build --action_env=LD_LIBRARY_PATH=/opt/homebrew/lib
+
+# 链接选项
+build --linkopt=-L/opt/homebrew/lib
+
+# 调试信息
+build:debug --copt=-g
+build:debug --strip=never
+
+# 发布版本
+build:release --copt=-O3
+build:release --copt=-DNDEBUG
+
+# 允许系统头文件
+build --host_copt=-I/opt/homebrew/include
+build --copt=-I/opt/homebrew/include

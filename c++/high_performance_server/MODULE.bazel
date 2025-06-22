@@ -1,0 +1,64 @@
+module(
+    name = "high_performance_server",
+    version = "1.0.0",
+)
+
+# Bazel 规则 - 更新版本
+bazel_dep(name = "rules_cc", version = "0.0.17")
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+
+# 系统库依赖 - 使用 cc_configure 扩展
+cc_configure = use_extension("@rules_cc//cc:extensions.bzl", "cc_configure")
+use_repo(cc_configure, "local_config_cc")
+
+# 使用 http_archive 下载依赖
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# libco 协程库
+http_archive(
+    name = "libco",
+    urls = ["https://github.com/Tencent/libco/archive/refs/tags/v1.0.tar.gz"],
+    strip_prefix = "libco-1.0",
+    build_file = "//third_party:libco.BUILD",
+)
+
+# libevent
+http_archive(
+    name = "libevent",
+    urls = ["https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz"],
+    strip_prefix = "libevent-2.1.12-stable",
+    build_file = "//third_party:libevent.BUILD",
+)
+
+# libev
+http_archive(
+    name = "libev",
+    urls = ["https://github.com/enki/libev/archive/refs/heads/master.zip"],
+    strip_prefix = "libev-master",
+    build_file = "//third_party:libev.BUILD",
+)
+
+# libuv
+http_archive(
+    name = "libuv",
+    urls = ["https://github.com/libuv/libuv/archive/refs/tags/v1.44.2.tar.gz"],
+    strip_prefix = "libuv-1.44.2",
+    build_file = "//third_party:libuv.BUILD",
+)
+
+# mongoose
+http_archive(
+    name = "mongoose",
+    urls = ["https://github.com/cesanta/mongoose/archive/refs/tags/7.11.tar.gz"],
+    strip_prefix = "mongoose-7.11",
+    build_file = "//third_party:mongoose.BUILD",
+)
+
+# Seastar 高性能异步框架
+http_archive(
+    name = "seastar",
+    urls = ["https://github.com/scylladb/seastar/archive/refs/tags/seastar-22.11.0.tar.gz"],
+    strip_prefix = "seastar-seastar-22.11.0",
+    build_file = "//third_party:seastar.BUILD",
+)

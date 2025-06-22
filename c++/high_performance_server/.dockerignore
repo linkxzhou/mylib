@@ -1,0 +1,25 @@
+# 忽略编译产物
+*/Makefile
+*/*_echo_server
+*.o
+*.so
+*.a
+
+# 忽略日志和临时文件
+logs/
+*.log
+*.tmp
+
+# 忽略 Git 相关
+.git/
+.gitignore
+
+# 忽略 IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 忽略文档
+*.md
+README*
