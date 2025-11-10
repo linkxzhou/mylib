@@ -19,5 +19,9 @@ if [ -d "./python" ]; then
   export PYTHONPATH="./python:${PYTHONPATH}"
 fi
 
+if [ -f "./requirements.txt" ]; then
+  "$PYTHON_BIN" -m pip install -r requirements.txt
+fi
+
 # 启动应用（以 llm_api.py 为入口）
 exec "$PYTHON_BIN" llm_api.py
