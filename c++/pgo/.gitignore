@@ -1,0 +1,55 @@
+# 编译生成的二进制文件
+main
+main_pgo
+main_pgo_gen
+main_debug
+benchmark
+
+# PGO Profile 数据文件
+*.profraw
+*.profdata
+default.profraw
+default.profdata
+
+# GCC Profile 数据文件
+*.gcda
+*.gcno
+
+# 汇编文件
+*.s
+*.asm
+
+# 对象文件
+*.o
+*.obj
+
+# 性能测试结果
+performance_results.json
+*.out
+
+# 临时文件
+*.tmp
+*.temp
+
+# IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS 文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux 文件
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Windows 文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini

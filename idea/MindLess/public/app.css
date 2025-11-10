@@ -1,0 +1,137 @@
+/** @import "./simpleMindMap.esm.css"; **/
+
+/** 字体与布局保留，不再使用图标相关的自定义样式 */
+
+.toolbar {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    pointer-events: none;
+    background: transparent;
+    padding: 0;
+}
+
+.toolbar-inner {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    position: relative;
+    max-width: 800px;
+    background: #ffffff;
+}
+
+.chart-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+#mindMapContainer {
+    max-width: 100%;
+    min-width: 1200px;
+    min-height: 1200px;
+}
+
+#mindMapContainer * {
+    margin: 0;
+    padding: 0;
+}
+
+.settings-panel {
+    position: fixed;
+    right: 16px;
+    top: 64px;
+    width: 320px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    padding: 12px;
+    z-index: 300; /* 提升层级，保证始终在最上层 */
+}
+
+.settings-panel .panel-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.settings-panel .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.settings-panel .panel-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.settings-panel .field > span {
+    font-size: 14px;
+}
+
+.zoom-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
+}
+
+.zoom-percent {
+    min-width: 44px;
+    text-align: center;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+/* 移动端：小于 600px 竖排显示并靠左 */
+@media (max-width: 600px) {
+    .toolbar {
+        top: 8px;
+        left: 8px;
+        transform: none;
+    }
+
+    .toolbar-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        padding: 8px;
+        border-radius: 10px;
+        max-width: 96vw;
+    }
+
+    /* 缩放控件仍保持横向居中 */
+    .zoom-control {
+        justify-content: center;
+        gap: 4px;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .zoom-percent {
+        min-width: 0;
+        text-align: center;
+    }
+
+    /* 其他按钮在移动端可设置为全宽居中 */
+    .toolbar-inner .ant-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* 缩放圆形按钮保持自适应宽度 */
+    .zoom-control .ant-btn {
+        width: auto;
+    }
+}

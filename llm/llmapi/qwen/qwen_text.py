@@ -2,7 +2,6 @@ from typing import Dict, List, Optional, Any
 from util.mylog import logger
 from qwen.qwen_base import QwenBase
 from openai import OpenAI
-import time
 
 class QwenTextAPI(QwenBase):
     """通义千问 API 调用封装"""

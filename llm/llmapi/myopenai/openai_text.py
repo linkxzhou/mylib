@@ -1,9 +1,7 @@
 from typing import Dict, List, Optional, Any
 from util.mylog import logger
 from myopenai.openai_base import OpenAIBase
-from util.cache import global_cache
 from openai import OpenAI
-import time
 
 class OpenAITextAPI(OpenAIBase):
     """OpenAI API 调用封装"""
@@ -17,7 +15,7 @@ class OpenAITextAPI(OpenAIBase):
         self._chat = self.Chat(self.client)
             
     def get_model_list(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
-        # 平台：https://openkey.cloud/
+        # 默认平台：https://openkey.cloud/，可以使用其他的平台替换即可
         return [
             {
                 'name': 'openai/gpt-3.5-turbo',
@@ -52,6 +50,10 @@ class OpenAITextAPI(OpenAIBase):
                 'description': 'OpenAI 语言模型'
             }, 
             {
+                'name': 'openai/gpt-5',
+                'description': 'gpt-5 多模态模型'
+            },
+            {
                 'name': 'openai/360GPT_S2_V9',
                 'description': 'OpenAI 语言模型'
             },
@@ -64,9 +66,13 @@ class OpenAITextAPI(OpenAIBase):
                 'description': 'claude3.5 语言模型'
             },
             {
-                'name': 'openai/claude-3-7-sonnet-20250219	',
+                'name': 'openai/claude-3-7-sonnet-20250219',
                 'description': 'claude3.7 语言模型'
-            }
+            },
+            {
+                'name': 'openai/claude-4',
+                'description': 'claude4 语言模型'
+            },
         ]
 
     @property

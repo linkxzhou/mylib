@@ -1,5 +1,5 @@
 import os
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from util.mylog import logger
 from transformers import AutoConfig
 

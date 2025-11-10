@@ -1,7 +1,5 @@
 import logging
-import queue
-from threading import Lock
-from typing import List, Optional
+from typing import Optional
 
 class logger:
     """日志工具类，提供静态方法用于记录不同级别的日志"""
@@ -33,8 +31,7 @@ class logger:
 def setup_logging(
     level=logging.INFO,
     log_file: Optional[str] = None,
-    console: bool = True,
-    queue_handler: bool = True
+    console: bool = True
 ):
     """设置日志系统
     
@@ -70,5 +67,4 @@ def setup_logging(
 setup_logging(
     level=logging.INFO,
     console=True,
-    queue_handler=True
 )

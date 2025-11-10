@@ -12,23 +12,156 @@ services:
     restart: unless-stopped
 
   # 不同服务器模型的配置示例
-  epoll-server:
+  single-process-server:
     build: .
     ports:
       - "8081:8080"
+    command: ["./concurrency_server", "single_process", "8080"]
+    profiles: ["single_process"]
+
+  multi-process-server:
+    build: .
+    ports:
+      - "8082:8080"
+    command: ["./concurrency_server", "multi_process", "8080"]
+    profiles: ["multi_process"]
+
+  multi-thread-server:
+    build: .
+    ports:
+      - "8083:8080"
+    command: ["./concurrency_server", "multi_thread", "8080"]
+    profiles: ["multi_thread"]
+
+  process-pool1-server:
+    build: .
+    ports:
+      - "8084:8080"
+    command: ["./concurrency_server", "process_pool1", "8080"]
+    profiles: ["process_pool1"]
+
+  process-pool2-server:
+    build: .
+    ports:
+      - "8085:8080"
+    command: ["./concurrency_server", "process_pool2", "8080"]
+    profiles: ["process_pool2"]
+
+  thread-pool-server:
+    build: .
+    ports:
+      - "8086:8080"
+    command: ["./concurrency_server", "thread_pool", "8080"]
+    profiles: ["thread_pool"]
+
+  leader-follower-server:
+    build: .
+    ports:
+      - "8087:8080"
+    command: ["./concurrency_server", "leader_follower", "8080"]
+    profiles: ["leader_follower"]
+
+  select-server:
+    build: .
+    ports:
+      - "8088:8080"
+    command: ["./concurrency_server", "select", "8080"]
+    profiles: ["select"]
+
+  poll-server:
+    build: .
+    ports:
+      - "8089:8080"
+    command: ["./concurrency_server", "poll", "8080"]
+    profiles: ["poll"]
+
+  epoll-server:
+    build: .
+    ports:
+      - "8090:8080"
     command: ["./concurrency_server", "epoll", "8080"]
     profiles: ["epoll"]
+
+  kqueue-server:
+    build: .
+    ports:
+      - "8091:8080"
+    command: ["./concurrency_server", "kqueue", "8080"]
+    profiles: ["kqueue"]
 
   reactor-server:
     build: .
     ports:
-      - "8082:8080"
+      - "8092:8080"
     command: ["./concurrency_server", "reactor", "8080"]
     profiles: ["reactor"]
 
   coroutine-server:
     build: .
     ports:
-      - "8083:8080"
+      - "8093:8080"
     command: ["./concurrency_server", "coroutine", "8080"]
     profiles: ["coroutine"]
+
+  event-loop-server:
+    build: .
+    ports:
+      - "8094:8080"
+    command: ["./concurrency_server", "event_loop", "8080"]
+    profiles: ["event_loop"]
+
+  work-stealing-server:
+    build: .
+    ports:
+      - "8095:8080"
+    command: ["./concurrency_server", "work_stealing", "8080"]
+    profiles: ["work_stealing"]
+
+  actor-server:
+    build: .
+    ports:
+      - "8096:8080"
+    command: ["./concurrency_server", "actor", "8080"]
+    profiles: ["actor"]
+
+  fiber-server:
+    build: .
+    ports:
+      - "8097:8080"
+    command: ["./concurrency_server", "fiber", "8080"]
+    profiles: ["fiber"]
+
+  producer-consumer-server:
+    build: .
+    ports:
+      - "8098:8080"
+    command: ["./concurrency_server", "producer_consumer", "8080"]
+    profiles: ["producer_consumer"]
+
+  half-sync-async-server:
+    build: .
+    ports:
+      - "8099:8080"
+    command: ["./concurrency_server", "half_sync_async", "8080"]
+    profiles: ["half_sync_async"]
+
+  proactor-server:
+    build: .
+    ports:
+      - "8100:8080"
+    command: ["./concurrency_server", "proactor", "8080"]
+    profiles: ["proactor"]
+
+  pipeline-server:
+    build: .
+    ports:
+      - "8101:8080"
+    command: ["./concurrency_server", "pipeline", "8080"]
+    profiles: ["pipeline"]
+
+  hybrid-server:
+    build: .
+    ports:
+      - "8102:8080"
+    command: ["./concurrency_server", "hybrid", "8080"]
+    profiles: ["hybrid"]

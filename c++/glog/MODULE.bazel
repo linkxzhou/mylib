@@ -1,0 +1,7 @@
+module(
+    name = "glog_mini",
+    version = "0.3.4",
+)
+
+# Google Test dependency for unit tests
+bazel_dep(name = "googletest", version = "1.14.0", repo_name = "gtest")

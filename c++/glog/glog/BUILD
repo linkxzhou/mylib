@@ -19,5 +19,8 @@ cc_library(
         "-Wno-sign-compare",
         "-Wno-nullability-completeness",
         "-Wno-expansion-to-defined",
+        "-DHAVE_SYS_SYSCALL_H",  # macOS uses sys/syscall.h instead of syscall.h
+        "-DHAVE_DLADDR",         # macOS has dladdr support
+        "-DOS_MACOSX",           # Define macOS platform
     ],
 )

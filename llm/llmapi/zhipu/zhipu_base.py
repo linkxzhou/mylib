@@ -1,10 +1,5 @@
 import os
-import time
-import json
-import hmac
-import base64
-import hashlib
-from typing import Dict, Any
+from typing import Dict
 from util.mylog import logger
 
 class ZhipuBaseAPI:

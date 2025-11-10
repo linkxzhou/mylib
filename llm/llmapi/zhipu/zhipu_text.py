@@ -1,14 +1,11 @@
 from util.mylog import logger
 import requests
 import json
-import os
 from typing import Optional, Dict, Any, Generator
 import base64
-from PIL import Image
 import io
 from zhipu.zhipu_base import ZhipuBaseAPI
 
-# 
 class ZhipuTextAPI(ZhipuBaseAPI):
     def __init__(self):
         super().__init__()

@@ -9,6 +9,8 @@
 **/__pycache__
 **/build/*
 **/.env
+**/main
+**/benchmark
 **/c++/tinyhttpd/tinyhttpd
 **/tinylib
 **/simplejs/tests
@@ -23,6 +25,15 @@
 **/concurrency_server/benchmark/benchmark_results
 **/concurrency_server/*.o
 **/concurrency_server/*_server
-**/idea
 **/high_performance_server/**/*_server
 **/sthread
+**/logs
+**/from0-buildllm/target
+**/from0-buildllm/outputs
+**/from0-buildllm/my_tokenizer
+**/from0-buildllm/models
+**/from0-buildllm/checkpoints
+**/from0-buildllm/cache
+**/from0-buildllm/datasets
+**/llm/apps/translation
+**/*.zip

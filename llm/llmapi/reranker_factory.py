@@ -6,6 +6,7 @@ class RerankerFactory:
     """
     Reranker 工厂类，用于创建不同的 Reranker 实例
     """
+    _instances = {}
     
     @staticmethod
     def create(
@@ -27,8 +28,14 @@ class RerankerFactory:
         Raises:
             ValueError: 不支持的Reranker类型
         """
-        if reranker_type.lower() == "huggingface":
-            return HuggingFaceRerankerAPI(**kwargs)
+        t = (reranker_type or "").lower().strip()
+        if t in RerankerFactory._instances:
+            return RerankerFactory._instances[t]
+
+        if t == "huggingface":
+            instance = HuggingFaceRerankerAPI(**kwargs)
+            RerankerFactory._instances[t] = instance
+            return instance
         else:
             raise ValueError(f"不支持的Reranker类型: {reranker_type}")
 

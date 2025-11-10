@@ -1,10 +1,9 @@
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any, Tuple
 from util.mylog import logger
 from myhuggingface.huggingface_base import HuggingFaceBase
 from util.util import split_model_name
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
-import numpy as np
 
 class HuggingFaceRerankerAPI(HuggingFaceBase):
     """HuggingFace 本地重排模型 API 调用封装"""

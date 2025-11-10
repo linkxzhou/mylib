@@ -2,11 +2,8 @@ from typing import Dict, List, Optional, Any, Union
 from util.mylog import logger
 from myhuggingface.huggingface_base import HuggingFaceBase
 from util.util import split_model_name
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer
 import torch
-import threading
-from queue import Queue
-import time
 import os
 
 class HuggingFaceTextAPI(HuggingFaceBase):

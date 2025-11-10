@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Any, Generator
+from typing import Dict, List, Optional, Any
 from util.mylog import logger
 from siliconflow.siliconflow_base import SiliconFlowBase
 import requests

@@ -1,8 +1,5 @@
 import os
-import json
-import requests
-from typing import Dict, Any, Optional, List
-from util.mylog import logger
+from typing import Any, Optional
 
 class QianFanBaseAPI:
     """百度千帆API基类"""

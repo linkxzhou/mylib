@@ -4,8 +4,9 @@
 - glog：glog的日志库，查看 [readme](c++/glog/readme.md)
 - simplejs：c的js解析库，查看 [readme](c++/simplejs/readme.md)
 - tinyhttpd：c的http服务器，查看 [readme](c++/tinyhttpd/readme.md)
-- concurrency_server: c++实现的并发服务器，查看 [readme](c++/concurrency_server/README.md)
-- high_performance_server: 开源高性能服务器样例，查看 [readme](c++/high_performance_server/README.md)
+- concurrency_server: c++实现23种的并发服务器，查看 [readme](c++/concurrency_server/README.md)
+- high_performance_server: 9 个开源高性能服务器实现 demo 的样例，查看 [readme](c++/high_performance_server/README.md)
+    - 涉及 libevent，libev，libuv，Boost.Asio，ACE，Seastar，Wangle，Proxygen，Mongoose 功能
 
 ## Golang
 - expr：golang的表达式支持库，查看 [readme](go/expr/readme.md)

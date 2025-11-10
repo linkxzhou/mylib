@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 from myhuggingface.huggingface_embedding import HuggingFaceEmbedding
 from util.mylog import logger
 from util.base import BaseEmbedding
@@ -7,7 +7,8 @@ class EmbeddingFactory:
     """
     Embedding 工厂类，用于创建不同的 Embedding 实例
     """
-    
+    _instances: Dict[str, BaseEmbedding] = {}
+
     @staticmethod
     def create(
         embedding_type: str = "huggingface",
@@ -15,21 +16,16 @@ class EmbeddingFactory:
         **kwargs
     ) -> BaseEmbedding:
         """
-        创建 Embedding 实例
-        
-        Args:
-            embedding_type: Embedding类型
-            api_key: API密钥
-            **kwargs: 其他参数
-            
-        Returns:
-            BaseEmbedding实例
-            
-        Raises:
-            ValueError: 不支持的Embedding类型
+        创建 Embedding 实例（按类型单例：相同 embedding_type 仅首次初始化）
         """
-        if embedding_type.lower() == "huggingface":
-            return HuggingFaceEmbedding(**kwargs)
+        t = (embedding_type or "").lower().strip()
+        if t in EmbeddingFactory._instances:
+            return EmbeddingFactory._instances[t]
+
+        if t == "huggingface":
+            instance = HuggingFaceEmbedding(**kwargs)
+            EmbeddingFactory._instances[t] = instance
+            return instance
         else:
             raise ValueError(f"不支持的Embedding类型: {embedding_type}")
 

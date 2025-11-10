@@ -12,7 +12,7 @@ class LLMChatAdapter:
         self.llm = llm
         self.system_info = ""
         try:
-            self.plugins: List[Plugin] = [ReplaceHtmlPlugin(), ReplaceImagePlugin()]
+            self.plugins: List[Plugin] = [ReplaceImagePlugin()]
         except Exception as e:
             logger.warning(f"插件初始化失败: {str(e)}")
             self.plugins: List[Plugin] = []
@@ -99,6 +99,7 @@ class LLMChatAdapter:
             
 class LLMFactory:
     """LLM工厂类，用于创建不同类型的LLM实例"""
+    _instances: Dict[Tuple[str, str], LLM] = {}
     
     @classmethod
     def create(
@@ -107,49 +108,42 @@ class LLMFactory:
         model_name: Optional[str] = None,
         temperature: Optional[float] = 0.6,
         top_p: Optional[float] = 0.9,
-        max_tokens: Optional[int] = None,
+        max_tokens: Optional[int] = 65535,
         **kwargs: Dict[str, Any]
     ) -> LLM:
         """
         创建LLM实例
-        
-        Args:
-            model_type: 模型类型
-            model_name: 模型名称
-            temperature: 温度参数 (0.0-1.0)
-            top_p: 采样参数 (0.0-1.0)
-            max_tokens: 最大生成长度
-            **kwargs: 其他参数
-            
-        Returns:
-            LLM实例
-            
-        Raises:
-            ValueError: 当模型类型不支持或参数无效时抛出
         """
         # 参数验证
-        if temperature is not None and not 0 <= temperature <= 1:
-            raise ValueError("temperature 必须在 0 到 1 之间")
+        if temperature is not None and not 0 <= temperature <= 2:
+            raise ValueError("temperature 必须在 0 到 2 之间")
         if top_p is not None and not 0 <= top_p <= 1:
             raise ValueError("top_p 必须在 0 到 1 之间")
         if max_tokens is not None and max_tokens <= 0:
             raise ValueError("max_tokens 必须大于 0")
-            
+        
+        # 规范化缓存键（按类型+名称）
+        key = (str(model_type).lower().strip(), str(model_name or "").lower().strip())
+        if key in cls._instances:
+            return cls._instances[key]
+        
         # 获取模型类
         model_type = model_type
         model_class = SUPPORTED_MODELS.get(model_type)
         if not model_class:
             raise ValueError(f"不支持的模型类型: {model_type}，支持的类型: {list(SUPPORTED_MODELS.keys())}")
         
-        logger.info(f"====== 使用 {model_type} 模型: {model_name}")
-        # 创建实例
-        return model_class(
+        logger.info(f"====== 使用 {model_type} 模型: {model_name}, 参数:({temperature}, {top_p}, {max_tokens})")
+        # 创建实例并缓存
+        instance = model_class(
             model_name=model_name,
             temperature=temperature,
             top_p=top_p,
             max_tokens=max_tokens,
             **kwargs
         )
+        cls._instances[key] = instance
+        return instance
 
 if __name__ == "__main__":
     # 测试不同类型的模型

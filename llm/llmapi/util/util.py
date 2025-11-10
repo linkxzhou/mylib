@@ -1,7 +1,6 @@
 import base64
-from PIL import Image
 import io
-from typing import Any, List, Mapping, Optional, Dict
+from typing import Optional
 import pickle
 from pathlib import Path
 

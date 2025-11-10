@@ -1,5 +1,5 @@
 from itertools import islice
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from duckduckgo_search import DDGS
 from util.mylog import logger
 

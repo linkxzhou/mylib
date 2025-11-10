@@ -10,11 +10,11 @@ var builtin = map[string]BuiltinFn{
 	"sum": func(args ...interface{}) (interface{}, error) {
 		var sum int64
 		for _, v := range args {
-			if v1, ok := v.(int64); !ok {
+			v1, ok := v.(int64)
+			if !ok {
 				return nil, fmt.Errorf("%v int64 invalid", v)
-			} else {
-				sum += v1
 			}
+			sum += v1
 		}
 		return sum, nil
 	},

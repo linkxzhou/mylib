@@ -1,47 +1,113 @@
 # Makefile for Concurrency Server Models
 
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -pthread
-TARGET = concurrency_server
-SOURCES = main.cpp base/event_dispatcher.cpp base/coroutine.cpp
-HEADERS = base/server_base.h \
-          base/event_dispatcher.h \
-          base/select_dispatcher.h \
-          base/poll_dispatcher.h \
-          base/epoll_dispatcher.h \
-          base/kqueue_dispatcher.h \
-          single_process_server.h \
-          multi_process_server.h \
-          multi_thread_server.h \
-          process_pool1_server.h \
-          process_pool2_server.h \
-          thread_pool_server.h \
-          leader_follower_server.h \
-          select_server.h \
-          poll_server.h \
-          epoll_server.h \
-          kqueue_server.h \
-          reactor_server.h \
-          coroutine_server.h
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -pthread -Ibase
+LDFLAGS = -lssl -lcrypto
 
-# 检测操作系统
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS += -DLINUX
-endif
-ifeq ($(UNAME_S),Darwin)
-    CXXFLAGS += -DMACOS
-endif
+# 目标文件
+TARGET = server
+UNIFIED_TARGET = unified_server
+EXAMPLE_TARGET = example_server
 
-.PHONY: all clean test help
+# 源文件
+MAIN_SOURCES = main.cpp
+BASE_SOURCES = base/server_factory.cpp base/enhanced_event_loop.cpp base/connection_manager.cpp \
+               base/protocol_handler.cpp base/monitoring.cpp base/event_dispatcher.cpp
+EXAMPLE_SOURCES = example_unified_server.cpp
 
-all: $(TARGET)
+# 对象文件
+BASE_OBJECTS = $(BASE_SOURCES:.cpp=.o)
+MAIN_OBJECTS = $(MAIN_SOURCES:.cpp=.o)
+EXAMPLE_OBJECTS = $(EXAMPLE_SOURCES:.cpp=.o)
 
-$(TARGET): $(SOURCES) $(HEADERS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCES)
+# 默认目标
+all: $(TARGET) $(UNIFIED_TARGET) $(EXAMPLE_TARGET)
 
+# 原始服务器（兼容性）
+$(TARGET): $(MAIN_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(MAIN_OBJECTS) $(LDFLAGS)
+
+# 统一服务器库
+$(UNIFIED_TARGET): $(BASE_OBJECTS)
+	ar rcs lib$(UNIFIED_TARGET).a $(BASE_OBJECTS)
+
+# 示例服务器
+$(EXAMPLE_TARGET): $(EXAMPLE_OBJECTS) $(BASE_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $(EXAMPLE_TARGET) $(EXAMPLE_OBJECTS) $(BASE_OBJECTS) $(LDFLAGS)
+
+# 编译规则
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# 安装基础库
+install: $(UNIFIED_TARGET)
+	mkdir -p /usr/local/include/concurrency_server
+	cp -r base/*.h /usr/local/include/concurrency_server/
+	cp lib$(UNIFIED_TARGET).a /usr/local/lib/
+	ldconfig
+
+# 测试目标
+test: $(EXAMPLE_TARGET)
+	./$(EXAMPLE_TARGET) &
+	echo "Server started, testing..."
+	sleep 2
+	curl -s http://localhost:8080/ > /dev/null && echo "HTTP test passed" || echo "HTTP test failed"
+	curl -s http://localhost:8080/api/stats > /dev/null && echo "Stats API test passed" || echo "Stats API test failed"
+	killall $(EXAMPLE_TARGET) 2>/dev/null || true
+
+# 性能测试（需要安装wrk）
+benchmark: $(EXAMPLE_TARGET)
+	./$(EXAMPLE_TARGET) &
+	echo "Starting benchmark..."
+	sleep 3
+	command -v wrk >/dev/null 2>&1 && wrk -t4 -c100 -d10s http://localhost:8080/ || echo "wrk not found, skipping benchmark"
+	killall $(EXAMPLE_TARGET) 2>/dev/null || true
+
+# 内存检查（需要安装valgrind）
+memcheck: $(EXAMPLE_TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(EXAMPLE_TARGET)
+
+# 代码格式化
+format:
+	find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
+
+# 静态分析
+analyze:
+	cppcheck --enable=all --std=c++17 .
+
+# 文档生成
+docs:
+	doxygen Doxyfile 2>/dev/null || echo "Doxygen not found, skipping documentation generation"
+
+# 清理
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(EXAMPLE_TARGET) lib$(UNIFIED_TARGET).a
+	rm -f $(BASE_OBJECTS) $(MAIN_OBJECTS) $(EXAMPLE_OBJECTS)
+	rm -rf docs/html docs/latex
+
+# 深度清理
+distclean: clean
+	rm -f *.log core.*
+
+# 帮助信息
+help:
+	@echo "Available targets:"
+	@echo "  all        - Build all targets"
+	@echo "  server     - Build original server (compatibility)"
+	@echo "  unified_server - Build unified server library"
+	@echo "  example_server - Build example server"
+	@echo "  install    - Install library to system"
+	@echo "  test       - Run basic functionality tests"
+	@echo "  benchmark  - Run performance benchmark"
+	@echo "  memcheck   - Run memory leak check"
+	@echo "  format     - Format code with clang-format"
+	@echo "  analyze    - Run static code analysis"
+	@echo "  docs       - Generate documentation"
+	@echo "  clean      - Remove build artifacts"
+	@echo "  distclean  - Remove all generated files"
+	@echo "  help       - Show this help message"
+
+.PHONY: all install test benchmark memcheck format analyze docs clean distclean help
 
 # 测试不同的服务器模型
 test-single: $(TARGET)

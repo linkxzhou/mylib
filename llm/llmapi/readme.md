@@ -104,6 +104,32 @@ export OLLAMA_API_BASE=
 export SILICONFLOW_API_KEY=
 ```
 
-## 许可证
+## OpenAI API 代理接口
 
-[许可证信息]
+该项目提供一个基于 FastAPI 的 OpenAI 兼容代理接口，统一接入多家模型提供商（OpenAI、千帆、通义、智谱、Ollama、SiliconFlow、HuggingFace），并复用本仓库的 LLMFactory/EmbeddingFactory。
+
+- 基础端点：
+  - `GET /health`
+  - `GET /v1/models`（跨提供商模型发现）
+  - `POST /v1/chat/completions`（OpenAI Chat API）
+  - `POST /v1/completions`（Legacy Text Completions）
+  - `POST /v1/embeddings`（OpenAI Embeddings API；当前接 HuggingFace）
+
+- 运行
+  1) 安装依赖：
+  ```bash
+  pip install flask flask-cors
+  ```
+
+- 测试用例：
+```
+curl -X POST http://localhost:18089/v1/embeddings -H "Content-Type: application/json" -d '{"model":"BAAI/bge-small-zh-v1.5","input":["你好世界","人工智能很有趣"]}'
+
+curl http://localhost:18089/v1/models
+
+curl -X POST http://localhost:18089/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"gpt-5","messages":[{"role":"system","content":"你是一个有帮助的助手"},{"role":"user","content":[{"type":"text","text":"请做个自我介绍"}]}],"temperature":0.6}'
+
+curl -X POST http://localhost:18089/v1/completions -H "Content-Type: application/json" -d '{"model":"gpt-5","prompt":"用中文写一首关于海洋的俳句。","temperature":0.7}'
+
+curl -X POST http://localhost:18089/v1/rerank -H "Content-Type: application/json" -d '{"query":"Python 学习路线","documents":[{"text":"从基础语法开始学习 Python"},{"content":"掌握数据结构与算法"}],"with_score":true}'
+```

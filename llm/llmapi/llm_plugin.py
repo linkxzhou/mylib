@@ -15,7 +15,7 @@ class Plugin:
         return response
 
 class ReplaceHtmlPlugin(Plugin):
-    """替换某些字符的的插件"""
+    """替换某些字符的的插件，TODO：存在bug，待修复"""
     def __init__(self):
         self.replace_html = ['<', '>']
         
