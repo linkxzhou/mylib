@@ -103,7 +103,7 @@ python run_ui.py --share
 
 ### 界面截图
 
-访问 `http://localhost:7860` 即可使用Web界面进行翻译。
+访问 `http://localhost:9000` 即可使用Web界面进行翻译。
 
 ## 扩展Agent
 

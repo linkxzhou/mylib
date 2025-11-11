@@ -8,16 +8,12 @@ if [ ! -x "$PYTHON_BIN" ]; then
   exit 1
 fi
 
+export PYTHONPATH=`pwd`:$PYTHONPATH
 # SCF 自定义运行时默认转发到 9000 端口
 export PORT="${PORT:-9000}"
 export HOST="${HOST:-0.0.0.0}"
 export PYTHONUNBUFFERED=1
 export FLASK_ENV="${FLASK_ENV:-production}"
-
-# 若将依赖预打包到 ./python 目录（推荐），追加到 PYTHONPATH
-if [ -d "./python" ]; then
-  export PYTHONPATH="./python:${PYTHONPATH}"
-fi
 
 if [ -f "./requirements.txt" ]; then
   "$PYTHON_BIN" -m pip install -r requirements.txt

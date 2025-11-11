@@ -1,6 +1,7 @@
-import gradio as gr
 import sys
 sys.path.append('../llmapi')
+
+import gradio as gr
 from translation import TranslationAgent
 from llmapi.llm_factory import LLMFactory, LLMChatAdapter
 from llmapi.util.mylog import logger
@@ -127,10 +128,9 @@ def main():
     try:
         ui = AppUI()
         demo = ui.create_interface()
-        demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
+        demo.launch(server_name="0.0.0.0", server_port=9000, share=False)
     except Exception as e:
         logger.error(f"应用启动失败: {str(e)}")
-        print(f"❌ 应用启动失败: {str(e)}")
 
 if __name__ == "__main__":
     main()

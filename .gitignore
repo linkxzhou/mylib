@@ -37,3 +37,4 @@
 **/from0-buildllm/datasets
 **/llm/apps/translation
 **/*.zip
+**/release
