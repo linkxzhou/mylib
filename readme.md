@@ -4,8 +4,8 @@
 - glog：glog的日志库，查看 [readme](c++/glog/readme.md)
 - simplejs：c的js解析库，查看 [readme](c++/simplejs/readme.md)
 - tinyhttpd：c的http服务器，查看 [readme](c++/tinyhttpd/readme.md)
-- pgo：使用pgo的性能优化样例，查看 [readme](c++/pgo/readme.md)
-- simd：使用simd指令集的性能优化样例（strlen函数），查看 [readme](c++/simd/readme.md)
+- pgo：使用pgo的性能优化样例，查看 [readme](c++/pgo/README.md)
+- simd：使用simd指令集的性能优化样例（strlen函数），查看 [readme](c++/simd/README.md)
 - concurrency_server: c++实现23种的并发服务器，查看 [readme](c++/concurrency_server/README.md)
 - high_performance_server: 9 个开源高性能服务器实现 demo 的样例，查看 [readme](c++/high_performance_server/README.md)
     - 涉及 libevent，libev，libuv，Boost.Asio，ACE，Seastar，Wangle，Proxygen，Mongoose 功能
